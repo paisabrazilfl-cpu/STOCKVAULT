@@ -15,6 +15,7 @@ import { AuditLogs } from "@/pages/audit";
 import { Settings } from "@/pages/settings";
 import { News } from "@/pages/news";
 import { Notes } from "@/pages/notes";
+import { Charts } from "@/pages/charts";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,6 +40,7 @@ function Router() {
         <Route path="/settings" component={Settings} />
         <Route path="/notes" component={Notes} />
         <Route path="/news" component={News} />
+        <Route path="/charts" component={Charts} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
