@@ -56,6 +56,7 @@ function calcBB(values: number[], period = 20, mult = 2): { upper: (number | nul
 
 function calcRSI(closes: number[], period = 14): (number | null)[] {
   const out: (number | null)[] = new Array(closes.length).fill(null);
+  if (closes.length < period + 2) return out;
   let avgGain = 0, avgLoss = 0;
   for (let i = 1; i <= period; i++) {
     const d = closes[i] - closes[i - 1];
@@ -81,8 +82,14 @@ function calcMACD(closes: number[], fast = 12, slow = 26, signal = 9) {
   const macd: (number | null)[] = closes.map((_, i) =>
     emaFast[i] != null && emaSlow[i] != null ? emaFast[i]! - emaSlow[i]! : null,
   );
-  const macdValues = macd.map((v) => v ?? 0);
-  const signalLine = calcEMA(macdValues, signal);
+  // Compute signal EMA only over valid MACD values — never zero-pad
+  const firstValid = macd.findIndex((v) => v != null);
+  const signalLine: (number | null)[] = new Array(closes.length).fill(null);
+  if (firstValid >= 0) {
+    const validMacd = macd.slice(firstValid).map((v) => v!);
+    const sigValues = calcEMA(validMacd, signal);
+    sigValues.forEach((v, j) => { signalLine[firstValid + j] = v; });
+  }
   const hist = macd.map((m, i) =>
     m != null && signalLine[i] != null ? m - signalLine[i]! : null,
   );
@@ -98,10 +105,21 @@ function calcStoch(
     const ll = Math.min(...lows.slice(i - kPeriod + 1, i + 1));
     rawK[i] = hh === ll ? 50 : ((closes[i] - ll) / (hh - ll)) * 100;
   }
-  const rawKFilled = rawK.map((v) => v ?? 0);
-  const k = calcSMA(rawKFilled, smooth);
-  const kFilled = k.map((v) => v ?? 0);
-  const d = calcSMA(kFilled, smooth);
+  // SMA over only the valid (non-null) rawK segment
+  const firstRaw = rawK.findIndex((v) => v != null);
+  const k: (number | null)[] = new Array(closes.length).fill(null);
+  if (firstRaw >= 0) {
+    const validRaw = rawK.slice(firstRaw).map((v) => v!);
+    const kValues = calcSMA(validRaw, smooth);
+    kValues.forEach((v, j) => { k[firstRaw + j] = v; });
+  }
+  const firstK = k.findIndex((v) => v != null);
+  const d: (number | null)[] = new Array(closes.length).fill(null);
+  if (firstK >= 0) {
+    const validK = k.slice(firstK).map((v) => v!);
+    const dValues = calcSMA(validK, smooth);
+    dValues.forEach((v, j) => { d[firstK + j] = v; });
+  }
   return { k, d };
 }
 
@@ -233,60 +251,83 @@ export function Charts() {
 
   useEffect(() => {
     if (!priceContainerRef.current) return;
-    const chart = createChart(priceContainerRef.current, {
-      ...BASE_OPTS,
-      width: priceContainerRef.current.clientWidth,
-      height: priceContainerRef.current.clientHeight || 400,
-    });
+    let disposed = false;
+    let chart: IChartApi;
+    try {
+      chart = createChart(priceContainerRef.current, {
+        ...BASE_OPTS,
+        width: priceContainerRef.current.clientWidth || 600,
+        height: priceContainerRef.current.clientHeight || 400,
+      });
+    } catch { return; }
     priceChartRef.current = chart;
 
     const ro = new ResizeObserver((entries) => {
+      if (disposed) return;
       const e = entries[0];
-      if (e && chart) chart.applyOptions({ width: e.contentRect.width, height: e.contentRect.height });
+      if (e) try { chart.applyOptions({ width: e.contentRect.width, height: e.contentRect.height }); } catch {}
     });
     ro.observe(priceContainerRef.current);
 
-    return () => { ro.disconnect(); chart.remove(); priceChartRef.current = null; };
+    return () => {
+      disposed = true;
+      ro.disconnect();
+      priceChartRef.current = null;
+      try { chart.remove(); } catch {}
+    };
   }, []);
 
   // ── Oscillator chart lifecycle ───────────────────────────────────────────
 
   useEffect(() => {
     if (!oscContainerRef.current || oscillator === "none") return;
-    const chart = createChart(oscContainerRef.current, {
-      ...BASE_OPTS,
-      width: oscContainerRef.current.clientWidth,
-      height: oscContainerRef.current.clientHeight || 140,
-      timeScale: { ...BASE_OPTS.timeScale, visible: true },
-    });
+    let disposed = false;
+    let chart: IChartApi;
+    try {
+      chart = createChart(oscContainerRef.current, {
+        ...BASE_OPTS,
+        width: oscContainerRef.current.clientWidth || 600,
+        height: oscContainerRef.current.clientHeight || 140,
+        timeScale: { ...BASE_OPTS.timeScale, visible: true },
+      });
+    } catch { return; }
     oscChartRef.current = chart;
 
     // Sync timescales
     let syncing = false;
-    const onPriceRange = (r: Parameters<Parameters<ReturnType<IChartApi["timeScale"]>["subscribeVisibleLogicalRangeChange"]>[0]>[0]) => {
-      if (syncing || !r) return; syncing = true; chart.timeScale().setVisibleLogicalRange(r); syncing = false;
+    type RangeParam = Parameters<Parameters<ReturnType<IChartApi["timeScale"]>["subscribeVisibleLogicalRangeChange"]>[0]>[0];
+    const onPriceRange = (r: RangeParam) => {
+      if (disposed || syncing || !r) return;
+      syncing = true;
+      try { chart.timeScale().setVisibleLogicalRange(r); } catch {}
+      syncing = false;
     };
-    const onOscRange = (r: Parameters<Parameters<ReturnType<IChartApi["timeScale"]>["subscribeVisibleLogicalRangeChange"]>[0]>[0]) => {
-      if (syncing || !r || !priceChartRef.current) return; syncing = true; priceChartRef.current.timeScale().setVisibleLogicalRange(r); syncing = false;
+    const onOscRange = (r: RangeParam) => {
+      if (disposed || syncing || !r || !priceChartRef.current) return;
+      syncing = true;
+      try { priceChartRef.current.timeScale().setVisibleLogicalRange(r); } catch {}
+      syncing = false;
     };
-    priceChartRef.current?.timeScale().subscribeVisibleLogicalRangeChange(onPriceRange);
-    chart.timeScale().subscribeVisibleLogicalRangeChange(onOscRange);
+    try { priceChartRef.current?.timeScale().subscribeVisibleLogicalRangeChange(onPriceRange); } catch {}
+    try { chart.timeScale().subscribeVisibleLogicalRangeChange(onOscRange); } catch {}
 
     const ro = new ResizeObserver((entries) => {
+      if (disposed) return;
       const e = entries[0];
-      if (e && chart) chart.applyOptions({ width: e.contentRect.width, height: e.contentRect.height });
+      if (e) try { chart.applyOptions({ width: e.contentRect.width, height: e.contentRect.height }); } catch {}
     });
     ro.observe(oscContainerRef.current);
 
     return () => {
+      disposed = true;
       ro.disconnect();
-      priceChartRef.current?.timeScale().unsubscribeVisibleLogicalRangeChange(onPriceRange);
-      chart.timeScale().unsubscribeVisibleLogicalRangeChange(onOscRange);
-      chart.remove();
+      try { priceChartRef.current?.timeScale().unsubscribeVisibleLogicalRangeChange(onPriceRange); } catch {}
+      try { chart.timeScale().unsubscribeVisibleLogicalRangeChange(onOscRange); } catch {}
       oscChartRef.current = null;
       oscSeries1Ref.current = null;
       oscSeries2Ref.current = null;
       oscHistRef.current = null;
+      try { chart.remove(); } catch {}
     };
   }, [oscillator]);
 
@@ -296,51 +337,53 @@ export function Charts() {
     const chart = priceChartRef.current;
     if (!chart) return;
 
-    // Remove old series
-    if (mainSeriesRef.current) { try { chart.removeSeries(mainSeriesRef.current); } catch {} mainSeriesRef.current = null; }
-    if (volSeriesRef.current) { try { chart.removeSeries(volSeriesRef.current); } catch {} volSeriesRef.current = null; }
-    overlaySeriesRef.current.forEach((s) => { try { chart.removeSeries(s); } catch {} });
-    overlaySeriesRef.current.clear();
+    try {
+      // Remove old series
+      if (mainSeriesRef.current) { try { chart.removeSeries(mainSeriesRef.current); } catch {} mainSeriesRef.current = null; }
+      if (volSeriesRef.current) { try { chart.removeSeries(volSeriesRef.current); } catch {} volSeriesRef.current = null; }
+      overlaySeriesRef.current.forEach((s) => { try { chart.removeSeries(s); } catch {} });
+      overlaySeriesRef.current.clear();
 
-    // Volume
-    const vol = chart.addSeries(HistogramSeries, {
-      color: T.vol_up, priceFormat: { type: "volume" }, priceScaleId: "vol",
-    });
-    chart.priceScale("vol").applyOptions({ scaleMargins: { top: 0.83, bottom: 0 } });
-    volSeriesRef.current = vol;
+      // Volume
+      const vol = chart.addSeries(HistogramSeries, {
+        color: T.vol_up, priceFormat: { type: "volume" }, priceScaleId: "vol",
+      });
+      chart.priceScale("vol").applyOptions({ scaleMargins: { top: 0.83, bottom: 0 } });
+      volSeriesRef.current = vol;
 
-    // Main series
-    if (chartType === "candle") {
-      mainSeriesRef.current = chart.addSeries(CandlestickSeries, {
-        upColor: T.up, downColor: T.down,
-        borderUpColor: T.up, borderDownColor: T.down,
-        wickUpColor: T.up, wickDownColor: T.down,
-      }) as ISeriesApi<"Candlestick">;
-    } else if (chartType === "line") {
-      mainSeriesRef.current = chart.addSeries(LineSeries, { color: T.line, lineWidth: 2 }) as ISeriesApi<"Line">;
-    } else {
-      mainSeriesRef.current = chart.addSeries(AreaSeries, {
-        lineColor: T.line, topColor: T.area_top, bottomColor: T.area_bot, lineWidth: 2,
-      }) as ISeriesApi<"Area">;
-    }
-
-    chart.subscribeCrosshairMove((param) => {
-      if (!param.time || !param.seriesData || !mainSeriesRef.current) { setCrosshair({}); return; }
-      const d = param.seriesData.get(mainSeriesRef.current);
-      if (!d) return;
-      const dateStr = typeof param.time === "number"
-        ? new Date(Number(param.time) * 1000).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
-        : String(param.time);
+      // Main series
       if (chartType === "candle") {
-        const cd = d as CandlestickData;
-        const change = cd.close - cd.open;
-        const changePct = cd.open > 0 ? (change / cd.open) * 100 : 0;
-        setCrosshair({ dateStr, open: cd.open, high: cd.high, low: cd.low, close: cd.close, change, changePct });
+        mainSeriesRef.current = chart.addSeries(CandlestickSeries, {
+          upColor: T.up, downColor: T.down,
+          borderUpColor: T.up, borderDownColor: T.down,
+          wickUpColor: T.up, wickDownColor: T.down,
+        }) as ISeriesApi<"Candlestick">;
+      } else if (chartType === "line") {
+        mainSeriesRef.current = chart.addSeries(LineSeries, { color: T.line, lineWidth: 2 }) as ISeriesApi<"Line">;
       } else {
-        const ld = d as LineData;
-        setCrosshair({ dateStr, close: ld.value });
+        mainSeriesRef.current = chart.addSeries(AreaSeries, {
+          lineColor: T.line, topColor: T.area_top, bottomColor: T.area_bot, lineWidth: 2,
+        }) as ISeriesApi<"Area">;
       }
-    });
+
+      chart.subscribeCrosshairMove((param) => {
+        if (!param.time || !param.seriesData || !mainSeriesRef.current) { setCrosshair({}); return; }
+        const d = param.seriesData.get(mainSeriesRef.current);
+        if (!d) return;
+        const dateStr = typeof param.time === "number"
+          ? new Date(Number(param.time) * 1000).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
+          : String(param.time);
+        if (chartType === "candle") {
+          const cd = d as CandlestickData;
+          const change = cd.close - cd.open;
+          const changePct = cd.open > 0 ? (change / cd.open) * 100 : 0;
+          setCrosshair({ dateStr, open: cd.open, high: cd.high, low: cd.low, close: cd.close, change, changePct });
+        } else {
+          const ld = d as LineData;
+          setCrosshair({ dateStr, close: ld.value });
+        }
+      });
+    } catch {}
   }, [chartType]);
 
   // ── Feed data + overlays + oscillator ───────────────────────────────────
@@ -349,116 +392,122 @@ export function Charts() {
     const chart = priceChartRef.current;
     if (!chart || !candles.length || !mainSeriesRef.current || !volSeriesRef.current) return;
 
-    const closes = candles.map((c) => c.close);
-    const highs = candles.map((c) => c.high);
-    const lows = candles.map((c) => c.low);
-    const times = candles.map((c) => c.time);
+    try {
+      const closes = candles.map((c) => c.close);
+      const highs = candles.map((c) => c.high);
+      const lows = candles.map((c) => c.low);
+      const times = candles.map((c) => c.time);
 
-    // Main series
-    if (chartType === "candle") {
-      (mainSeriesRef.current as ISeriesApi<"Candlestick">).setData(
-        candles.map((c) => ({ time: c.time as CandlestickData["time"], open: c.open, high: c.high, low: c.low, close: c.close })),
-      );
-    } else {
-      (mainSeriesRef.current as ISeriesApi<"Line"> | ISeriesApi<"Area">).setData(
-        candles.map((c) => ({ time: c.time as LineData["time"], value: c.close })),
-      );
-    }
+      // Main series
+      if (chartType === "candle") {
+        (mainSeriesRef.current as ISeriesApi<"Candlestick">).setData(
+          candles.map((c) => ({ time: c.time as CandlestickData["time"], open: c.open, high: c.high, low: c.low, close: c.close })),
+        );
+      } else {
+        (mainSeriesRef.current as ISeriesApi<"Line"> | ISeriesApi<"Area">).setData(
+          candles.map((c) => ({ time: c.time as LineData["time"], value: c.close })),
+        );
+      }
 
-    // Volume
-    volSeriesRef.current.setData(candles.map((c) => ({
-      time: c.time as HistogramData["time"],
-      value: c.volume,
-      color: c.close >= c.open ? T.vol_up : T.vol_down,
-    })));
+      // Volume
+      volSeriesRef.current.setData(candles.map((c) => ({
+        time: c.time as HistogramData["time"],
+        value: c.volume,
+        color: c.close >= c.open ? T.vol_up : T.vol_down,
+      })));
 
-    // Remove old overlay series
-    overlaySeriesRef.current.forEach((s) => { try { chart.removeSeries(s); } catch {} });
-    overlaySeriesRef.current.clear();
+      // Remove old overlay series
+      overlaySeriesRef.current.forEach((s) => { try { chart.removeSeries(s); } catch {} });
+      overlaySeriesRef.current.clear();
 
-    // Add overlay series
-    function addOverlayLine(values: (number | null)[], color: string, width: 1 | 2 = 1) {
-      const s = chart!.addSeries(LineSeries, {
-        color, lineWidth: width, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false,
-      });
-      s.setData(
-        values
+      // Add overlay series
+      function addOverlayLine(values: (number | null)[], color: string, width: 1 | 2 = 1) {
+        const s = chart!.addSeries(LineSeries, {
+          color, lineWidth: width, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false,
+        });
+        s.setData(
+          values
+            .map((v, i) => v != null ? { time: times[i] as LineData["time"], value: v } : null)
+            .filter(Boolean) as { time: LineData["time"]; value: number }[],
+        );
+        return s;
+      }
+
+      if (overlays.has("ema20")) overlaySeriesRef.current.set("ema20", addOverlayLine(calcEMA(closes, 20), T.ema20));
+      if (overlays.has("ema50")) overlaySeriesRef.current.set("ema50", addOverlayLine(calcEMA(closes, 50), T.ema50));
+      if (overlays.has("ema200")) overlaySeriesRef.current.set("ema200", addOverlayLine(calcEMA(closes, 200), T.ema200));
+      if (overlays.has("sma50")) overlaySeriesRef.current.set("sma50", addOverlayLine(calcSMA(closes, 50), T.sma50));
+      if (overlays.has("bb")) {
+        const bb = calcBB(closes);
+        overlaySeriesRef.current.set("bb_u", addOverlayLine(bb.upper, T.bb_band));
+        overlaySeriesRef.current.set("bb_m", addOverlayLine(bb.mid, T.bb_mid));
+        overlaySeriesRef.current.set("bb_l", addOverlayLine(bb.lower, T.bb_band));
+      }
+
+      chart.timeScale().fitContent();
+
+      // Last candle for initial crosshair
+      const last = candles[candles.length - 1];
+      if (last) {
+        const change = last.close - last.open;
+        const changePct = last.open > 0 ? (change / last.open) * 100 : 0;
+        setCrosshair({
+          dateStr: new Date(last.time * 1000).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
+          open: last.open, high: last.high, low: last.low, close: last.close, change, changePct,
+        });
+      }
+
+      // ── Oscillator data ────────────────────────────────────────────────
+      const oscChart = oscChartRef.current;
+      if (!oscChart || oscillator === "none") return;
+
+      // Clear old oscillator series
+      if (oscSeries1Ref.current) { try { oscChart.removeSeries(oscSeries1Ref.current); } catch {} oscSeries1Ref.current = null; }
+      if (oscSeries2Ref.current) { try { oscChart.removeSeries(oscSeries2Ref.current); } catch {} oscSeries2Ref.current = null; }
+      if (oscHistRef.current) { try { oscChart.removeSeries(oscHistRef.current); } catch {} oscHistRef.current = null; }
+
+      function toLine(values: (number | null)[]): { time: LineData["time"]; value: number }[] {
+        return values
           .map((v, i) => v != null ? { time: times[i] as LineData["time"], value: v } : null)
-          .filter(Boolean) as { time: LineData["time"]; value: number }[],
-      );
-      return s;
+          .filter(Boolean) as { time: LineData["time"]; value: number }[];
+      }
+      function toHist(values: (number | null)[]): { time: HistogramData["time"]; value: number; color: string }[] {
+        return values
+          .map((v, i) => v != null ? { time: times[i] as HistogramData["time"], value: v, color: v >= 0 ? T.vol_up : T.vol_down } : null)
+          .filter(Boolean) as { time: HistogramData["time"]; value: number; color: string }[];
+      }
+
+      if (oscillator === "rsi") {
+        const rsi = calcRSI(closes);
+        oscSeries1Ref.current = oscChart.addSeries(LineSeries, { color: T.ema20, lineWidth: 2, priceLineVisible: false });
+        oscSeries1Ref.current.setData(toLine(rsi));
+        oscChart.priceScale("right").applyOptions({ autoScale: false });
+      } else if (oscillator === "macd") {
+        const { macd, signal: sig, hist } = calcMACD(closes);
+        oscHistRef.current = oscChart.addSeries(HistogramSeries, { color: T.vol_up, priceFormat: { type: "price", precision: 4 } });
+        oscHistRef.current.setData(toHist(hist));
+        oscSeries1Ref.current = oscChart.addSeries(LineSeries, { color: T.macd_line, lineWidth: 2, priceLineVisible: false });
+        oscSeries1Ref.current.setData(toLine(macd));
+        oscSeries2Ref.current = oscChart.addSeries(LineSeries, { color: T.macd_sig, lineWidth: 1, priceLineVisible: false });
+        oscSeries2Ref.current.setData(toLine(sig));
+      } else if (oscillator === "stoch") {
+        const { k, d } = calcStoch(highs, lows, closes);
+        oscSeries1Ref.current = oscChart.addSeries(LineSeries, { color: T.stoch_k, lineWidth: 2, priceLineVisible: false });
+        oscSeries1Ref.current.setData(toLine(k));
+        oscSeries2Ref.current = oscChart.addSeries(LineSeries, { color: T.stoch_d, lineWidth: 1, priceLineVisible: false });
+        oscSeries2Ref.current.setData(toLine(d));
+        oscChart.priceScale("right").applyOptions({ autoScale: false });
+      }
+
+      oscChart.timeScale().fitContent();
+      // Sync initial range
+      const priceRange = priceChartRef.current?.timeScale().getVisibleLogicalRange();
+      if (priceRange) oscChart.timeScale().setVisibleLogicalRange(priceRange);
+    } catch (_err) {
+      // lightweight-charts throws strings (not Error objects) for invariant violations
+      // (e.g. out-of-order timestamps, disposed series). Swallow to prevent unhandled
+      // exception crashes — the chart will recover on the next data/dependency update.
     }
-
-    if (overlays.has("ema20")) overlaySeriesRef.current.set("ema20", addOverlayLine(calcEMA(closes, 20), T.ema20));
-    if (overlays.has("ema50")) overlaySeriesRef.current.set("ema50", addOverlayLine(calcEMA(closes, 50), T.ema50));
-    if (overlays.has("ema200")) overlaySeriesRef.current.set("ema200", addOverlayLine(calcEMA(closes, 200), T.ema200));
-    if (overlays.has("sma50")) overlaySeriesRef.current.set("sma50", addOverlayLine(calcSMA(closes, 50), T.sma50));
-    if (overlays.has("bb")) {
-      const bb = calcBB(closes);
-      overlaySeriesRef.current.set("bb_u", addOverlayLine(bb.upper, T.bb_band));
-      overlaySeriesRef.current.set("bb_m", addOverlayLine(bb.mid, T.bb_mid));
-      overlaySeriesRef.current.set("bb_l", addOverlayLine(bb.lower, T.bb_band));
-    }
-
-    chart.timeScale().fitContent();
-
-    // Last candle for initial crosshair
-    const last = candles[candles.length - 1];
-    if (last) {
-      const change = last.close - last.open;
-      const changePct = last.open > 0 ? (change / last.open) * 100 : 0;
-      setCrosshair({
-        dateStr: new Date(last.time * 1000).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
-        open: last.open, high: last.high, low: last.low, close: last.close, change, changePct,
-      });
-    }
-
-    // ── Oscillator data ──────────────────────────────────────────────────
-    const oscChart = oscChartRef.current;
-    if (!oscChart || oscillator === "none") return;
-
-    // Clear old oscillator series
-    if (oscSeries1Ref.current) { try { oscChart.removeSeries(oscSeries1Ref.current); } catch {} oscSeries1Ref.current = null; }
-    if (oscSeries2Ref.current) { try { oscChart.removeSeries(oscSeries2Ref.current); } catch {} oscSeries2Ref.current = null; }
-    if (oscHistRef.current) { try { oscChart.removeSeries(oscHistRef.current); } catch {} oscHistRef.current = null; }
-
-    function toLine(values: (number | null)[]): { time: LineData["time"]; value: number }[] {
-      return values
-        .map((v, i) => v != null ? { time: times[i] as LineData["time"], value: v } : null)
-        .filter(Boolean) as { time: LineData["time"]; value: number }[];
-    }
-    function toHist(values: (number | null)[]): { time: HistogramData["time"]; value: number; color: string }[] {
-      return values
-        .map((v, i) => v != null ? { time: times[i] as HistogramData["time"], value: v, color: v >= 0 ? T.vol_up : T.vol_down } : null)
-        .filter(Boolean) as { time: HistogramData["time"]; value: number; color: string }[];
-    }
-
-    if (oscillator === "rsi") {
-      const rsi = calcRSI(closes);
-      oscSeries1Ref.current = oscChart.addSeries(LineSeries, { color: T.ema20, lineWidth: 2, priceLineVisible: false });
-      oscSeries1Ref.current.setData(toLine(rsi));
-      oscChart.priceScale("right").applyOptions({ autoScale: false });
-    } else if (oscillator === "macd") {
-      const { macd, signal: sig, hist } = calcMACD(closes);
-      oscHistRef.current = oscChart.addSeries(HistogramSeries, { color: T.vol_up, priceFormat: { type: "price", precision: 4 } });
-      oscHistRef.current.setData(toHist(hist));
-      oscSeries1Ref.current = oscChart.addSeries(LineSeries, { color: T.macd_line, lineWidth: 2, priceLineVisible: false });
-      oscSeries1Ref.current.setData(toLine(macd));
-      oscSeries2Ref.current = oscChart.addSeries(LineSeries, { color: T.macd_sig, lineWidth: 1, priceLineVisible: false });
-      oscSeries2Ref.current.setData(toLine(sig));
-    } else if (oscillator === "stoch") {
-      const { k, d } = calcStoch(highs, lows, closes);
-      oscSeries1Ref.current = oscChart.addSeries(LineSeries, { color: T.stoch_k, lineWidth: 2, priceLineVisible: false });
-      oscSeries1Ref.current.setData(toLine(k));
-      oscSeries2Ref.current = oscChart.addSeries(LineSeries, { color: T.stoch_d, lineWidth: 1, priceLineVisible: false });
-      oscSeries2Ref.current.setData(toLine(d));
-      oscChart.priceScale("right").applyOptions({ autoScale: false });
-    }
-
-    oscChart.timeScale().fitContent();
-    // Sync initial range
-    const priceRange = priceChartRef.current?.timeScale().getVisibleLogicalRange();
-    if (priceRange) oscChart.timeScale().setVisibleLogicalRange(priceRange);
   }, [candles, chartType, overlays, oscillator]);
 
   // ── Overlay toggle ───────────────────────────────────────────────────────
