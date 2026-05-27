@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 48" fill="none">
+  <!-- Scanner/search icon -->
+  <circle cx="24" cy="22" r="16" stroke="#4ade80" stroke-width="1.5"/>
+  <polyline points="14,28 18,16 22,23 26,12 30,20" stroke="#4ade80" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="36" y1="34" x2="30" y2="28" stroke="#4ade80" stroke-width="2" stroke-linecap="round"/>
+  <!-- Text -->
+  <text x="50" y="19" font-family="JetBrains Mono, Courier New, monospace" font-size="14" font-weight="700" fill="#d8e3f0" letter-spacing="0.5">MOTION</text>
+  <text x="50" y="34" font-family="JetBrains Mono, Courier New, monospace" font-size="9" font-weight="400" fill="#7f92a8" letter-spacing="3">SCANNER</text>
+</svg>
