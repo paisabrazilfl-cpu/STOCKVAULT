@@ -416,29 +416,47 @@ function ApiKeysSection({ keys }: { keys: ApiKeyStatus }) {
           onKeyChange={setFinnhubApiKey}
         />
 
-        <ProviderRow
-          name="Alpaca Paper Trading"
-          description="Automated paper trade execution, account positions, P&L"
-          configured={keys.alpacaConfigured}
-          signupUrl="https://alpaca.markets"
-          keyLabel="API Key"
-          keyPlaceholder="PKXXXXXXXX..."
-          keyValue={alpacaApiKey}
-          onKeyChange={setAlpacaApiKey}
-          secretLabel="Secret Key"
-          secretPlaceholder="Enter secret..."
-          secretValue={alpacaSecretKey}
-          onSecretChange={setAlpacaSecretKey}
-          extra={
-            <div className="flex items-center gap-3">
-              <Switch checked={alpacaPaper} onCheckedChange={setAlpacaPaper} />
+        {keys.alpacaManaged ? (
+          <div className="rounded border border-[hsl(var(--go-color))]/20 bg-[hsl(var(--go-color))]/5 p-4">
+            <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm">Paper Trading Mode</div>
-                <div className="text-xs text-muted-foreground">Use paper trading endpoint (recommended)</div>
+                <div className="text-sm font-medium">Alpaca Trading</div>
+                <div className="text-xs text-muted-foreground">
+                  Wired in via server configuration. To trade your own account,
+                  generate API keys at alpaca.markets and run a separate instance.
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs">
+                <CheckCircle className="h-4 w-4 text-[hsl(var(--go-color))]" />
+                <span className="text-[hsl(var(--go-color))]">Connected (server)</span>
               </div>
             </div>
-          }
-        />
+          </div>
+        ) : (
+          <ProviderRow
+            name="Alpaca Paper Trading"
+            description="Automated paper trade execution, account positions, P&L"
+            configured={keys.alpacaConfigured}
+            signupUrl="https://alpaca.markets"
+            keyLabel="API Key"
+            keyPlaceholder="PKXXXXXXXX..."
+            keyValue={alpacaApiKey}
+            onKeyChange={setAlpacaApiKey}
+            secretLabel="Secret Key"
+            secretPlaceholder="Enter secret..."
+            secretValue={alpacaSecretKey}
+            onSecretChange={setAlpacaSecretKey}
+            extra={
+              <div className="flex items-center gap-3">
+                <Switch checked={alpacaPaper} onCheckedChange={setAlpacaPaper} />
+                <div>
+                  <div className="text-sm">Paper Trading Mode</div>
+                  <div className="text-xs text-muted-foreground">Use paper trading endpoint (recommended)</div>
+                </div>
+              </div>
+            }
+          />
+        )}
 
         <Button onClick={handleSave} disabled={isPending || !hasChanges} className="w-full">
           {isPending ? "Saving..." : "Save API Keys"}

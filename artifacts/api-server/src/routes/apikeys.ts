@@ -3,6 +3,7 @@ import { db, apiKeysTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { UpdateApiKeysBody } from "@workspace/api-zod";
 import { encrypt, decrypt } from "../lib/crypto";
+import { hasEnvAlpacaCreds } from "../lib/alpaca";
 import { logAudit } from "../lib/audit";
 
 const router = Router();
@@ -16,7 +17,9 @@ router.get("/api-keys", async (req, res): Promise<void> => {
     .where(eq(apiKeysTable.tenantId, req.tenantId)).limit(1);
   const row = rows[0];
   res.json({
-    alpacaConfigured: isSet(row?.alpacaApiKeyEnc),
+    // Server-wide env credentials (the operator's account) count as configured.
+    alpacaConfigured: hasEnvAlpacaCreds() || isSet(row?.alpacaApiKeyEnc),
+    alpacaManaged: hasEnvAlpacaCreds(),
     tradierConfigured: isSet(row?.tradierApiKeyEnc),
     polygonConfigured: isSet(row?.polygonApiKeyEnc),
     finnhubConfigured: isSet(row?.finnhubApiKeyEnc),
@@ -56,7 +59,8 @@ router.put("/api-keys", async (req, res): Promise<void> => {
 
   await logAudit(req, { tenantId: req.tenantId, userId: req.userId, action: "API_KEYS_UPDATE" });
   res.json({
-    alpacaConfigured: isSet(row?.alpacaApiKeyEnc),
+    alpacaConfigured: hasEnvAlpacaCreds() || isSet(row?.alpacaApiKeyEnc),
+    alpacaManaged: hasEnvAlpacaCreds(),
     tradierConfigured: isSet(row?.tradierApiKeyEnc),
     polygonConfigured: isSet(row?.polygonApiKeyEnc),
     finnhubConfigured: isSet(row?.finnhubApiKeyEnc),

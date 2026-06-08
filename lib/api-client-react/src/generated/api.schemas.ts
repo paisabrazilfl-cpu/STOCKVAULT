@@ -282,6 +282,8 @@ export interface AuditLogList {
 
 export interface ApiKeyStatus {
   alpacaConfigured?: boolean;
+  /** True when Alpaca credentials are provided server-side via environment (the operator's account). When set, per-tenant Alpaca keys are ignored and the Settings inputs are read-only. */
+  alpacaManaged?: boolean;
   tradierConfigured?: boolean;
   polygonConfigured?: boolean;
   finnhubConfigured?: boolean;

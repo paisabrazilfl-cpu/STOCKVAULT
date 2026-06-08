@@ -1031,6 +1031,12 @@ components:
       properties:
         alpacaConfigured:
           type: boolean
+        alpacaManaged:
+          type: boolean
+          description: >-
+            True when Alpaca credentials are provided server-side via
+            environment (the operator's account). When set, per-tenant Alpaca
+            keys are ignored and the Settings inputs are read-only.
         tradierConfigured:
           type: boolean
         polygonConfigured:

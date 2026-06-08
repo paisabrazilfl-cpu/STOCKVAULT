@@ -621,6 +621,7 @@ export const ListAuditLogsResponse = zod.object({
  */
 export const GetApiKeysResponse = zod.object({
   "alpacaConfigured": zod.boolean().optional(),
+  "alpacaManaged": zod.boolean().optional().describe('True when Alpaca credentials are provided server-side via environment (the operator\'s account). When set, per-tenant Alpaca keys are ignored and the Settings inputs are read-only.'),
   "tradierConfigured": zod.boolean().optional(),
   "polygonConfigured": zod.boolean().optional(),
   "finnhubConfigured": zod.boolean().optional(),
@@ -644,6 +645,7 @@ export const UpdateApiKeysBody = zod.object({
 
 export const UpdateApiKeysResponse = zod.object({
   "alpacaConfigured": zod.boolean().optional(),
+  "alpacaManaged": zod.boolean().optional().describe('True when Alpaca credentials are provided server-side via environment (the operator\'s account). When set, per-tenant Alpaca keys are ignored and the Settings inputs are read-only.'),
   "tradierConfigured": zod.boolean().optional(),
   "polygonConfigured": zod.boolean().optional(),
   "finnhubConfigured": zod.boolean().optional(),
