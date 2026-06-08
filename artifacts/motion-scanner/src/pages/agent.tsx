@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Bot, Send, Plus, Trash2, ChevronRight, Sparkles, Loader2,
   RotateCcw, Search, TrendingUp, List, History, BarChart2, CheckCircle2,
+  Zap, X, ArrowUpRight, ArrowDownRight, Minus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,7 +14,9 @@ import {
   useCreateOpenaiConversation,
   useGetOpenaiConversation,
   useDeleteOpenaiConversation,
+  useRunScreener,
 } from "@workspace/api-client-react";
+import type { CandidateRecord } from "@workspace/api-client-react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -132,6 +135,102 @@ const SUGGESTIONS = [
   { label: "Recent scan history recap", prompt: "Review my recent scan history. What tickers have been appearing as GO signals repeatedly? What patterns do you see?" },
 ];
 
+// ── Alex's Screener preset ───────────────────────────────────────────────────
+
+const ALEX_PARAMS = {
+  universe: "smallcap" as const,
+  priceMin: 1,
+  priceMax: 10,
+  range52wMin: 2,
+  mom1mMin: 0.2,
+  nearHigh52wPct: 0.1,
+};
+
+function AlexVerdictIcon({ verdict }: { verdict: string }) {
+  if (verdict === "GO") return <ArrowUpRight className="h-3.5 w-3.5 text-green-400" />;
+  if (verdict === "ABORT") return <ArrowDownRight className="h-3.5 w-3.5 text-red-400" />;
+  return <Minus className="h-3.5 w-3.5 text-yellow-400" />;
+}
+
+function AlexScreenerPanel({ onClose }: { onClose: () => void }) {
+  const { data, isLoading, isError } = useRunScreener(ALEX_PARAMS);
+  const results = data?.results ?? [];
+
+  return (
+    <div className="border border-yellow-500/30 rounded-lg bg-yellow-500/5 overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-yellow-500/20 bg-yellow-500/10">
+        <div className="flex items-center gap-2">
+          <Zap className="h-4 w-4 text-yellow-400" />
+          <span className="text-xs font-bold text-yellow-300 uppercase tracking-wider">Alex's Screener</span>
+          <span className="text-[10px] text-yellow-400/70">2× Range · $1-$10 · 20% Mom · ≤10% from High</span>
+        </div>
+        <Button size="icon" variant="ghost" className="h-6 w-6 text-yellow-400/70 hover:text-yellow-300" onClick={onClose}>
+          <X className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+
+      <div className="p-4">
+        {isLoading && (
+          <div className="flex items-center justify-center gap-2 py-8 text-muted-foreground text-xs">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Scanning small-caps with Alex's 4 rules…
+          </div>
+        )}
+
+        {isError && (
+          <p className="text-xs text-red-400 text-center py-4">Failed to run screener. Is the API server running?</p>
+        )}
+
+        {!isLoading && !isError && results.length === 0 && (
+          <p className="text-xs text-muted-foreground text-center py-6">
+            No tickers passed all 4 rules right now. Check back during market hours.
+          </p>
+        )}
+
+        {!isLoading && results.length > 0 && (
+          <>
+            <div className="text-xs text-muted-foreground mb-3">
+              <span className="text-yellow-300 font-semibold">{results.length}</span> ticker{results.length !== 1 ? "s" : ""} passed
+              {data?.scanned ? ` (out of ${data.scanned} scanned)` : ""}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[380px] overflow-y-auto pr-1">
+              {results.map((r: CandidateRecord) => {
+                const tech = r.technical as Record<string, number> | null | undefined;
+                return (
+                  <div key={r.ticker} className="flex items-center gap-3 px-3 py-2 rounded border border-border bg-card hover:border-yellow-500/30 transition-colors">
+                    <AlexVerdictIcon verdict={r.verdict} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-foreground">{r.ticker}</span>
+                        <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0",
+                          r.verdict === "GO" ? "border-green-500/40 text-green-400" :
+                          r.verdict === "ABORT" ? "border-red-500/40 text-red-400" :
+                          "border-yellow-500/40 text-yellow-400"
+                        )}>
+                          {r.verdict}
+                        </Badge>
+                        <span className="text-[10px] text-muted-foreground">score {r.score}</span>
+                      </div>
+                      {tech && (
+                        <div className="flex gap-3 text-[10px] text-muted-foreground mt-0.5">
+                          <span>52w ×{(tech.range52w ?? 0).toFixed(1)}</span>
+                          <span>Mom {((tech.mom1m ?? 0) * 100).toFixed(0)}%</span>
+                          <span>{((tech.pctFromHigh52w ?? 0) * 100).toFixed(1)}% from hi</span>
+                          {tech.close != null && <span>${(tech.close as number).toFixed(2)}</span>}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function Agent() {
@@ -141,6 +240,7 @@ export function Agent() {
   const [streaming, setStreaming] = useState(false);
   const [streamingContent, setStreamingContent] = useState("");
   const [streamingTools, setStreamingTools] = useState<ToolEvent[]>([]);
+  const [showAlexScreener, setShowAlexScreener] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -325,6 +425,20 @@ export function Agent() {
             <p className="text-xs text-muted-foreground">Live data access · Scans · Sector rotation · Chart analysis</p>
           </div>
           <div className="ml-auto flex items-center gap-2">
+            <Button
+              size="sm"
+              variant={showAlexScreener ? "default" : "outline"}
+              className={cn(
+                "text-xs gap-1.5 h-7",
+                showAlexScreener
+                  ? "bg-yellow-500/20 border-yellow-500/50 text-yellow-300 hover:bg-yellow-500/30"
+                  : "border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10"
+              )}
+              onClick={() => setShowAlexScreener((v) => !v)}
+            >
+              <Zap className="h-3 w-3" />
+              Alex's Screener
+            </Button>
             {streaming && pendingTools.length > 0 && (
               <Badge variant="outline" className="text-xs border-primary/40 text-primary gap-1">
                 <Loader2 className="h-3 w-3 animate-spin" />
@@ -340,7 +454,14 @@ export function Agent() {
 
         {/* Messages */}
         <ScrollArea className="flex-1 px-6 py-4">
-          {messages.length === 0 && !streaming && (
+          {/* Alex's Screener panel (shown above everything when active) */}
+          {showAlexScreener && (
+            <div className="max-w-3xl mx-auto mb-4">
+              <AlexScreenerPanel onClose={() => setShowAlexScreener(false)} />
+            </div>
+          )}
+
+          {messages.length === 0 && !streaming && !showAlexScreener && (
             <div className="flex flex-col items-center justify-center h-full min-h-[400px] gap-6">
               <div className="flex flex-col items-center gap-2 text-center">
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -351,6 +472,19 @@ export function Agent() {
                   I can run real scans, check sector rotation, load your watchlists, and analyze price data live — not just answer from training data.
                 </p>
               </div>
+
+              {/* Alex's Screener one-click button */}
+              <button
+                onClick={() => setShowAlexScreener(true)}
+                className="flex items-center gap-2 px-5 py-3 rounded-lg border-2 border-yellow-500/40 bg-yellow-500/10 hover:bg-yellow-500/20 hover:border-yellow-500/60 transition-all text-yellow-300 group"
+              >
+                <Zap className="h-5 w-5 text-yellow-400 group-hover:animate-pulse" />
+                <div className="text-left">
+                  <span className="font-bold text-sm block">Alex's Screener</span>
+                  <span className="text-[10px] text-yellow-400/70">2× Range · $1-$10 · 20% Mom · ≤10% from High</span>
+                </div>
+              </button>
+
               <div className="grid grid-cols-2 gap-2 w-full max-w-xl">
                 {SUGGESTIONS.map((s) => (
                   <button
