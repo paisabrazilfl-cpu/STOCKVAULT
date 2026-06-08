@@ -376,6 +376,181 @@ export const GetBrokerPositionsResponse = zod.array(GetBrokerPositionsResponseIt
 
 
 /**
+ * @summary Get the signed-in user's brokerage account (Broker API)
+ */
+export const GetMyBrokerAccountResponse = zod.object({
+  "onboarded": zod.boolean().describe('True when the user has a brokerage account on file.'),
+  "brokerEnabled": zod.boolean().describe('True when the server has Broker API credentials configured.'),
+  "accountId": zod.string().nullish(),
+  "accountNumber": zod.string().nullish(),
+  "status": zod.string().nullish().describe('SUBMITTED, ACTION_REQUIRED, ACTIVE, REJECTED, etc.'),
+  "cryptoStatus": zod.string().nullish(),
+  "currency": zod.string().nullish(),
+  "equity": zod.number().nullish(),
+  "cash": zod.number().nullish(),
+  "buyingPower": zod.number().nullish(),
+  "portfolioValue": zod.number().nullish()
+})
+
+
+/**
+ * @summary Submit a KYC application to open a brokerage account for the user
+ */
+export const createBrokerAccountBodyIdentityTaxIdTypeDefault = `USA_SSN`;
+export const createBrokerAccountBodyIdentityCountryOfCitizenshipDefault = `USA`;
+export const createBrokerAccountBodyIdentityCountryOfBirthDefault = `USA`;
+export const createBrokerAccountBodyIdentityCountryOfTaxResidenceDefault = `USA`;
+export const createBrokerAccountBodyDisclosuresIsControlPersonDefault = false;
+export const createBrokerAccountBodyDisclosuresIsAffiliatedExchangeOrFinraDefault = false;
+export const createBrokerAccountBodyDisclosuresIsPoliticallyExposedDefault = false;
+export const createBrokerAccountBodyDisclosuresImmediateFamilyExposedDefault = false;
+
+export const CreateBrokerAccountBody = zod.object({
+  "contact": zod.object({
+  "emailAddress": zod.string(),
+  "phoneNumber": zod.string(),
+  "streetAddress": zod.array(zod.string()),
+  "city": zod.string(),
+  "state": zod.string(),
+  "postalCode": zod.string()
+}),
+  "identity": zod.object({
+  "givenName": zod.string(),
+  "familyName": zod.string(),
+  "dateOfBirth": zod.string().describe('YYYY-MM-DD'),
+  "taxId": zod.string(),
+  "taxIdType": zod.string().default(createBrokerAccountBodyIdentityTaxIdTypeDefault),
+  "countryOfCitizenship": zod.string().default(createBrokerAccountBodyIdentityCountryOfCitizenshipDefault),
+  "countryOfBirth": zod.string().default(createBrokerAccountBodyIdentityCountryOfBirthDefault),
+  "countryOfTaxResidence": zod.string().default(createBrokerAccountBodyIdentityCountryOfTaxResidenceDefault),
+  "fundingSource": zod.array(zod.string()).optional()
+}),
+  "disclosures": zod.object({
+  "isControlPerson": zod.boolean().default(createBrokerAccountBodyDisclosuresIsControlPersonDefault),
+  "isAffiliatedExchangeOrFinra": zod.boolean().default(createBrokerAccountBodyDisclosuresIsAffiliatedExchangeOrFinraDefault),
+  "isPoliticallyExposed": zod.boolean().default(createBrokerAccountBodyDisclosuresIsPoliticallyExposedDefault),
+  "immediateFamilyExposed": zod.boolean().default(createBrokerAccountBodyDisclosuresImmediateFamilyExposedDefault)
+}),
+  "agreedToCustomerAgreement": zod.boolean().describe('Must be true; the server records the signed customer agreement.')
+})
+
+export const CreateBrokerAccountResponse = zod.object({
+  "onboarded": zod.boolean().describe('True when the user has a brokerage account on file.'),
+  "brokerEnabled": zod.boolean().describe('True when the server has Broker API credentials configured.'),
+  "accountId": zod.string().nullish(),
+  "accountNumber": zod.string().nullish(),
+  "status": zod.string().nullish().describe('SUBMITTED, ACTION_REQUIRED, ACTIVE, REJECTED, etc.'),
+  "cryptoStatus": zod.string().nullish(),
+  "currency": zod.string().nullish(),
+  "equity": zod.number().nullish(),
+  "cash": zod.number().nullish(),
+  "buyingPower": zod.number().nullish(),
+  "portfolioValue": zod.number().nullish()
+})
+
+
+/**
+ * @summary Open positions for the user's brokerage account
+ */
+export const GetMyBrokerPositionsResponseItem = zod.object({
+  "symbol": zod.string(),
+  "qty": zod.number(),
+  "marketValue": zod.number(),
+  "unrealizedPl": zod.number(),
+  "unrealizedPlPct": zod.number().optional(),
+  "currentPrice": zod.number().optional(),
+  "entryPrice": zod.number().optional()
+})
+export const GetMyBrokerPositionsResponse = zod.array(GetMyBrokerPositionsResponseItem)
+
+
+/**
+ * @summary Orders for the user's brokerage account
+ */
+export const getMyBrokerOrdersQueryStatusDefault = `all`;
+export const getMyBrokerOrdersQueryLimitDefault = 50;
+
+export const GetMyBrokerOrdersQueryParams = zod.object({
+  "status": zod.enum(['open', 'closed', 'all']).default(getMyBrokerOrdersQueryStatusDefault),
+  "limit": zod.coerce.number().default(getMyBrokerOrdersQueryLimitDefault)
+})
+
+export const GetMyBrokerOrdersResponseItem = zod.object({
+  "id": zod.string(),
+  "clientOrderId": zod.string().nullish(),
+  "symbol": zod.string(),
+  "side": zod.string(),
+  "type": zod.string().nullish(),
+  "timeInForce": zod.string().nullish(),
+  "qty": zod.number().nullish(),
+  "filledQty": zod.number().nullish(),
+  "filledAvgPrice": zod.number().nullish(),
+  "limitPrice": zod.number().nullish(),
+  "stopPrice": zod.number().nullish(),
+  "status": zod.string(),
+  "submittedAt": zod.string().nullish(),
+  "filledAt": zod.string().nullish()
+})
+export const GetMyBrokerOrdersResponse = zod.array(GetMyBrokerOrdersResponseItem)
+
+
+/**
+ * @summary Place an order in the user's brokerage account
+ */
+export const createMyBrokerOrderBodyTypeDefault = `market`;
+export const createMyBrokerOrderBodyTimeInForceDefault = `day`;
+
+export const CreateMyBrokerOrderBody = zod.object({
+  "symbol": zod.string(),
+  "qty": zod.number().nullish(),
+  "notional": zod.number().nullish(),
+  "side": zod.enum(['buy', 'sell']),
+  "type": zod.enum(['market', 'limit', 'stop', 'stop_limit']).default(createMyBrokerOrderBodyTypeDefault),
+  "timeInForce": zod.enum(['day', 'gtc', 'ioc', 'fok']).default(createMyBrokerOrderBodyTimeInForceDefault),
+  "limitPrice": zod.number().nullish(),
+  "stopPrice": zod.number().nullish()
+})
+
+export const CreateMyBrokerOrderResponse = zod.object({
+  "id": zod.string(),
+  "clientOrderId": zod.string().nullish(),
+  "symbol": zod.string(),
+  "side": zod.string(),
+  "type": zod.string().nullish(),
+  "timeInForce": zod.string().nullish(),
+  "qty": zod.number().nullish(),
+  "filledQty": zod.number().nullish(),
+  "filledAvgPrice": zod.number().nullish(),
+  "limitPrice": zod.number().nullish(),
+  "stopPrice": zod.number().nullish(),
+  "status": zod.string(),
+  "submittedAt": zod.string().nullish(),
+  "filledAt": zod.string().nullish()
+})
+
+
+/**
+ * @summary Portfolio equity / P&L history for the user's brokerage account
+ */
+export const getMyBrokerPortfolioHistoryQueryPeriodDefault = `1M`;
+export const getMyBrokerPortfolioHistoryQueryTimeframeDefault = `1D`;
+
+export const GetMyBrokerPortfolioHistoryQueryParams = zod.object({
+  "period": zod.coerce.string().default(getMyBrokerPortfolioHistoryQueryPeriodDefault),
+  "timeframe": zod.coerce.string().default(getMyBrokerPortfolioHistoryQueryTimeframeDefault)
+})
+
+export const GetMyBrokerPortfolioHistoryResponse = zod.object({
+  "timestamp": zod.array(zod.number()).optional(),
+  "equity": zod.array(zod.number().nullable()).optional(),
+  "profitLoss": zod.array(zod.number().nullable()).optional(),
+  "profitLossPct": zod.array(zod.number().nullable()).optional(),
+  "baseValue": zod.number().nullish(),
+  "timeframe": zod.string().nullish()
+})
+
+
+/**
  * @summary Get sector rotation heatmap data
  */
 export const GetSectorRotationResponse = zod.object({

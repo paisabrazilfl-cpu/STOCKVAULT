@@ -396,6 +396,127 @@ paths:
                 items:
                   $ref: "#/components/schemas/Position"
 
+  # ── BROKER API (per-user brokerage accounts) ──────────────────────────────
+  /broker/accounts/me:
+    get:
+      operationId: getMyBrokerAccount
+      tags: [broker]
+      summary: Get the signed-in user's brokerage account (Broker API)
+      responses:
+        "200":
+          description: The user's brokerage account, or a not-onboarded marker
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BrokerageAccount"
+        "503":
+          description: Broker API not configured on the server
+
+  /broker/accounts:
+    post:
+      operationId: createBrokerAccount
+      tags: [broker]
+      summary: Submit a KYC application to open a brokerage account for the user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BrokerAccountApplication"
+      responses:
+        "200":
+          description: Created brokerage account
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BrokerageAccount"
+        "400":
+          description: Invalid application
+        "409":
+          description: User already has a brokerage account
+        "503":
+          description: Broker API not configured on the server
+
+  /broker/accounts/me/positions:
+    get:
+      operationId: getMyBrokerPositions
+      tags: [broker]
+      summary: Open positions for the user's brokerage account
+      responses:
+        "200":
+          description: Open positions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Position"
+
+  /broker/accounts/me/orders:
+    get:
+      operationId: getMyBrokerOrders
+      tags: [broker]
+      summary: Orders for the user's brokerage account
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string, enum: [open, closed, all], default: all }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50 }
+      responses:
+        "200":
+          description: Orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BrokerOrder"
+    post:
+      operationId: createMyBrokerOrder
+      tags: [broker]
+      summary: Place an order in the user's brokerage account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBrokerOrder"
+      responses:
+        "200":
+          description: Submitted order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BrokerOrder"
+        "400":
+          description: Invalid order
+        "404":
+          description: User has no brokerage account
+        "503":
+          description: Broker API not configured on the server
+
+  /broker/accounts/me/portfolio:
+    get:
+      operationId: getMyBrokerPortfolioHistory
+      tags: [broker]
+      summary: Portfolio equity / P&L history for the user's brokerage account
+      parameters:
+        - name: period
+          in: query
+          schema: { type: string, default: "1M" }
+        - name: timeframe
+          in: query
+          schema: { type: string, default: "1D" }
+      responses:
+        "200":
+          description: Portfolio history time series
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PortfolioHistory"
+
   # ── SECTOR ────────────────────────────────────────────────────────────────
   /sector-rotation:
     get:
@@ -1024,6 +1145,130 @@ components:
             $ref: "#/components/schemas/AuditLogEntry"
         total:
           type: integer
+
+    # ── BROKER API (per-user brokerage accounts) ──────────────────────────
+    BrokerageAccount:
+      type: object
+      required: [onboarded, brokerEnabled]
+      properties:
+        onboarded:
+          type: boolean
+          description: True when the user has a brokerage account on file.
+        brokerEnabled:
+          type: boolean
+          description: True when the server has Broker API credentials configured.
+        accountId:
+          type: ["string", "null"]
+        accountNumber:
+          type: ["string", "null"]
+        status:
+          type: ["string", "null"]
+          description: SUBMITTED, ACTION_REQUIRED, ACTIVE, REJECTED, etc.
+        cryptoStatus:
+          type: ["string", "null"]
+        currency:
+          type: ["string", "null"]
+        equity:
+          type: ["number", "null"]
+        cash:
+          type: ["number", "null"]
+        buyingPower:
+          type: ["number", "null"]
+        portfolioValue:
+          type: ["number", "null"]
+
+    BrokerAccountApplication:
+      type: object
+      required: [contact, identity, disclosures, agreedToCustomerAgreement]
+      properties:
+        contact:
+          type: object
+          required: [emailAddress, phoneNumber, streetAddress, city, state, postalCode]
+          properties:
+            emailAddress: { type: string }
+            phoneNumber: { type: string }
+            streetAddress:
+              type: array
+              items: { type: string }
+            city: { type: string }
+            state: { type: string }
+            postalCode: { type: string }
+        identity:
+          type: object
+          required:
+            [givenName, familyName, dateOfBirth, taxId, countryOfCitizenship, countryOfBirth, countryOfTaxResidence]
+          properties:
+            givenName: { type: string }
+            familyName: { type: string }
+            dateOfBirth: { type: string, description: "YYYY-MM-DD" }
+            taxId: { type: string }
+            taxIdType: { type: string, default: "USA_SSN" }
+            countryOfCitizenship: { type: string, default: "USA" }
+            countryOfBirth: { type: string, default: "USA" }
+            countryOfTaxResidence: { type: string, default: "USA" }
+            fundingSource:
+              type: array
+              items: { type: string }
+        disclosures:
+          type: object
+          properties:
+            isControlPerson: { type: boolean, default: false }
+            isAffiliatedExchangeOrFinra: { type: boolean, default: false }
+            isPoliticallyExposed: { type: boolean, default: false }
+            immediateFamilyExposed: { type: boolean, default: false }
+        agreedToCustomerAgreement:
+          type: boolean
+          description: Must be true; the server records the signed customer agreement.
+
+    BrokerOrder:
+      type: object
+      required: [id, symbol, side, status]
+      properties:
+        id: { type: string }
+        clientOrderId: { type: ["string", "null"] }
+        symbol: { type: string }
+        side: { type: string }
+        type: { type: ["string", "null"] }
+        timeInForce: { type: ["string", "null"] }
+        qty: { type: ["number", "null"] }
+        filledQty: { type: ["number", "null"] }
+        filledAvgPrice: { type: ["number", "null"] }
+        limitPrice: { type: ["number", "null"] }
+        stopPrice: { type: ["number", "null"] }
+        status: { type: string }
+        submittedAt: { type: ["string", "null"] }
+        filledAt: { type: ["string", "null"] }
+
+    CreateBrokerOrder:
+      type: object
+      required: [symbol, side]
+      properties:
+        symbol: { type: string }
+        qty: { type: ["number", "null"] }
+        notional: { type: ["number", "null"] }
+        side: { type: string, enum: [buy, sell] }
+        type: { type: string, enum: [market, limit, stop, stop_limit], default: market }
+        timeInForce: { type: string, enum: [day, gtc, ioc, fok], default: day }
+        limitPrice: { type: ["number", "null"] }
+        stopPrice: { type: ["number", "null"] }
+
+    PortfolioHistory:
+      type: object
+      properties:
+        timestamp:
+          type: array
+          items: { type: number }
+        equity:
+          type: array
+          items: { type: ["number", "null"] }
+        profitLoss:
+          type: array
+          items: { type: ["number", "null"] }
+        profitLossPct:
+          type: array
+          items: { type: ["number", "null"] }
+        baseValue: { type: ["number", "null"] }
+        timeframe: { type: ["string", "null"] }
 
     # ── API KEYS ──────────────────────────────────────────────────────────
     ApiKeyStatus:

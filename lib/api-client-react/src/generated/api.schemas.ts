@@ -280,6 +280,152 @@ export interface AuditLogList {
   total: number;
 }
 
+export interface BrokerageAccount {
+  /** True when the user has a brokerage account on file. */
+  onboarded: boolean;
+  /** True when the server has Broker API credentials configured. */
+  brokerEnabled: boolean;
+  /** @nullable */
+  accountId?: string | null;
+  /** @nullable */
+  accountNumber?: string | null;
+  /**
+     * SUBMITTED, ACTION_REQUIRED, ACTIVE, REJECTED, etc.
+     * @nullable
+     */
+  status?: string | null;
+  /** @nullable */
+  cryptoStatus?: string | null;
+  /** @nullable */
+  currency?: string | null;
+  /** @nullable */
+  equity?: number | null;
+  /** @nullable */
+  cash?: number | null;
+  /** @nullable */
+  buyingPower?: number | null;
+  /** @nullable */
+  portfolioValue?: number | null;
+}
+
+export type BrokerAccountApplicationContact = {
+  emailAddress: string;
+  phoneNumber: string;
+  streetAddress: string[];
+  city: string;
+  state: string;
+  postalCode: string;
+};
+
+export type BrokerAccountApplicationIdentity = {
+  givenName: string;
+  familyName: string;
+  /** YYYY-MM-DD */
+  dateOfBirth: string;
+  taxId: string;
+  taxIdType?: string;
+  countryOfCitizenship: string;
+  countryOfBirth: string;
+  countryOfTaxResidence: string;
+  fundingSource?: string[];
+};
+
+export type BrokerAccountApplicationDisclosures = {
+  isControlPerson?: boolean;
+  isAffiliatedExchangeOrFinra?: boolean;
+  isPoliticallyExposed?: boolean;
+  immediateFamilyExposed?: boolean;
+};
+
+export interface BrokerAccountApplication {
+  contact: BrokerAccountApplicationContact;
+  identity: BrokerAccountApplicationIdentity;
+  disclosures: BrokerAccountApplicationDisclosures;
+  /** Must be true; the server records the signed customer agreement. */
+  agreedToCustomerAgreement: boolean;
+}
+
+export interface BrokerOrder {
+  id: string;
+  /** @nullable */
+  clientOrderId?: string | null;
+  symbol: string;
+  side: string;
+  /** @nullable */
+  type?: string | null;
+  /** @nullable */
+  timeInForce?: string | null;
+  /** @nullable */
+  qty?: number | null;
+  /** @nullable */
+  filledQty?: number | null;
+  /** @nullable */
+  filledAvgPrice?: number | null;
+  /** @nullable */
+  limitPrice?: number | null;
+  /** @nullable */
+  stopPrice?: number | null;
+  status: string;
+  /** @nullable */
+  submittedAt?: string | null;
+  /** @nullable */
+  filledAt?: string | null;
+}
+
+export type CreateBrokerOrderSide = typeof CreateBrokerOrderSide[keyof typeof CreateBrokerOrderSide];
+
+
+export const CreateBrokerOrderSide = {
+  buy: 'buy',
+  sell: 'sell',
+} as const;
+
+export type CreateBrokerOrderType = typeof CreateBrokerOrderType[keyof typeof CreateBrokerOrderType];
+
+
+export const CreateBrokerOrderType = {
+  market: 'market',
+  limit: 'limit',
+  stop: 'stop',
+  stop_limit: 'stop_limit',
+} as const;
+
+export type CreateBrokerOrderTimeInForce = typeof CreateBrokerOrderTimeInForce[keyof typeof CreateBrokerOrderTimeInForce];
+
+
+export const CreateBrokerOrderTimeInForce = {
+  day: 'day',
+  gtc: 'gtc',
+  ioc: 'ioc',
+  fok: 'fok',
+} as const;
+
+export interface CreateBrokerOrder {
+  symbol: string;
+  /** @nullable */
+  qty?: number | null;
+  /** @nullable */
+  notional?: number | null;
+  side: CreateBrokerOrderSide;
+  type?: CreateBrokerOrderType;
+  timeInForce?: CreateBrokerOrderTimeInForce;
+  /** @nullable */
+  limitPrice?: number | null;
+  /** @nullable */
+  stopPrice?: number | null;
+}
+
+export interface PortfolioHistory {
+  timestamp?: number[];
+  equity?: (number | null)[];
+  profitLoss?: (number | null)[];
+  profitLossPct?: (number | null)[];
+  /** @nullable */
+  baseValue?: number | null;
+  /** @nullable */
+  timeframe?: string | null;
+}
+
 export interface ApiKeyStatus {
   alpacaConfigured?: boolean;
   /** True when Alpaca credentials are provided server-side via environment (the operator's account). When set, per-tenant Alpaca keys are ignored and the Settings inputs are read-only. */
@@ -429,6 +575,25 @@ export interface DashboardSummary {
 export type ListScanHistoryParams = {
 limit?: number;
 offset?: number;
+};
+
+export type GetMyBrokerOrdersParams = {
+status?: GetMyBrokerOrdersStatus;
+limit?: number;
+};
+
+export type GetMyBrokerOrdersStatus = typeof GetMyBrokerOrdersStatus[keyof typeof GetMyBrokerOrdersStatus];
+
+
+export const GetMyBrokerOrdersStatus = {
+  open: 'open',
+  closed: 'closed',
+  all: 'all',
+} as const;
+
+export type GetMyBrokerPortfolioHistoryParams = {
+period?: string;
+timeframe?: string;
 };
 
 export type RunScreenerParams = {

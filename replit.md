@@ -58,6 +58,10 @@ A full-stack, multi-tenant, SOC 2-aligned stock scanning platform with tri-state
 
 _Populate as you build — explicit user instructions worth remembering across sessions._
 
+- **Push branch naming (INTERNAL RULE):** Every push goes to a branch whose name reads as methodical notes — ALWAYS include the date and a short description of what changed (e.g. `claude/2026-06-08-broker-api-kyc-accounts`).
+- **No loss of function (INTERNAL RULE):** The pushed branch must always be the latest version of the project merged with the new work — never drop existing functionality.
+- **Be self-sufficient (INTERNAL RULE):** Don't ask the user to fix things you can fix yourself. Self-reflect — "can I fix this?" — and if so, fix it.
+
 ## Gotchas
 
 - Run `pnpm run typecheck:libs` before `pnpm --filter @workspace/api-server run typecheck` when DB schema changes — libs must rebuild first.

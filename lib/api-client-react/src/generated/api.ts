@@ -24,11 +24,17 @@ import type {
   ApiKeyStatus,
   AuditLogList,
   BrokerAccount,
+  BrokerAccountApplication,
+  BrokerOrder,
+  BrokerageAccount,
   ChartData,
+  CreateBrokerOrder,
   DashboardSummary,
   ExecuteRequest,
   ExecutionResult,
   GetChartParams,
+  GetMyBrokerOrdersParams,
+  GetMyBrokerPortfolioHistoryParams,
   GetNewsParams,
   HealthStatus,
   ListAuditLogsParams,
@@ -42,6 +48,7 @@ import type {
   OpenaiError,
   OpenaiMessage,
   OpenaiMessageInput,
+  PortfolioHistory,
   Position,
   RunScreenerParams,
   ScanConfig,
@@ -1549,6 +1556,470 @@ export function useGetBrokerPositions<TData = Awaited<ReturnType<typeof getBroke
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetBrokerPositionsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetMyBrokerAccountUrl = () => {
+
+
+
+
+  return `/api/broker/accounts/me`
+}
+
+/**
+ * @summary Get the signed-in user's brokerage account (Broker API)
+ */
+export const getMyBrokerAccount = async ( options?: RequestInit): Promise<BrokerageAccount> => {
+
+  return customFetch<BrokerageAccount>(getGetMyBrokerAccountUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetMyBrokerAccountQueryKey = () => {
+    return [
+    `/api/broker/accounts/me`
+    ] as const;
+    }
+
+
+export const getGetMyBrokerAccountQueryOptions = <TData = Awaited<ReturnType<typeof getMyBrokerAccount>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMyBrokerAccount>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMyBrokerAccountQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyBrokerAccount>>> = ({ signal }) => getMyBrokerAccount({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMyBrokerAccount>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetMyBrokerAccountQueryResult = NonNullable<Awaited<ReturnType<typeof getMyBrokerAccount>>>
+export type GetMyBrokerAccountQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get the signed-in user's brokerage account (Broker API)
+ */
+
+export function useGetMyBrokerAccount<TData = Awaited<ReturnType<typeof getMyBrokerAccount>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMyBrokerAccount>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetMyBrokerAccountQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getCreateBrokerAccountUrl = () => {
+
+
+
+
+  return `/api/broker/accounts`
+}
+
+/**
+ * @summary Submit a KYC application to open a brokerage account for the user
+ */
+export const createBrokerAccount = async (brokerAccountApplication: BrokerAccountApplication, options?: RequestInit): Promise<BrokerageAccount> => {
+
+  return customFetch<BrokerageAccount>(getCreateBrokerAccountUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      brokerAccountApplication,)
+  }
+);}
+
+
+
+
+export const getCreateBrokerAccountMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createBrokerAccount>>, TError,{data: BodyType<BrokerAccountApplication>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createBrokerAccount>>, TError,{data: BodyType<BrokerAccountApplication>}, TContext> => {
+
+const mutationKey = ['createBrokerAccount'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createBrokerAccount>>, {data: BodyType<BrokerAccountApplication>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createBrokerAccount(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateBrokerAccountMutationResult = NonNullable<Awaited<ReturnType<typeof createBrokerAccount>>>
+    export type CreateBrokerAccountMutationBody = BodyType<BrokerAccountApplication>
+    export type CreateBrokerAccountMutationError = ErrorType<void>
+
+    /**
+ * @summary Submit a KYC application to open a brokerage account for the user
+ */
+export const useCreateBrokerAccount = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createBrokerAccount>>, TError,{data: BodyType<BrokerAccountApplication>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createBrokerAccount>>,
+        TError,
+        {data: BodyType<BrokerAccountApplication>},
+        TContext
+      > => {
+      return useMutation(getCreateBrokerAccountMutationOptions(options));
+    }
+
+export const getGetMyBrokerPositionsUrl = () => {
+
+
+
+
+  return `/api/broker/accounts/me/positions`
+}
+
+/**
+ * @summary Open positions for the user's brokerage account
+ */
+export const getMyBrokerPositions = async ( options?: RequestInit): Promise<Position[]> => {
+
+  return customFetch<Position[]>(getGetMyBrokerPositionsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetMyBrokerPositionsQueryKey = () => {
+    return [
+    `/api/broker/accounts/me/positions`
+    ] as const;
+    }
+
+
+export const getGetMyBrokerPositionsQueryOptions = <TData = Awaited<ReturnType<typeof getMyBrokerPositions>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMyBrokerPositions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMyBrokerPositionsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyBrokerPositions>>> = ({ signal }) => getMyBrokerPositions({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMyBrokerPositions>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetMyBrokerPositionsQueryResult = NonNullable<Awaited<ReturnType<typeof getMyBrokerPositions>>>
+export type GetMyBrokerPositionsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Open positions for the user's brokerage account
+ */
+
+export function useGetMyBrokerPositions<TData = Awaited<ReturnType<typeof getMyBrokerPositions>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMyBrokerPositions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetMyBrokerPositionsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetMyBrokerOrdersUrl = (params?: GetMyBrokerOrdersParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/broker/accounts/me/orders?${stringifiedParams}` : `/api/broker/accounts/me/orders`
+}
+
+/**
+ * @summary Orders for the user's brokerage account
+ */
+export const getMyBrokerOrders = async (params?: GetMyBrokerOrdersParams, options?: RequestInit): Promise<BrokerOrder[]> => {
+
+  return customFetch<BrokerOrder[]>(getGetMyBrokerOrdersUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetMyBrokerOrdersQueryKey = (params?: GetMyBrokerOrdersParams,) => {
+    return [
+    `/api/broker/accounts/me/orders`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetMyBrokerOrdersQueryOptions = <TData = Awaited<ReturnType<typeof getMyBrokerOrders>>, TError = ErrorType<unknown>>(params?: GetMyBrokerOrdersParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMyBrokerOrders>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMyBrokerOrdersQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyBrokerOrders>>> = ({ signal }) => getMyBrokerOrders(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMyBrokerOrders>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetMyBrokerOrdersQueryResult = NonNullable<Awaited<ReturnType<typeof getMyBrokerOrders>>>
+export type GetMyBrokerOrdersQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Orders for the user's brokerage account
+ */
+
+export function useGetMyBrokerOrders<TData = Awaited<ReturnType<typeof getMyBrokerOrders>>, TError = ErrorType<unknown>>(
+ params?: GetMyBrokerOrdersParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMyBrokerOrders>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetMyBrokerOrdersQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getCreateMyBrokerOrderUrl = () => {
+
+
+
+
+  return `/api/broker/accounts/me/orders`
+}
+
+/**
+ * @summary Place an order in the user's brokerage account
+ */
+export const createMyBrokerOrder = async (createBrokerOrder: CreateBrokerOrder, options?: RequestInit): Promise<BrokerOrder> => {
+
+  return customFetch<BrokerOrder>(getCreateMyBrokerOrderUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      createBrokerOrder,)
+  }
+);}
+
+
+
+
+export const getCreateMyBrokerOrderMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMyBrokerOrder>>, TError,{data: BodyType<CreateBrokerOrder>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createMyBrokerOrder>>, TError,{data: BodyType<CreateBrokerOrder>}, TContext> => {
+
+const mutationKey = ['createMyBrokerOrder'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createMyBrokerOrder>>, {data: BodyType<CreateBrokerOrder>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createMyBrokerOrder(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateMyBrokerOrderMutationResult = NonNullable<Awaited<ReturnType<typeof createMyBrokerOrder>>>
+    export type CreateMyBrokerOrderMutationBody = BodyType<CreateBrokerOrder>
+    export type CreateMyBrokerOrderMutationError = ErrorType<void>
+
+    /**
+ * @summary Place an order in the user's brokerage account
+ */
+export const useCreateMyBrokerOrder = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMyBrokerOrder>>, TError,{data: BodyType<CreateBrokerOrder>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createMyBrokerOrder>>,
+        TError,
+        {data: BodyType<CreateBrokerOrder>},
+        TContext
+      > => {
+      return useMutation(getCreateMyBrokerOrderMutationOptions(options));
+    }
+
+export const getGetMyBrokerPortfolioHistoryUrl = (params?: GetMyBrokerPortfolioHistoryParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/broker/accounts/me/portfolio?${stringifiedParams}` : `/api/broker/accounts/me/portfolio`
+}
+
+/**
+ * @summary Portfolio equity / P&L history for the user's brokerage account
+ */
+export const getMyBrokerPortfolioHistory = async (params?: GetMyBrokerPortfolioHistoryParams, options?: RequestInit): Promise<PortfolioHistory> => {
+
+  return customFetch<PortfolioHistory>(getGetMyBrokerPortfolioHistoryUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetMyBrokerPortfolioHistoryQueryKey = (params?: GetMyBrokerPortfolioHistoryParams,) => {
+    return [
+    `/api/broker/accounts/me/portfolio`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetMyBrokerPortfolioHistoryQueryOptions = <TData = Awaited<ReturnType<typeof getMyBrokerPortfolioHistory>>, TError = ErrorType<unknown>>(params?: GetMyBrokerPortfolioHistoryParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMyBrokerPortfolioHistory>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMyBrokerPortfolioHistoryQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyBrokerPortfolioHistory>>> = ({ signal }) => getMyBrokerPortfolioHistory(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMyBrokerPortfolioHistory>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetMyBrokerPortfolioHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof getMyBrokerPortfolioHistory>>>
+export type GetMyBrokerPortfolioHistoryQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Portfolio equity / P&L history for the user's brokerage account
+ */
+
+export function useGetMyBrokerPortfolioHistory<TData = Awaited<ReturnType<typeof getMyBrokerPortfolioHistory>>, TError = ErrorType<unknown>>(
+ params?: GetMyBrokerPortfolioHistoryParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMyBrokerPortfolioHistory>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetMyBrokerPortfolioHistoryQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
