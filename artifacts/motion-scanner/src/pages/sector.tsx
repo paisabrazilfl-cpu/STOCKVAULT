@@ -50,6 +50,20 @@ export function SectorRotation() {
   const laggards = data?.laggards ?? [];
   const regime = data?.regime ?? "Unknown";
 
+  // Backend responds 200 even when its upstream (Yahoo) is rate-limited; in
+  // that case it returns no sectors. Show a soft, accurate message instead of
+  // an empty grid so the user knows it's a transient data-source issue.
+  if (sectors.length === 0) {
+    return (
+      <div className="p-6">
+        <div className="text-yellow-400 bg-yellow-500/10 border border-yellow-500/20 rounded p-4">
+          Sector data is temporarily unavailable — the market data source (Yahoo Finance)
+          is rate-limiting or unreachable right now. This usually clears within a few minutes; try again shortly.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">

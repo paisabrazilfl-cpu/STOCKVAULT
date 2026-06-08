@@ -10,25 +10,36 @@ const SECTOR_ETFS: Record<string, string> = {
   XLB: "Materials", XLRE: "Real Estate",
 };
 
-async function fetchReturn(symbol: string, days: number): Promise<number | null> {
-  try {
-    const range = days <= 5 ? "1mo" : "3mo";
-    const chart = await fetchYahooChart(symbol, range);
-    if (!chart || chart.closes.length < days + 1) return null;
-    const closes = chart.closes;
-    const prev = closes[closes.length - 1 - days];
-    return (closes[closes.length - 1] - prev) / prev;
-  } catch { return null; }
+/** Trailing return over `days` trading sessions from a close series. */
+function returnOver(closes: number[], days: number): number | null {
+  if (closes.length < days + 1) return null;
+  const prev = closes[closes.length - 1 - days];
+  if (!prev) return null;
+  return (closes[closes.length - 1] - prev) / prev;
 }
 
 export async function getSectorRotation(): Promise<Record<string, unknown>> {
   try {
     const tickers = [...Object.keys(SECTOR_ETFS), "SPY"];
-    const [ret1d, ret5d, ret20d] = await Promise.all([
-      Promise.all(tickers.map((t) => fetchReturn(t, 1))),
-      Promise.all(tickers.map((t) => fetchReturn(t, 5))),
-      Promise.all(tickers.map((t) => fetchReturn(t, 20))),
-    ]);
+
+    // Fetch each ticker ONCE (3mo ≈ 63 sessions covers 1/5/20-day lookbacks)
+    // and derive all three returns locally. Previously this fired 3 requests
+    // per ticker (39 total); Yahoo rate-limits bursts from a single datacenter
+    // IP, which is the common cause of "Failed to load sector data" on Render.
+    const charts = await Promise.all(
+      tickers.map((t) => fetchYahooChart(t, "3mo").catch(() => null))
+    );
+
+    // If Yahoo blocked us entirely, surface that instead of all-zero noise.
+    const okCount = charts.filter((c) => c && c.closes.length > 1).length;
+    if (okCount === 0) {
+      return { ok: false, reason: "Yahoo Finance returned no data (rate limited or unreachable)" };
+    }
+
+    const closesByIdx = charts.map((c) => c?.closes ?? []);
+    const ret1d = closesByIdx.map((c) => returnOver(c, 1));
+    const ret5d = closesByIdx.map((c) => returnOver(c, 5));
+    const ret20d = closesByIdx.map((c) => returnOver(c, 20));
 
     const spyIdx = tickers.indexOf("SPY");
     const spyR1 = ret1d[spyIdx] ?? 0;

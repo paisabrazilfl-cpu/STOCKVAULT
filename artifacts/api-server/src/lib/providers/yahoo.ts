@@ -16,22 +16,32 @@ export interface YahooQuoteResult {
 }
 
 export async function fetchYahooChart(ticker: string, range = "1y"): Promise<YahooQuoteResult | null> {
-  try {
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=${range}&includePrePost=false`;
-    const { data } = await axios.get(url, { timeout: 15000, headers: YF_HEADERS });
-    const result = data?.chart?.result?.[0];
-    if (!result) return null;
-    const q = result.indicators?.quote?.[0] ?? {};
-    const notNull = (arr: (number | null)[]): number[] => (arr ?? []).filter((v) => v != null) as number[];
-    return {
-      closes: notNull(q.close ?? []),
-      highs: notNull(q.high ?? []),
-      lows: notNull(q.low ?? []),
-      opens: notNull(q.open ?? []),
-      volumes: notNull(q.volume ?? []),
-      timestamps: (result.timestamp ?? []) as number[],
-    };
-  } catch { return null; }
+  // Yahoo throttles single IPs (esp. datacenter/cloud egress like Render) and
+  // occasionally 401/429s one host while the other still serves. Try both
+  // query hosts before giving up so a transient block on one doesn't take the
+  // whole feature down.
+  const hosts = ["query1.finance.yahoo.com", "query2.finance.yahoo.com"];
+  for (const host of hosts) {
+    try {
+      const url = `https://${host}/v8/finance/chart/${ticker}?interval=1d&range=${range}&includePrePost=false`;
+      const { data } = await axios.get(url, { timeout: 15000, headers: YF_HEADERS });
+      const result = data?.chart?.result?.[0];
+      if (!result) continue;
+      const q = result.indicators?.quote?.[0] ?? {};
+      const notNull = (arr: (number | null)[]): number[] => (arr ?? []).filter((v) => v != null) as number[];
+      return {
+        closes: notNull(q.close ?? []),
+        highs: notNull(q.high ?? []),
+        lows: notNull(q.low ?? []),
+        opens: notNull(q.open ?? []),
+        volumes: notNull(q.volume ?? []),
+        timestamps: (result.timestamp ?? []) as number[],
+      };
+    } catch {
+      // try next host
+    }
+  }
+  return null;
 }
 
 export interface YahooFundamentals {
