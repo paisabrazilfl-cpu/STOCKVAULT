@@ -4,6 +4,29 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
+// Emit a 404.html that's a byte-for-byte copy of index.html. Static hosts
+// (Render, GitHub Pages, etc.) serve 404.html for unmatched paths, which makes
+// SPA deep-links and hard refreshes resolve to the app even when a host-level
+// /* -> /index.html rewrite isn't configured. Belt-and-suspenders with the
+// render.yaml routes.
+function spaFallback404() {
+  return {
+    name: "spa-fallback-404",
+    apply: "build" as const,
+    closeBundle: async () => {
+      const { readFile, writeFile } = await import("node:fs/promises");
+      const nodePath = await import("node:path");
+      const outDir = nodePath.resolve(import.meta.dirname, "dist/public");
+      try {
+        const html = await readFile(nodePath.join(outDir, "index.html"));
+        await writeFile(nodePath.join(outDir, "404.html"), html);
+      } catch {
+        // index.html not produced (non-build context) — nothing to copy.
+      }
+    },
+  };
+}
+
 export default defineConfig(async ({ command }) => {
   // PORT/BASE_PATH are only needed when running the dev/preview server.
   // A production `vite build` (e.g. on Render's static site) must not require
@@ -27,6 +50,7 @@ export default defineConfig(async ({ command }) => {
     react(),
     tailwindcss({ optimize: false }),
     runtimeErrorOverlay(),
+    spaFallback404(),
     ...(process.env.NODE_ENV !== "production" &&
     process.env.REPL_ID !== undefined
       ? [
