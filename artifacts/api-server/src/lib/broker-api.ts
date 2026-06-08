@@ -13,11 +13,16 @@
  *   ALPACA_BROKER_SANDBOX = "true" (default) | "false"
  */
 import type { AxiosInstance } from "axios";
+import { db, apiKeysTable } from "@workspace/db";
+import { eq } from "drizzle-orm";
+import { decrypt } from "./crypto";
 
 export interface BrokerConfig {
   key: string;
   secret: string;
   sandbox: boolean;
+  /** Where the credentials came from. */
+  source: "env" | "tenant";
 }
 
 export function getBrokerConfig(): BrokerConfig | null {
@@ -26,7 +31,48 @@ export function getBrokerConfig(): BrokerConfig | null {
   if (!key || !secret) return null;
   const sandboxRaw = (process.env.ALPACA_BROKER_SANDBOX ?? "true").toLowerCase();
   const sandbox = sandboxRaw !== "false" && sandboxRaw !== "0" && sandboxRaw !== "no";
-  return { key, secret, sandbox };
+  return { key, secret, sandbox, source: "env" };
+}
+
+/** True when server-wide (env) Broker API credentials are present. */
+export function hasEnvBrokerConfig(): boolean {
+  return getBrokerConfig() !== null;
+}
+
+function decryptKey(enc: string | null | undefined): string | null {
+  if (!enc) return null;
+  try {
+    return decrypt(enc);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Resolve Broker API credentials for a tenant.
+ *
+ * Precedence:
+ *   1. Server env credentials (operator-wide).
+ *   2. The tenant's own keys stored in Settings (encrypted at rest).
+ *
+ * Returns null when neither is configured.
+ */
+export async function resolveBrokerConfig(tenantId: number): Promise<BrokerConfig | null> {
+  const fromEnv = getBrokerConfig();
+  if (fromEnv) return fromEnv;
+
+  const rows = await db
+    .select()
+    .from(apiKeysTable)
+    .where(eq(apiKeysTable.tenantId, tenantId))
+    .limit(1);
+  const row = rows[0];
+
+  const key = decryptKey(row?.alpacaBrokerApiKeyEnc);
+  const secret = decryptKey(row?.alpacaBrokerSecretKeyEnc);
+  if (!key || !secret) return null;
+
+  return { key, secret, sandbox: row?.alpacaBrokerSandbox ?? true, source: "tenant" };
 }
 
 export function brokerEnabled(): boolean {

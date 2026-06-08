@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   useGetBrokerAccount,
   useGetBrokerPositions,
@@ -5,16 +6,106 @@ import {
   useGetMyBrokerAccount,
   useGetMyBrokerPositions,
   useGetMyBrokerOrders,
+  useCreateMyBrokerOrder,
 } from "@workspace/api-client-react";
 import type { Position, BrokerOrder } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatPercent } from "@/lib/format";
-import { TrendingUp, TrendingDown, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { BrokerOnboarding } from "./broker-onboarding";
+
+// ── Order ticket: place an order in the user's brokerage account ──────────────
+function OrderTicket() {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  const [symbol, setSymbol] = useState("");
+  const [qty, setQty] = useState("1");
+  const [side, setSide] = useState<"buy" | "sell">("buy");
+  const [type, setType] = useState<"market" | "limit">("market");
+  const [limitPrice, setLimitPrice] = useState("");
+
+  const { mutate, isPending } = useCreateMyBrokerOrder({
+    mutation: {
+      onSuccess: (order) => {
+        qc.invalidateQueries({ queryKey: ["/api/broker/accounts/me/orders"] });
+        qc.invalidateQueries({ queryKey: ["/api/broker/accounts/me/positions"] });
+        toast({ title: "Order submitted", description: `${order.side?.toUpperCase()} ${order.symbol} — ${order.status}` });
+        setSymbol("");
+      },
+      onError: (err: any) => {
+        toast({ title: "Order rejected", description: err?.message ?? "Could not place order", variant: "destructive" });
+      },
+    },
+  });
+
+  const canSubmit = symbol.trim() && Number(qty) > 0 && (type === "market" || Number(limitPrice) > 0);
+
+  function submit() {
+    mutate({
+      data: {
+        symbol: symbol.trim().toUpperCase(),
+        qty: Number(qty),
+        side,
+        type,
+        timeInForce: "day",
+        limitPrice: type === "limit" ? Number(limitPrice) : undefined,
+      },
+    });
+  }
+
+  return (
+    <Card className="bg-card border-border">
+      <CardHeader><CardTitle className="text-sm uppercase tracking-wider">Place Order</CardTitle></CardHeader>
+      <CardContent className="grid grid-cols-2 md:grid-cols-5 gap-3 items-end">
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground uppercase">Symbol</Label>
+          <Input value={symbol} onChange={(e) => setSymbol(e.target.value)} placeholder="AAPL" className="font-mono h-8 text-sm uppercase" />
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground uppercase">Qty</Label>
+          <Input value={qty} onChange={(e) => setQty(e.target.value)} className="font-mono h-8 text-sm" />
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground uppercase">Side</Label>
+          <div className="flex gap-1">
+            {(["buy", "sell"] as const).map((s) => (
+              <Button key={s} type="button" size="sm" variant={side === s ? "default" : "outline"}
+                className="flex-1 h-8" onClick={() => setSide(s)}>{s.toUpperCase()}</Button>
+            ))}
+          </div>
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground uppercase">Type</Label>
+          <div className="flex gap-1">
+            {(["market", "limit"] as const).map((t) => (
+              <Button key={t} type="button" size="sm" variant={type === t ? "default" : "outline"}
+                className="flex-1 h-8" onClick={() => setType(t)}>{t === "market" ? "MKT" : "LMT"}</Button>
+            ))}
+          </div>
+        </div>
+        {type === "limit" ? (
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground uppercase">Limit Price</Label>
+            <Input value={limitPrice} onChange={(e) => setLimitPrice(e.target.value)} placeholder="0.00" className="font-mono h-8 text-sm" />
+          </div>
+        ) : <div />}
+        <div className="col-span-2 md:col-span-5">
+          <Button onClick={submit} disabled={!canSubmit || isPending} className="w-full">
+            {isPending ? "Submitting..." : `${side === "buy" ? "Buy" : "Sell"} ${symbol.trim().toUpperCase() || "—"}`}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 // ── Shared position table ─────────────────────────────────────────────────────
 function PositionsTable({ positions }: { positions?: Position[] }) {
@@ -146,6 +237,8 @@ function BrokerApiAccount() {
               accent={totalPnl >= 0 ? "pos" : "neg"}
             />
           </div>
+
+          <OrderTicket />
 
           <Card className="bg-card border-border">
             <CardHeader><CardTitle className="text-sm uppercase tracking-wider">Positions</CardTitle></CardHeader>

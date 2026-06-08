@@ -430,6 +430,12 @@ export interface ApiKeyStatus {
   alpacaConfigured?: boolean;
   /** True when Alpaca credentials are provided server-side via environment (the operator's account). When set, per-tenant Alpaca keys are ignored and the Settings inputs are read-only. */
   alpacaManaged?: boolean;
+  /** True when Broker API credentials (key + secret) are on file. */
+  alpacaBrokerConfigured?: boolean;
+  /** True when Broker API credentials come from server env. When set, the Settings inputs are read-only. */
+  alpacaBrokerManaged?: boolean;
+  /** True when the Broker API targets the sandbox environment. */
+  alpacaBrokerSandbox?: boolean;
   tradierConfigured?: boolean;
   polygonConfigured?: boolean;
   finnhubConfigured?: boolean;
@@ -444,6 +450,12 @@ export interface ApiKeyInput {
   alpacaSecretKey?: string | null;
   /** @nullable */
   alpacaPaper?: boolean | null;
+  /** @nullable */
+  alpacaBrokerApiKey?: string | null;
+  /** @nullable */
+  alpacaBrokerSecretKey?: string | null;
+  /** @nullable */
+  alpacaBrokerSandbox?: boolean | null;
   /** @nullable */
   tradierApiKey?: string | null;
   /** @nullable */

@@ -344,6 +344,9 @@ function ApiKeysSection({ keys }: { keys: ApiKeyStatus }) {
   const [alpacaApiKey, setAlpacaApiKey] = useState("");
   const [alpacaSecretKey, setAlpacaSecretKey] = useState("");
   const [alpacaPaper, setAlpacaPaper] = useState(keys.alpacaPaper ?? true);
+  const [brokerApiKey, setBrokerApiKey] = useState("");
+  const [brokerSecretKey, setBrokerSecretKey] = useState("");
+  const [brokerSandbox, setBrokerSandbox] = useState(keys.alpacaBrokerSandbox ?? true);
   const [polygonApiKey, setPolygonApiKey] = useState("");
   const [finnhubApiKey, setFinnhubApiKey] = useState("");
 
@@ -351,13 +354,16 @@ function ApiKeysSection({ keys }: { keys: ApiKeyStatus }) {
     mutation: {
       onSuccess: () => {
         qc.invalidateQueries({ queryKey: ["/api/api-keys"] });
+        qc.invalidateQueries({ queryKey: ["/api/broker/accounts/me"] });
         toast({ title: "API keys saved", description: "All keys encrypted with AES-256-GCM." });
-        setAlpacaApiKey(""); setAlpacaSecretKey(""); setPolygonApiKey(""); setFinnhubApiKey("");
+        setAlpacaApiKey(""); setAlpacaSecretKey(""); setBrokerApiKey(""); setBrokerSecretKey("");
+        setPolygonApiKey(""); setFinnhubApiKey("");
       },
     },
   });
 
-  const hasChanges = alpacaApiKey || alpacaSecretKey || polygonApiKey || finnhubApiKey;
+  const hasChanges =
+    alpacaApiKey || alpacaSecretKey || brokerApiKey || brokerSecretKey || polygonApiKey || finnhubApiKey;
 
   const handleSave = () => {
     update({
@@ -365,6 +371,9 @@ function ApiKeysSection({ keys }: { keys: ApiKeyStatus }) {
         alpacaApiKey: alpacaApiKey || undefined,
         alpacaSecretKey: alpacaSecretKey || undefined,
         alpacaPaper,
+        alpacaBrokerApiKey: brokerApiKey || undefined,
+        alpacaBrokerSecretKey: brokerSecretKey || undefined,
+        alpacaBrokerSandbox: brokerSandbox,
         polygonApiKey: polygonApiKey || undefined,
         finnhubApiKey: finnhubApiKey || undefined,
       },
@@ -456,6 +465,83 @@ function ApiKeysSection({ keys }: { keys: ApiKeyStatus }) {
               </div>
             }
           />
+        )}
+
+        {/* ── Alpaca Broker API (per-user brokerage accounts) ───────────────── */}
+        {keys.alpacaBrokerManaged ? (
+          <div className="rounded border border-[hsl(var(--go-color))]/20 bg-[hsl(var(--go-color))]/5 p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-medium">Alpaca Broker API</div>
+                <div className="text-xs text-muted-foreground">
+                  Managed via server configuration. Per-user brokerage accounts are enabled.
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs">
+                <CheckCircle className="h-4 w-4 text-[hsl(var(--go-color))]" />
+                <span className="text-[hsl(var(--go-color))]">Connected (server)</span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded border border-border p-4 space-y-3">
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="text-sm font-medium">Alpaca Broker API</div>
+                <div className="text-xs text-muted-foreground">
+                  Opens a separate brokerage account for each user (KYC onboarding, account-scoped trading).
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 text-xs">
+                  <StatusDot configured={keys.alpacaBrokerConfigured} />
+                </div>
+                <a href="https://broker-app.alpaca.markets/" target="_blank" rel="noopener noreferrer"
+                  className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
+                  <ExternalLink className="h-3 w-3" />Get keys
+                </a>
+              </div>
+            </div>
+
+            {/* How-to instructions */}
+            <div className="rounded bg-muted/20 p-3 text-xs text-muted-foreground space-y-1.5">
+              <div className="font-semibold text-foreground">How to get your Broker API keys</div>
+              <ol className="list-decimal list-inside space-y-1">
+                <li>Sign up / log in at{" "}
+                  <a href="https://broker-app.alpaca.markets/" target="_blank" rel="noopener noreferrer" className="underline">broker-app.alpaca.markets</a>.
+                </li>
+                <li>Open the <span className="font-mono">API Keys</span> section of the Broker dashboard.</li>
+                <li>Generate a key pair — copy the <span className="font-mono">API Key ID</span> and{" "}
+                  <span className="font-mono">Secret</span> (the secret is shown only once).</li>
+                <li>Paste both below and keep <span className="font-medium">Sandbox</span> on for testing.</li>
+                <li>Save. Keys are encrypted at rest (AES-256-GCM) and never leave this server.</li>
+              </ol>
+              <div className="pt-1">
+                Sandbox calls hit <span className="font-mono">broker-api.sandbox.alpaca.markets</span>;
+                turning Sandbox off uses live <span className="font-mono">broker-api.alpaca.markets</span> (real money).
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground uppercase">Broker API Key ID</Label>
+                <Input type="password" value={brokerApiKey} onChange={(e) => setBrokerApiKey(e.target.value)}
+                  placeholder={keys.alpacaBrokerConfigured ? "••••••••••••" : "CKXXXXXXXXXXXXXXXXXX"} className="font-mono text-xs" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground uppercase">Broker Secret</Label>
+                <Input type="password" value={brokerSecretKey} onChange={(e) => setBrokerSecretKey(e.target.value)}
+                  placeholder={keys.alpacaBrokerConfigured ? "••••••••••••" : "Enter secret..."} className="font-mono text-xs" />
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Switch checked={brokerSandbox} onCheckedChange={setBrokerSandbox} />
+              <div>
+                <div className="text-sm">Sandbox Mode</div>
+                <div className="text-xs text-muted-foreground">Use the Broker API sandbox (recommended for testing)</div>
+              </div>
+            </div>
+          </div>
         )}
 
         <Button onClick={handleSave} disabled={isPending || !hasChanges} className="w-full">

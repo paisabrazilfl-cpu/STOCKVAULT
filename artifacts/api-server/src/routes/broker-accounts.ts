@@ -4,7 +4,7 @@ import { and, eq } from "drizzle-orm";
 import type { Request, Response } from "express";
 import { CreateBrokerAccountBody, CreateMyBrokerOrderBody } from "@workspace/api-zod";
 import {
-  getBrokerConfig,
+  resolveBrokerConfig,
   brokerEnabled,
   createAccount,
   getAccount,
@@ -53,7 +53,7 @@ async function requireAccount(
   req: Request,
   res: Response,
 ): Promise<{ cfg: BrokerConfig; accountId: string } | null> {
-  const cfg = getBrokerConfig();
+  const cfg = await resolveBrokerConfig(req.tenantId);
   if (!cfg) {
     res.status(503).json({ error: "Broker API not configured" });
     return null;
@@ -68,7 +68,7 @@ async function requireAccount(
 
 // ── GET /broker/accounts/me ──────────────────────────────────────────────────
 router.get("/broker/accounts/me", async (req, res): Promise<void> => {
-  const cfg = getBrokerConfig();
+  const cfg = await resolveBrokerConfig(req.tenantId);
   const rows = await db
     .select()
     .from(alpacaAccountsTable)
@@ -129,7 +129,7 @@ router.get("/broker/accounts/me", async (req, res): Promise<void> => {
 
 // ── POST /broker/accounts ────────────────────────────────────────────────────
 router.post("/broker/accounts", async (req, res): Promise<void> => {
-  const cfg = getBrokerConfig();
+  const cfg = await resolveBrokerConfig(req.tenantId);
   if (!cfg) {
     res.status(503).json({ error: "Broker API not configured" });
     return;

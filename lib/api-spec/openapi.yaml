@@ -1282,6 +1282,17 @@ components:
             True when Alpaca credentials are provided server-side via
             environment (the operator's account). When set, per-tenant Alpaca
             keys are ignored and the Settings inputs are read-only.
+        alpacaBrokerConfigured:
+          type: boolean
+          description: True when Broker API credentials (key + secret) are on file.
+        alpacaBrokerManaged:
+          type: boolean
+          description: >-
+            True when Broker API credentials come from server env. When set, the
+            Settings inputs are read-only.
+        alpacaBrokerSandbox:
+          type: boolean
+          description: True when the Broker API targets the sandbox environment.
         tradierConfigured:
           type: boolean
         polygonConfigured:
@@ -1301,6 +1312,12 @@ components:
         alpacaSecretKey:
           type: ["string", "null"]
         alpacaPaper:
+          type: ["boolean", "null"]
+        alpacaBrokerApiKey:
+          type: ["string", "null"]
+        alpacaBrokerSecretKey:
+          type: ["string", "null"]
+        alpacaBrokerSandbox:
           type: ["boolean", "null"]
         tradierApiKey:
           type: ["string", "null"]

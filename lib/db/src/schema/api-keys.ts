@@ -8,6 +8,10 @@ export const apiKeysTable = pgTable("api_keys", {
   alpacaApiKeyEnc: text("alpaca_api_key_enc"),
   alpacaSecretKeyEnc: text("alpaca_secret_key_enc"),
   alpacaPaper: boolean("alpaca_paper").notNull().default(true),
+  // Alpaca Broker API credentials (per-user brokerage accounts via Basic auth).
+  alpacaBrokerApiKeyEnc: text("alpaca_broker_api_key_enc"),
+  alpacaBrokerSecretKeyEnc: text("alpaca_broker_secret_key_enc"),
+  alpacaBrokerSandbox: boolean("alpaca_broker_sandbox").notNull().default(true),
   tradierApiKeyEnc: text("tradier_api_key_enc"),
   polygonApiKeyEnc: text("polygon_api_key_enc"),
   finnhubApiKeyEnc: text("finnhub_api_key_enc"),
