@@ -75,9 +75,10 @@ services:
         value: "0"
     routes:
       # Proxy API calls to the API service so the SPA can call /api/* directly.
+      # Point at the actual deployed API service URL.
       - type: rewrite
         source: /api/*
-        destination: https://stockvault-api.onrender.com/api/*
+        destination: https://stockvault-5qjg.onrender.com/api/*
       # SPA fallback for client-side routing.
       - type: rewrite
         source: /*
