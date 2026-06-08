@@ -220,6 +220,14 @@ router.get("/screener", async (req, res): Promise<void> => {
   const stochMin  = q.stochMin  != null ? parseFloat(q.stochMin)  : null;
   const stochMax  = q.stochMax  != null ? parseFloat(q.stochMax)  : null;
 
+  // ── Alex's Screener rules (all optional; only filter when provided) ───────
+  // range52wMin:    52-week high / low multiple, e.g. 2 = "2x range"
+  // mom1mMin:       minimum ~1-month momentum as a fraction, e.g. 0.20 = +20%
+  // nearHigh52wPct: must trade within this % of the 52-week high, e.g. 0.10
+  const range52wMin    = q.range52wMin    != null ? parseFloat(q.range52wMin)    : null;
+  const mom1mMin       = q.mom1mMin       != null ? parseFloat(q.mom1mMin)       : null;
+  const nearHigh52wPct = q.nearHigh52wPct != null ? parseFloat(q.nearHigh52wPct) : null;
+
   const verdictFilter    = q.verdictFilter     ?? "all";
   const aboveEma10       = q.aboveEma10        === "true";
   const aboveSma20       = q.aboveSma20        === "true";
@@ -278,6 +286,9 @@ router.get("/screener", async (req, res): Promise<void> => {
     const macd3mHist = tech.macd3mHist as number | undefined;
     const emaStackOk = Boolean(tech.ema_stack_ok);
     const breakout   = Boolean(tech.breakout);
+    const range52w       = tech.range52w       as number | undefined;
+    const mom1m          = tech.mom1m          as number | undefined;
+    const pctFromHigh52w = tech.pctFromHigh52w as number | undefined;
 
     if (price  != null && (price  < priceMin || price  > priceMax)) return false;
     if (rsi    != null && (rsi    < rsiMin   || rsi    > rsiMax  )) return false;
@@ -298,6 +309,15 @@ router.get("/screener", async (req, res): Promise<void> => {
 
     if (macd3mAboveZero && macd3mLine != null && macd3mLine < 0) return false;
     if (macd3mHistPos   && macd3mHist != null && macd3mHist < 0) return false;
+
+    // ── Alex's Screener rules ──────────────────────────────────────────────
+    // Rule 1 — 2x Range: 52-week high at least N× the 52-week low.
+    if (range52wMin != null && (range52w == null || range52w < range52wMin)) return false;
+    // Rule 3 — Monthly Momentum: up at least N% over the trailing month.
+    if (mom1mMin != null && (mom1m == null || mom1m < mom1mMin)) return false;
+    // Rule 4 — Within X% of the 52-week high.
+    if (nearHigh52wPct != null && (pctFromHigh52w == null || pctFromHigh52w < -nearHigh52wPct)) return false;
+    // Rule 2 — price band ($1–$10) is enforced via priceMin/priceMax above.
 
     return true;
   });

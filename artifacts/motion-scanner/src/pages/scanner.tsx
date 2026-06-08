@@ -20,7 +20,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
-import { RefreshCw, Filter, SlidersHorizontal, BarChart2, Bookmark, BookmarkCheck, Plus, Check, Loader2, ListPlus } from "lucide-react";
+import { RefreshCw, Filter, SlidersHorizontal, BarChart2, Bookmark, BookmarkCheck, Plus, Check, Loader2, ListPlus, Zap } from "lucide-react";
 import { formatPercent, formatCurrency } from "@/lib/format";
 
 // ── Shared sub-components ──────────────────────────────────────────────────
@@ -126,6 +126,11 @@ function TickerDetail({ c }: { c: CandidateRecord }) {
               ["SMA20",   tech?.sma20, 2],
               ["EMA200",  tech?.ema200, 2],
               ["Vol $M",  tech?.dollar_volume != null ? Number(tech.dollar_volume)/1_000_000 : null, 1],
+              ["52w High", tech?.high52w, 2],
+              ["52w Low",  tech?.low52w, 2],
+              ["52w Range", tech?.range52w, 2],
+              ["Mom 1M %", tech?.mom1m != null ? Number(tech.mom1m)*100 : null, 1],
+              ["% from High", tech?.pctFromHigh52w != null ? Number(tech.pctFromHigh52w)*100 : null, 1],
             ].map(([label, val]) => (
               <div key={String(label)} className="flex justify-between border-b border-border/40 py-1">
                 <span className="text-muted-foreground">{label}</span>
@@ -446,9 +451,11 @@ function WatchlistSaveButton({ ticker }: { ticker: string }) {
 function ResultsTable({
   rows,
   onSelect,
+  showAlex = false,
 }: {
   rows: CandidateRecord[];
   onSelect: (c: CandidateRecord) => void;
+  showAlex?: boolean;
 }) {
   return (
     <Table>
@@ -459,10 +466,20 @@ function ResultsTable({
           <TableHead>Verdict</TableHead>
           <TableHead>Score</TableHead>
           <TableHead className="text-right">Price</TableHead>
-          <TableHead className="text-right">Chg%</TableHead>
-          <TableHead className="text-right">RSI</TableHead>
-          <TableHead className="text-right">ADX</TableHead>
-          <TableHead className="text-right">RVOL</TableHead>
+          {showAlex ? (
+            <>
+              <TableHead className="text-right">52w Range</TableHead>
+              <TableHead className="text-right">Mom 1M</TableHead>
+              <TableHead className="text-right">% from High</TableHead>
+            </>
+          ) : (
+            <>
+              <TableHead className="text-right">Chg%</TableHead>
+              <TableHead className="text-right">RSI</TableHead>
+              <TableHead className="text-right">ADX</TableHead>
+              <TableHead className="text-right">RVOL</TableHead>
+            </>
+          )}
           <TableHead className="text-right hidden lg:table-cell">Sector</TableHead>
           <TableHead className="text-right hidden lg:table-cell">Reason</TableHead>
         </TableRow>
@@ -486,20 +503,40 @@ function ResultsTable({
               <TableCell className="text-right font-mono">
                 {tech.price != null ? `$${Number(tech.price).toFixed(2)}` : "—"}
               </TableCell>
-              <TableCell className="text-right">
-                {tech.changePct != null
-                  ? <Num v={Number(tech.changePct)*100} digits={2} suffix="%" colored />
-                  : "—"}
-              </TableCell>
-              <TableCell className="text-right font-mono">
-                {tech.rsi != null ? Number(tech.rsi).toFixed(1) : "—"}
-              </TableCell>
-              <TableCell className="text-right font-mono">
-                {tech.adx != null ? Number(tech.adx).toFixed(1) : "—"}
-              </TableCell>
-              <TableCell className="text-right font-mono">
-                {tech.rvol != null ? Number(tech.rvol).toFixed(2) : "—"}
-              </TableCell>
+              {showAlex ? (
+                <>
+                  <TableCell className="text-right font-mono">
+                    {tech.range52w != null ? `${Number(tech.range52w).toFixed(1)}x` : "—"}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {tech.mom1m != null
+                      ? <Num v={Number(tech.mom1m)*100} digits={1} suffix="%" colored />
+                      : "—"}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {tech.pctFromHigh52w != null
+                      ? <Num v={Number(tech.pctFromHigh52w)*100} digits={1} suffix="%" colored />
+                      : "—"}
+                  </TableCell>
+                </>
+              ) : (
+                <>
+                  <TableCell className="text-right">
+                    {tech.changePct != null
+                      ? <Num v={Number(tech.changePct)*100} digits={2} suffix="%" colored />
+                      : "—"}
+                  </TableCell>
+                  <TableCell className="text-right font-mono">
+                    {tech.rsi != null ? Number(tech.rsi).toFixed(1) : "—"}
+                  </TableCell>
+                  <TableCell className="text-right font-mono">
+                    {tech.adx != null ? Number(tech.adx).toFixed(1) : "—"}
+                  </TableCell>
+                  <TableCell className="text-right font-mono">
+                    {tech.rvol != null ? Number(tech.rvol).toFixed(2) : "—"}
+                  </TableCell>
+                </>
+              )}
               <TableCell className="text-right text-xs text-muted-foreground hidden lg:table-cell">
                 {String(fund.sector ?? "—")}
               </TableCell>
@@ -659,6 +696,10 @@ interface ScreenerFilters {
   stochMax: string;
   macd3mAboveZero: boolean;
   macd3mHistPositive: boolean;
+  // Alex's Screener rules ("" = off)
+  range52wMin: string;
+  mom1mMin: string;
+  nearHigh52wPct: string;
 }
 
 const DEFAULT_FILTERS: ScreenerFilters = {
@@ -680,6 +721,26 @@ const DEFAULT_FILTERS: ScreenerFilters = {
   stochMax: "80",
   macd3mAboveZero: false,
   macd3mHistPositive: false,
+  range52wMin: "",
+  mom1mMin: "",
+  nearHigh52wPct: "",
+};
+
+// ── Alex's Screener — one-click preset ─────────────────────────────────────
+// "The stock market is designed to transfer money from the impatient to the
+// patient." Rules:
+//   1. 2x Range            — 52-week high ≥ 2× the 52-week low
+//   2. Under $10, Over $1  — price between $1 and $10
+//   3. 20% Monthly Momentum— up ≥ 20% over the trailing month
+//   4. Within 10% of High  — trading within 10% of its 52-week high
+const ALEX_FILTERS: ScreenerFilters = {
+  ...DEFAULT_FILTERS,
+  universe: "smallcap",   // sub-$10 movers live here, not in the large-cap indices
+  priceMin: "1",
+  priceMax: "10",
+  range52wMin: "2",
+  mom1mMin: "20",         // percent (converted to fraction in buildParams)
+  nearHigh52wPct: "10",   // percent within the 52-week high
 };
 
 function activeFilterCount(f: ScreenerFilters): number {
@@ -699,7 +760,18 @@ function activeFilterCount(f: ScreenerFilters): number {
   if (f.stochEnabled)     n++;
   if (f.macd3mAboveZero)  n++;
   if (f.macd3mHistPositive) n++;
+  if (f.range52wMin    !== "") n++;
+  if (f.mom1mMin       !== "") n++;
+  if (f.nearHigh52wPct !== "") n++;
   return n;
+}
+
+// Are all four of Alex's rules currently active?
+function isAlexActive(f: ScreenerFilters): boolean {
+  return (
+    f.priceMin === "1" && f.priceMax === "10" &&
+    f.range52wMin === "2" && f.mom1mMin === "20" && f.nearHigh52wPct === "10"
+  );
 }
 
 function FilterPanel({
@@ -887,6 +959,36 @@ function FilterPanel({
           </div>
         ))}
       </div>
+
+      <Separator />
+
+      {/* Alex's Rules (52-week range + momentum) */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-1.5">
+          <Zap className="h-3.5 w-3.5 text-[hsl(var(--go-color))]" />
+          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Alex's Rules</div>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">52w ×</Label>
+            <Input value={filters.range52wMin} onChange={(e) => set("range52wMin", e.target.value)}
+              className="h-8 font-mono text-xs" placeholder="2" />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Mom %</Label>
+            <Input value={filters.mom1mMin} onChange={(e) => set("mom1mMin", e.target.value)}
+              className="h-8 font-mono text-xs" placeholder="20" />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">≤% Hi</Label>
+            <Input value={filters.nearHigh52wPct} onChange={(e) => set("nearHigh52wPct", e.target.value)}
+              className="h-8 font-mono text-xs" placeholder="10" />
+          </div>
+        </div>
+        <div className="text-xs text-muted-foreground">
+          52-week high ≥ N× low · up N% over the month · within N% of the high. Leave blank to disable.
+        </div>
+      </div>
     </div>
   );
 }
@@ -916,6 +1018,10 @@ function Screener() {
     stochMax: f.stochEnabled ? parseFloat(f.stochMax) : undefined,
     macd3mAboveZero:   f.macd3mAboveZero   || undefined,
     macd3mHistPositive: f.macd3mHistPositive || undefined,
+    // Alex's Screener rules — only sent when set (percent → fraction for momentum/near-high)
+    range52wMin:    f.range52wMin   !== "" ? parseFloat(f.range52wMin)        : undefined,
+    mom1mMin:       f.mom1mMin      !== "" ? parseFloat(f.mom1mMin) / 100      : undefined,
+    nearHigh52wPct: f.nearHigh52wPct!== "" ? parseFloat(f.nearHigh52wPct) / 100 : undefined,
     bust: bustCache || undefined,
   }), []);
 
@@ -939,7 +1045,15 @@ function Screener() {
     setActiveFilters({ ...filters });
   };
 
+  // One-click "Alex's Screener": apply all four rules and run immediately.
+  const handleAlex = () => {
+    setBust(false);
+    setFilters(ALEX_FILTERS);
+    setActiveFilters(ALEX_FILTERS);
+  };
+
   const filterCount = activeFilterCount(filters);
+  const alexActive = isAlexActive(activeFilters);
   const results = (data?.results ?? []) as CandidateRecord[];
 
   return (
@@ -963,6 +1077,15 @@ function Screener() {
             <Button onClick={handleRun} disabled={isFetching} className="w-full font-mono tracking-widest h-9">
               {isFetching ? "SCANNING..." : "▶  FIND STOCKS"}
             </Button>
+            <Button
+              onClick={handleAlex}
+              disabled={isFetching}
+              variant="outline"
+              className="w-full h-9 gap-1.5 font-mono text-xs border-[hsl(var(--go-color))]/40 text-[hsl(var(--go-color))] hover:bg-[hsl(var(--go-color))]/10"
+            >
+              <Zap className="h-3.5 w-3.5" />
+              ALEX'S SCREENER
+            </Button>
             <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isFetching}
               className="w-full text-xs gap-1.5">
               <RefreshCw className={`h-3 w-3 ${isFetching ? "animate-spin" : ""}`} />
@@ -974,6 +1097,34 @@ function Screener() {
 
       {/* ── Right results panel ────────────────────────────────────────── */}
       <div className="flex-1 min-w-0 space-y-4">
+        {/* Alex's Screener banner */}
+        {alexActive && (
+          <Card className="bg-[hsl(var(--go-color))]/5 border-[hsl(var(--go-color))]/30">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Zap className="h-4 w-4 text-[hsl(var(--go-color))]" />
+                <span className="text-sm font-bold tracking-wide">Alex's Screener</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                {[
+                  ["2x Range", "52w high ≥ 2× low"],
+                  ["$1 – $10", "Sweet-spot price band"],
+                  ["+20% / mo", "Sustained momentum"],
+                  ["Within 10%", "Near 52-week high"],
+                ].map(([t, d]) => (
+                  <div key={t} className="border border-border/60 rounded px-2 py-1.5 bg-background/40">
+                    <div className="font-semibold text-foreground">{t}</div>
+                    <div className="text-muted-foreground">{d}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="text-xs text-muted-foreground italic mt-2">
+                "The stock market is designed to transfer money from the impatient to the patient."
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Stats bar */}
         {data && !isFetching && (
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -1050,7 +1201,7 @@ function Screener() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <ResultsTable rows={results} onSelect={setSelected} />
+              <ResultsTable rows={results} onSelect={setSelected} showAlex={alexActive} />
             </CardContent>
           </Card>
         )}

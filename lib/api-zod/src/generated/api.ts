@@ -645,6 +645,9 @@ export const RunScreenerQueryParams = zod.object({
   "macd3mAboveZero": zod.coerce.boolean().optional(),
   "macd3mHistPositive": zod.coerce.boolean().optional(),
   "breakoutOnly": zod.coerce.boolean().optional(),
+  "range52wMin": zod.coerce.number().optional().describe('52-week high \/ low multiple, e.g. 2 = \"2x range\"'),
+  "mom1mMin": zod.coerce.number().optional().describe('Minimum trailing ~1-month momentum as a fraction, e.g. 0.20 = +20%'),
+  "nearHigh52wPct": zod.coerce.number().optional().describe('Must trade within this fraction of the 52-week high, e.g. 0.10 = within 10%'),
   "universe": zod.enum(['sp100', 'nasdaq100', 'dow30', 'tech', 'finance', 'health', 'energy', 'consumer', 'industrials', 'utilities', 'materials', 'realestate', 'comms', 'semis', 'biotech', 'smallcap', 'mags7', 'aicloud', 'dividend', 'all']).default(runScreenerQueryUniverseDefault),
   "bust": zod.coerce.boolean().optional()
 })

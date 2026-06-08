@@ -640,6 +640,18 @@ stochMax?: number;
 macd3mAboveZero?: boolean;
 macd3mHistPositive?: boolean;
 breakoutOnly?: boolean;
+/**
+ * 52-week high / low multiple, e.g. 2 = "2x range"
+ */
+range52wMin?: number;
+/**
+ * Minimum trailing ~1-month momentum as a fraction, e.g. 0.20 = +20%
+ */
+mom1mMin?: number;
+/**
+ * Must trade within this fraction of the 52-week high, e.g. 0.10 = within 10%
+ */
+nearHigh52wPct?: number;
 universe?: RunScreenerUniverse;
 bust?: boolean;
 };

@@ -611,6 +611,19 @@ paths:
         - name: breakoutOnly
           in: query
           schema: { type: boolean }
+        # ── Alex's Screener rules (optional; filter only when provided) ──────
+        - name: range52wMin
+          in: query
+          description: 52-week high / low multiple, e.g. 2 = "2x range"
+          schema: { type: number }
+        - name: mom1mMin
+          in: query
+          description: Minimum trailing ~1-month momentum as a fraction, e.g. 0.20 = +20%
+          schema: { type: number }
+        - name: nearHigh52wPct
+          in: query
+          description: Must trade within this fraction of the 52-week high, e.g. 0.10 = within 10%
+          schema: { type: number }
         - name: universe
           in: query
           schema: { type: string, enum: [sp100, nasdaq100, dow30, tech, finance, health, energy, consumer, industrials, utilities, materials, realestate, comms, semis, biotech, smallcap, mags7, aicloud, dividend, all], default: sp100 }

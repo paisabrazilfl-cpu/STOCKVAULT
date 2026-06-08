@@ -94,6 +94,12 @@ export interface TechData {
   dollar_volume: number;
   change: number;
   changePct: number;
+  // 52-week range + momentum (used by "Alex's Screener" preset)
+  high52w: number;
+  low52w: number;
+  range52w: number;        // high52w / low52w (the "X" multiple)
+  pctFromHigh52w: number;  // (close / high52w) - 1, e.g. -0.05 = 5% below high
+  mom1m: number;           // ~1-month momentum: close / close[~21 bars ago] - 1
 }
 
 export interface FlowData {
@@ -312,8 +318,24 @@ export async function getTechnical(ticker: string): Promise<TechData> {
     const fullStoch = fullStochastic(highs, lows, closes);
     const dolVol = close * volume;
 
+    // ── 52-week range + 1-month momentum (Alex's Screener) ──────────────────
+    const yrHighs = highs.slice(-252);
+    const yrLows  = lows.slice(-252);
+    const high52w = yrHighs.length ? Math.max(...yrHighs) : high;
+    const low52w  = yrLows.length  ? Math.min(...yrLows.filter((v) => v > 0)) : low;
+    const range52w = low52w > 0 ? high52w / low52w : 0;
+    const pctFromHigh52w = high52w > 0 ? close / high52w - 1 : 0;
+    // ~21 trading days ≈ 1 calendar month
+    const monthAgo = closes[closes.length - 1 - 21];
+    const mom1m = monthAgo && monthAgo > 0 ? close / monthAgo - 1 : 0;
+
     return {
       ok: true, price: close, close, high, low, open, volume,
+      high52w: parseFloat(high52w.toFixed(2)),
+      low52w: parseFloat(low52w.toFixed(2)),
+      range52w: parseFloat(range52w.toFixed(2)),
+      pctFromHigh52w: parseFloat(pctFromHigh52w.toFixed(4)),
+      mom1m: parseFloat(mom1m.toFixed(4)),
       rvol: parseFloat(rvolVal.toFixed(2)),
       atr: parseFloat(atrVal.toFixed(4)),
       atr_pct: parseFloat((atrVal / close).toFixed(4)),
