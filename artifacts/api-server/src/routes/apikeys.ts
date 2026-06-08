@@ -5,6 +5,7 @@ import { UpdateApiKeysBody } from "@workspace/api-zod";
 import { encrypt } from "../lib/crypto";
 import { hasEnvAlpacaCreds } from "../lib/alpaca";
 import { hasEnvBrokerConfig } from "../lib/broker-api";
+import { hasEnvGeminiKey } from "../lib/gemini";
 import { logAudit } from "../lib/audit";
 import type { ApiKey } from "@workspace/db";
 
@@ -27,7 +28,8 @@ function statusOf(row: ApiKey | undefined) {
     polygonConfigured: isSet(row?.polygonApiKeyEnc),
     finnhubConfigured: isSet(row?.finnhubApiKeyEnc),
     discordConfigured: isSet(row?.discordWebhookUrlEnc),
-    geminiConfigured: isSet(row?.geminiApiKeyEnc),
+    geminiConfigured: hasEnvGeminiKey() || isSet(row?.geminiApiKeyEnc),
+    geminiManaged: hasEnvGeminiKey(),
     alpacaPaper: row?.alpacaPaper ?? true,
   };
 }

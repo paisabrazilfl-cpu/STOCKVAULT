@@ -825,6 +825,7 @@ export const GetApiKeysResponse = zod.object({
   "finnhubConfigured": zod.boolean().optional(),
   "discordConfigured": zod.boolean().optional(),
   "geminiConfigured": zod.boolean().optional().describe('True when a Google Gemini API key is on file.'),
+  "geminiManaged": zod.boolean().optional().describe('True when the Gemini key comes from server env (GEMINI_API_KEY).'),
   "alpacaPaper": zod.boolean().optional()
 })
 
@@ -857,6 +858,7 @@ export const UpdateApiKeysResponse = zod.object({
   "finnhubConfigured": zod.boolean().optional(),
   "discordConfigured": zod.boolean().optional(),
   "geminiConfigured": zod.boolean().optional().describe('True when a Google Gemini API key is on file.'),
+  "geminiManaged": zod.boolean().optional().describe('True when the Gemini key comes from server env (GEMINI_API_KEY).'),
   "alpacaPaper": zod.boolean().optional()
 })
 

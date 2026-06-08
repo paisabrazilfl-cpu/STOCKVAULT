@@ -1360,6 +1360,9 @@ components:
         geminiConfigured:
           type: boolean
           description: True when a Google Gemini API key is on file.
+        geminiManaged:
+          type: boolean
+          description: True when the Gemini key comes from server env (GEMINI_API_KEY).
         alpacaPaper:
           type: boolean
 

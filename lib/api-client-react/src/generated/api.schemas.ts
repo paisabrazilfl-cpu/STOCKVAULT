@@ -457,6 +457,8 @@ export interface ApiKeyStatus {
   discordConfigured?: boolean;
   /** True when a Google Gemini API key is on file. */
   geminiConfigured?: boolean;
+  /** True when the Gemini key comes from server env (GEMINI_API_KEY). */
+  geminiManaged?: boolean;
   alpacaPaper?: boolean;
 }
 

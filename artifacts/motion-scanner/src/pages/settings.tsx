@@ -427,16 +427,33 @@ function ApiKeysSection({ keys }: { keys: ApiKeyStatus }) {
           onKeyChange={setFinnhubApiKey}
         />
 
-        <ProviderRow
-          name="Google Gemini"
-          description="AI completions, embeddings, multimodal analysis — powers the Market Analysis Agent"
-          configured={keys.geminiConfigured}
-          signupUrl="https://ai.google.dev"
-          keyLabel="API Key"
-          keyPlaceholder="Enter Gemini API key..."
-          keyValue={geminiApiKey}
-          onKeyChange={setGeminiApiKey}
-        />
+        {keys.geminiManaged ? (
+          <div className="rounded border border-[hsl(var(--go-color))]/20 bg-[hsl(var(--go-color))]/5 p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-medium">Google Gemini</div>
+                <div className="text-xs text-muted-foreground">
+                  Wired in via server configuration (GEMINI_API_KEY env var).
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs">
+                <CheckCircle className="h-4 w-4 text-[hsl(var(--go-color))]" />
+                <span className="text-[hsl(var(--go-color))]">Connected (server)</span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <ProviderRow
+            name="Google Gemini"
+            description="AI completions, embeddings, multimodal analysis — powers the Market Analysis Agent"
+            configured={keys.geminiConfigured}
+            signupUrl="https://ai.google.dev"
+            keyLabel="API Key"
+            keyPlaceholder="Enter Gemini API key..."
+            keyValue={geminiApiKey}
+            onKeyChange={setGeminiApiKey}
+          />
+        )}
 
         {keys.alpacaManaged ? (
           <div className="rounded border border-[hsl(var(--go-color))]/20 bg-[hsl(var(--go-color))]/5 p-4">
