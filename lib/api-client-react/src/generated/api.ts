@@ -32,6 +32,8 @@ import type {
   DashboardSummary,
   ExecuteRequest,
   ExecutionResult,
+  FundAccount,
+  FundResult,
   GetChartParams,
   GetMyBrokerOrdersParams,
   GetMyBrokerPortfolioHistoryParams,
@@ -1946,6 +1948,77 @@ export const useCreateMyBrokerOrder = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getCreateMyBrokerOrderMutationOptions(options));
+    }
+
+export const getFundMyBrokerAccountUrl = () => {
+
+
+
+
+  return `/api/broker/accounts/me/fund`
+}
+
+/**
+ * @summary Instantly fund the user's brokerage account (sandbox only)
+ */
+export const fundMyBrokerAccount = async (fundAccount: FundAccount, options?: RequestInit): Promise<FundResult> => {
+
+  return customFetch<FundResult>(getFundMyBrokerAccountUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      fundAccount,)
+  }
+);}
+
+
+
+
+export const getFundMyBrokerAccountMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof fundMyBrokerAccount>>, TError,{data: BodyType<FundAccount>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof fundMyBrokerAccount>>, TError,{data: BodyType<FundAccount>}, TContext> => {
+
+const mutationKey = ['fundMyBrokerAccount'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof fundMyBrokerAccount>>, {data: BodyType<FundAccount>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  fundMyBrokerAccount(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type FundMyBrokerAccountMutationResult = NonNullable<Awaited<ReturnType<typeof fundMyBrokerAccount>>>
+    export type FundMyBrokerAccountMutationBody = BodyType<FundAccount>
+    export type FundMyBrokerAccountMutationError = ErrorType<void>
+
+    /**
+ * @summary Instantly fund the user's brokerage account (sandbox only)
+ */
+export const useFundMyBrokerAccount = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof fundMyBrokerAccount>>, TError,{data: BodyType<FundAccount>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof fundMyBrokerAccount>>,
+        TError,
+        {data: BodyType<FundAccount>},
+        TContext
+      > => {
+      return useMutation(getFundMyBrokerAccountMutationOptions(options));
     }
 
 export const getGetMyBrokerPortfolioHistoryUrl = (params?: GetMyBrokerPortfolioHistoryParams,) => {

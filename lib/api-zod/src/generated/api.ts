@@ -530,6 +530,23 @@ export const CreateMyBrokerOrderResponse = zod.object({
 
 
 /**
+ * @summary Instantly fund the user's brokerage account (sandbox only)
+ */
+export const fundMyBrokerAccountBodyAmountDefault = 100000;
+
+export const FundMyBrokerAccountBody = zod.object({
+  "amount": zod.number().default(fundMyBrokerAccountBodyAmountDefault).describe('Virtual USD amount to deposit (sandbox).')
+})
+
+export const FundMyBrokerAccountResponse = zod.object({
+  "ok": zod.boolean(),
+  "transferId": zod.string().nullish(),
+  "amount": zod.number().nullish(),
+  "status": zod.string().nullish()
+})
+
+
+/**
  * @summary Portfolio equity / P&L history for the user's brokerage account
  */
 export const getMyBrokerPortfolioHistoryQueryPeriodDefault = `1M`;

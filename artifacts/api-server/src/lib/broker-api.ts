@@ -223,3 +223,55 @@ export async function getPortfolioHistory(
   );
   return data;
 }
+
+// ── Funding (sandbox instant deposit) ────────────────────────────────────────
+
+/** GET /v1/accounts/:id/ach_relationships — existing linked bank relationships. */
+export async function getAchRelationships(cfg: BrokerConfig, accountId: string): Promise<any[]> {
+  const c = await client(cfg);
+  const { data } = await c.get(`/v1/accounts/${accountId}/ach_relationships`);
+  return Array.isArray(data) ? data : [];
+}
+
+/**
+ * POST /v1/accounts/:id/ach_relationships — link a (dummy) bank. In sandbox the
+ * relationship is auto-approved, enabling instant virtual deposits.
+ */
+export async function createAchRelationship(cfg: BrokerConfig, accountId: string): Promise<any> {
+  const c = await client(cfg);
+  const { data } = await c.post(`/v1/accounts/${accountId}/ach_relationships`, {
+    account_owner_name: "Sandbox Tester",
+    bank_account_type: "CHECKING",
+    bank_account_number: "32131231abc",
+    bank_routing_number: "121000358",
+    nickname: "Sandbox Funding",
+  });
+  return data;
+}
+
+/** Ensure an ACH relationship exists (reuse APPROVED/QUEUED, else create). */
+export async function ensureAchRelationship(cfg: BrokerConfig, accountId: string): Promise<string> {
+  const existing = await getAchRelationships(cfg, accountId);
+  const usable = existing.find((r) => r.status !== "CANCELED" && r.status !== "CANCEL_REQUESTED");
+  if (usable) return usable.id;
+  const created = await createAchRelationship(cfg, accountId);
+  return created.id;
+}
+
+/** POST /v1/accounts/:id/transfers — incoming ACH transfer (instant in sandbox). */
+export async function createTransfer(
+  cfg: BrokerConfig,
+  accountId: string,
+  relationshipId: string,
+  amount: number,
+): Promise<any> {
+  const c = await client(cfg);
+  const { data } = await c.post(`/v1/accounts/${accountId}/transfers`, {
+    transfer_type: "ach",
+    relationship_id: relationshipId,
+    amount: String(amount),
+    direction: "INCOMING",
+    timing: "immediate",
+  });
+  return data;
+}

@@ -415,6 +415,21 @@ export interface CreateBrokerOrder {
   stopPrice?: number | null;
 }
 
+export interface FundAccount {
+  /** Virtual USD amount to deposit (sandbox). */
+  amount: number;
+}
+
+export interface FundResult {
+  ok: boolean;
+  /** @nullable */
+  transferId?: string | null;
+  /** @nullable */
+  amount?: number | null;
+  /** @nullable */
+  status?: string | null;
+}
+
 export interface PortfolioHistory {
   timestamp?: number[];
   equity?: (number | null)[];

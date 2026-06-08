@@ -497,6 +497,31 @@ paths:
         "503":
           description: Broker API not configured on the server
 
+  /broker/accounts/me/fund:
+    post:
+      operationId: fundMyBrokerAccount
+      tags: [broker]
+      summary: Instantly fund the user's brokerage account (sandbox only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FundAccount"
+      responses:
+        "200":
+          description: Transfer result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FundResult"
+        "400":
+          description: Funding not allowed (e.g. live environment)
+        "404":
+          description: User has no brokerage account
+        "503":
+          description: Broker API not configured on the server
+
   /broker/accounts/me/portfolio:
     get:
       operationId: getMyBrokerPortfolioHistory
@@ -1251,6 +1276,24 @@ components:
         timeInForce: { type: string, enum: [day, gtc, ioc, fok], default: day }
         limitPrice: { type: ["number", "null"] }
         stopPrice: { type: ["number", "null"] }
+
+    FundAccount:
+      type: object
+      required: [amount]
+      properties:
+        amount:
+          type: number
+          description: Virtual USD amount to deposit (sandbox).
+          default: 100000
+
+    FundResult:
+      type: object
+      required: [ok]
+      properties:
+        ok: { type: boolean }
+        transferId: { type: ["string", "null"] }
+        amount: { type: ["number", "null"] }
+        status: { type: ["string", "null"] }
 
     PortfolioHistory:
       type: object

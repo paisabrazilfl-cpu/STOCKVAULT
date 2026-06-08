@@ -7,6 +7,7 @@ import {
   useGetMyBrokerPositions,
   useGetMyBrokerOrders,
   useCreateMyBrokerOrder,
+  useFundMyBrokerAccount,
 } from "@workspace/api-client-react";
 import type { Position, BrokerOrder } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -21,6 +22,46 @@ import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatPercent } from "@/lib/format";
 import { RefreshCw } from "lucide-react";
 import { BrokerOnboarding } from "./broker-onboarding";
+
+// ── Funding panel: instant virtual deposit (sandbox) ─────────────────────────
+function FundingPanel() {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  const [amount, setAmount] = useState("100000");
+
+  const { mutate, isPending } = useFundMyBrokerAccount({
+    mutation: {
+      onSuccess: (r) => {
+        qc.invalidateQueries({ queryKey: ["/api/broker/accounts/me"] });
+        toast({ title: "Account funded", description: `Deposited $${r.amount?.toLocaleString()} — ${r.status ?? "submitted"}` });
+      },
+      onError: (err: any) => {
+        toast({ title: "Funding failed", description: err?.message ?? "Could not deposit", variant: "destructive" });
+      },
+    },
+  });
+
+  return (
+    <Card className="bg-card border-border">
+      <CardHeader><CardTitle className="text-sm uppercase tracking-wider">Add Funds (Sandbox)</CardTitle></CardHeader>
+      <CardContent className="flex items-end gap-3">
+        <div className="space-y-1.5 flex-1 max-w-xs">
+          <Label className="text-xs text-muted-foreground uppercase">Virtual Deposit (USD)</Label>
+          <Input value={amount} onChange={(e) => setAmount(e.target.value)} className="font-mono h-8 text-sm" />
+        </div>
+        <Button
+          onClick={() => mutate({ data: { amount: Number(amount) } })}
+          disabled={isPending || !(Number(amount) > 0)}
+        >
+          {isPending ? "Depositing..." : "Deposit"}
+        </Button>
+        <p className="text-xs text-muted-foreground pb-2">
+          Instantly credits virtual cash so orders can fill. Sandbox only.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
 
 // ── Order ticket: place an order in the user's brokerage account ──────────────
 function OrderTicket() {
@@ -237,6 +278,8 @@ function BrokerApiAccount() {
               accent={totalPnl >= 0 ? "pos" : "neg"}
             />
           </div>
+
+          <FundingPanel />
 
           <OrderTicket />
 

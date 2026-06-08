@@ -2,7 +2,7 @@ import { Router } from "express";
 import { db, alpacaAccountsTable } from "@workspace/db";
 import { and, eq } from "drizzle-orm";
 import type { Request, Response } from "express";
-import { CreateBrokerAccountBody, CreateMyBrokerOrderBody } from "@workspace/api-zod";
+import { CreateBrokerAccountBody, CreateMyBrokerOrderBody, FundMyBrokerAccountBody } from "@workspace/api-zod";
 import {
   resolveBrokerConfig,
   brokerEnabled,
@@ -13,6 +13,8 @@ import {
   getOrders,
   createOrder,
   getPortfolioHistory,
+  ensureAchRelationship,
+  createTransfer,
   type BrokerConfig,
   type CreateAccountPayload,
 } from "../lib/broker-api";
@@ -332,6 +334,49 @@ router.post("/broker/accounts/me/orders", async (req, res): Promise<void> => {
   } catch (err: any) {
     req.log.error({ err: err?.response?.data ?? err }, "Broker order create failed");
     res.status(502).json({ error: err?.response?.data?.message ?? "Order failed" });
+  }
+});
+
+// ── POST /broker/accounts/me/fund (sandbox instant deposit) ──────────────────
+router.post("/broker/accounts/me/fund", async (req, res): Promise<void> => {
+  const parsed = FundMyBrokerAccountBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const ctx = await requireAccount(req, res);
+  if (!ctx) return;
+
+  // Instant virtual funding is a sandbox-only convenience.
+  if (!ctx.cfg.sandbox) {
+    res.status(400).json({ error: "Instant funding is only available in the Broker API sandbox" });
+    return;
+  }
+
+  const amount = parsed.data.amount;
+  if (!(amount > 0)) {
+    res.status(400).json({ error: "Amount must be positive" });
+    return;
+  }
+
+  try {
+    const relationshipId = await ensureAchRelationship(ctx.cfg, ctx.accountId);
+    const transfer = await createTransfer(ctx.cfg, ctx.accountId, relationshipId, amount);
+    await logAudit(req, {
+      tenantId: req.tenantId,
+      userId: req.userId,
+      action: "BROKER_ACCOUNT_FUND",
+      metadata: { accountId: ctx.accountId, amount, transferId: transfer.id },
+    });
+    res.json({
+      ok: true,
+      transferId: transfer.id ?? null,
+      amount,
+      status: transfer.status ?? null,
+    });
+  } catch (err: any) {
+    req.log.error({ err: err?.response?.data ?? err }, "Broker funding failed");
+    res.status(502).json({ error: err?.response?.data?.message ?? "Funding failed" });
   }
 });
 
