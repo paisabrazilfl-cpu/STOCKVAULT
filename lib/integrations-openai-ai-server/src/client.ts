@@ -1,18 +1,10 @@
 import OpenAI from "openai";
+import { lazyOpenAI } from "./lazy-client";
 
-if (!process.env.AI_INTEGRATIONS_OPENAI_BASE_URL) {
-  throw new Error(
-    "AI_INTEGRATIONS_OPENAI_BASE_URL must be set. Did you forget to provision the OpenAI AI integration?",
-  );
-}
-
-if (!process.env.AI_INTEGRATIONS_OPENAI_API_KEY) {
-  throw new Error(
-    "AI_INTEGRATIONS_OPENAI_API_KEY must be set. Did you forget to provision the OpenAI AI integration?",
-  );
-}
-
-export const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
+/**
+ * Lazy OpenAI client. Validation/construction is deferred to first use so that
+ * importing this module never crashes the server when the OpenAI integration
+ * isn't provisioned — the rest of the app boots fine and only OpenAI-backed
+ * routes fail (clearly) if called without configuration.
+ */
+export const openai: OpenAI = lazyOpenAI();

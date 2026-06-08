@@ -69,7 +69,8 @@ services:
     runtime: static
     rootDir: .
     buildCommand: corepack pnpm install --frozen-lockfile && corepack pnpm --filter @workspace/motion-scanner run build
-    staticPublishPath: artifacts/motion-scanner/dist
+    # Vite outputs to dist/public (see vite.config.ts build.outDir).
+    staticPublishPath: artifacts/motion-scanner/dist/public
     envVars:
       - key: COREPACK_ENABLE_DOWNLOAD_PROMPT
         value: "0"
