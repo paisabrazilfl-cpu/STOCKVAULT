@@ -1,5 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useUser, useClerk } from "@clerk/react";
+import { AUTH_ENABLED } from "@/lib/auth";
 import {
   Activity,
   BarChart2,
@@ -33,7 +34,25 @@ const NAV_ITEMS = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
-function UserMenu() {
+// Single-tenant footer shown when Clerk auth isn't configured. Renders no Clerk
+// hooks, so it's safe to mount without a ClerkProvider ancestor.
+function DemoUserMenu() {
+  return (
+    <div className="border-t border-border p-3">
+      <div className="flex items-center gap-2">
+        <div className="w-7 h-7 rounded-full bg-primary/15 border border-border flex items-center justify-center text-xs font-bold text-primary shrink-0">
+          M
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-xs font-medium truncate text-foreground">Motion Scanner</div>
+          <div className="text-xs text-muted-foreground truncate">Single-tenant mode</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ClerkUserMenu() {
   const { user, isLoaded } = useUser();
   const { signOut } = useClerk();
 
@@ -109,7 +128,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             })}
           </ul>
         </div>
-        <UserMenu />
+        {AUTH_ENABLED ? <ClerkUserMenu /> : <DemoUserMenu />}
       </nav>
       <main className="flex-1 overflow-y-auto bg-background">{children}</main>
     </div>

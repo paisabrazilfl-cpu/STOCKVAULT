@@ -9,6 +9,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Activity, BarChart2, Bot, TrendingUp, Zap } from "lucide-react";
 import { Layout } from "@/components/layout";
+import { AUTH_ENABLED, RAW_CLERK_PUBLISHABLE_KEY } from "@/lib/auth";
 import { Dashboard } from "@/pages/dashboard";
 import { Scanner } from "@/pages/scanner";
 import { SectorRotation } from "@/pages/sector";
@@ -35,11 +36,12 @@ const queryClient = new QueryClient({
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 
-// REQUIRED — resolves the key from window.location.hostname
-const clerkPubKey = publishableKeyFromHost(
-  window.location.hostname,
-  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
-);
+// Auth-mode detection lives in ./lib/auth (shared with the layout, no cycle).
+// When AUTH_ENABLED is false the app runs single-tenant against the API's demo
+// tenant fallback instead of rendering a blank screen behind a broken Clerk.
+const clerkPubKey = AUTH_ENABLED
+  ? publishableKeyFromHost(window.location.hostname, RAW_CLERK_PUBLISHABLE_KEY)
+  : "";
 
 // REQUIRED — empty in dev (intentional), auto-set in prod
 const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
@@ -50,7 +52,7 @@ function stripBase(path: string): string {
     : path;
 }
 
-if (!clerkPubKey) {
+if (AUTH_ENABLED && !clerkPubKey) {
   throw new Error("Missing VITE_CLERK_PUBLISHABLE_KEY");
 }
 
@@ -250,7 +252,30 @@ function ClerkQueryClientCacheInvalidator() {
   return null;
 }
 
-// ── App routes ────────────────────────────────────────────────────────────────
+// ── Authenticated page routes (shared by auth + no-auth trees) ────────────────
+
+function AuthedPages() {
+  return (
+    <Layout>
+      <Switch>
+        <Route path="/scanner" component={Scanner} />
+        <Route path="/sector" component={SectorRotation} />
+        <Route path="/watchlists" component={Watchlists} />
+        <Route path="/broker" component={Broker} />
+        <Route path="/history" component={History} />
+        <Route path="/audit" component={AuditLogs} />
+        <Route path="/settings" component={Settings} />
+        <Route path="/notes" component={Notes} />
+        <Route path="/news" component={News} />
+        <Route path="/charts" component={Charts} />
+        <Route path="/agent" component={Agent} />
+        <Route component={NotFound} />
+      </Switch>
+    </Layout>
+  );
+}
+
+// ── App routes (Clerk auth enabled) ───────────────────────────────────────────
 
 function AppRoutes() {
   return (
@@ -266,22 +291,7 @@ function AppRoutes() {
       <Route>
         <>
           <Show when="signed-in">
-            <Layout>
-              <Switch>
-                <Route path="/scanner" component={Scanner} />
-                <Route path="/sector" component={SectorRotation} />
-                <Route path="/watchlists" component={Watchlists} />
-                <Route path="/broker" component={Broker} />
-                <Route path="/history" component={History} />
-                <Route path="/audit" component={AuditLogs} />
-                <Route path="/settings" component={Settings} />
-                <Route path="/notes" component={Notes} />
-                <Route path="/news" component={News} />
-                <Route path="/charts" component={Charts} />
-                <Route path="/agent" component={Agent} />
-                <Route component={NotFound} />
-              </Switch>
-            </Layout>
+            <AuthedPages />
           </Show>
           <Show when="signed-out">
             <Redirect to="/sign-in" />
@@ -289,6 +299,31 @@ function AppRoutes() {
         </>
       </Route>
     </Switch>
+  );
+}
+
+// ── No-auth routes (single tenant; Clerk not configured) ──────────────────────
+
+function NoAuthRoutes() {
+  return (
+    <Switch>
+      {/* No auth: send sign-in/up straight to the app */}
+      <Route path="/sign-in/*?"><Redirect to="/" /></Route>
+      <Route path="/sign-up/*?"><Redirect to="/" /></Route>
+      <Route path="/"><Layout><Dashboard /></Layout></Route>
+      <Route><AuthedPages /></Route>
+    </Switch>
+  );
+}
+
+function NoAuthApp() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <NoAuthRoutes />
+        <Toaster />
+      </TooltipProvider>
+    </QueryClientProvider>
   );
 }
 
@@ -339,7 +374,7 @@ function App() {
 
   return (
     <WouterRouter base={basePath}>
-      <ClerkProviderWithRoutes />
+      {AUTH_ENABLED ? <ClerkProviderWithRoutes /> : <NoAuthApp />}
     </WouterRouter>
   );
 }
