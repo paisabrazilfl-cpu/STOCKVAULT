@@ -9,7 +9,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Activity, BarChart2, Bot, TrendingUp, Zap } from "lucide-react";
 import { Layout } from "@/components/layout";
-import { AUTH_ENABLED, RAW_CLERK_PUBLISHABLE_KEY } from "@/lib/auth";
+import { AUTH_ENABLED, HAS_REAL_CLERK_KEY, IS_REPLIT_HOST, RAW_CLERK_PUBLISHABLE_KEY } from "@/lib/auth";
 import { Dashboard } from "@/pages/dashboard";
 import { Scanner } from "@/pages/scanner";
 import { SectorRotation } from "@/pages/sector";
@@ -39,12 +39,19 @@ const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 // Auth-mode detection lives in ./lib/auth (shared with the layout, no cycle).
 // When AUTH_ENABLED is false the app runs single-tenant against the API's demo
 // tenant fallback instead of rendering a blank screen behind a broken Clerk.
-const clerkPubKey = AUTH_ENABLED
-  ? publishableKeyFromHost(window.location.hostname, RAW_CLERK_PUBLISHABLE_KEY)
-  : "";
+//
+// With a real pk_test_/pk_live_ key we pass it through unchanged: clerk-js then
+// loads from the frontend API encoded in the key, which works on ANY host
+// (Render included). The publishableKeyFromHost + proxy dance is only needed on
+// Replit, where Clerk is served from a clerk.<host> proxy.
+const clerkPubKey = HAS_REAL_CLERK_KEY
+  ? (RAW_CLERK_PUBLISHABLE_KEY as string)
+  : IS_REPLIT_HOST
+    ? publishableKeyFromHost(window.location.hostname, RAW_CLERK_PUBLISHABLE_KEY)
+    : "";
 
-// REQUIRED — empty in dev (intentional), auto-set in prod
-const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
+// Only use the Replit proxy URL when we're actually relying on the Replit proxy.
+const clerkProxyUrl = HAS_REAL_CLERK_KEY ? undefined : import.meta.env.VITE_CLERK_PROXY_URL;
 
 function stripBase(path: string): string {
   return basePath && path.startsWith(basePath)

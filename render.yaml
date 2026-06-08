@@ -74,6 +74,11 @@ services:
     envVars:
       - key: COREPACK_ENABLE_DOWNLOAD_PROMPT
         value: "0"
+      # Real Clerk publishable key (pk_test_… / pk_live_…). Set this to enable
+      # per-user sign-in. Leave it blank to run the app in single-tenant mode.
+      # Vite inlines it at BUILD time, so a change requires a redeploy.
+      - key: VITE_CLERK_PUBLISHABLE_KEY
+        sync: false
     routes:
       - type: rewrite
         source: /api/*
