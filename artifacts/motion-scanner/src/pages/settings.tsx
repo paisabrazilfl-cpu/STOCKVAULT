@@ -349,6 +349,7 @@ function ApiKeysSection({ keys }: { keys: ApiKeyStatus }) {
   const [brokerSandbox, setBrokerSandbox] = useState(keys.alpacaBrokerSandbox ?? true);
   const [polygonApiKey, setPolygonApiKey] = useState("");
   const [finnhubApiKey, setFinnhubApiKey] = useState("");
+  const [geminiApiKey, setGeminiApiKey] = useState("");
 
   const { mutate: update, isPending } = useUpdateApiKeys({
     mutation: {
@@ -357,13 +358,13 @@ function ApiKeysSection({ keys }: { keys: ApiKeyStatus }) {
         qc.invalidateQueries({ queryKey: ["/api/broker/accounts/me"] });
         toast({ title: "API keys saved", description: "All keys encrypted with AES-256-GCM." });
         setAlpacaApiKey(""); setAlpacaSecretKey(""); setBrokerApiKey(""); setBrokerSecretKey("");
-        setPolygonApiKey(""); setFinnhubApiKey("");
+        setPolygonApiKey(""); setFinnhubApiKey(""); setGeminiApiKey("");
       },
     },
   });
 
   const hasChanges =
-    alpacaApiKey || alpacaSecretKey || brokerApiKey || brokerSecretKey || polygonApiKey || finnhubApiKey;
+    alpacaApiKey || alpacaSecretKey || brokerApiKey || brokerSecretKey || polygonApiKey || finnhubApiKey || geminiApiKey;
 
   const handleSave = () => {
     update({
@@ -376,6 +377,7 @@ function ApiKeysSection({ keys }: { keys: ApiKeyStatus }) {
         alpacaBrokerSandbox: brokerSandbox,
         polygonApiKey: polygonApiKey || undefined,
         finnhubApiKey: finnhubApiKey || undefined,
+        geminiApiKey: geminiApiKey || undefined,
       },
     });
   };
@@ -423,6 +425,17 @@ function ApiKeysSection({ keys }: { keys: ApiKeyStatus }) {
           keyPlaceholder="Enter Finnhub API key..."
           keyValue={finnhubApiKey}
           onKeyChange={setFinnhubApiKey}
+        />
+
+        <ProviderRow
+          name="Google Gemini"
+          description="AI completions, embeddings, multimodal analysis — powers the Market Analysis Agent"
+          configured={keys.geminiConfigured}
+          signupUrl="https://ai.google.dev"
+          keyLabel="API Key"
+          keyPlaceholder="Enter Gemini API key..."
+          keyValue={geminiApiKey}
+          onKeyChange={setGeminiApiKey}
         />
 
         {keys.alpacaManaged ? (

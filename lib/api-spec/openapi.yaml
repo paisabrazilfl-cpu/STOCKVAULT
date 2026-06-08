@@ -1357,6 +1357,9 @@ components:
           type: boolean
         discordConfigured:
           type: boolean
+        geminiConfigured:
+          type: boolean
+          description: True when a Google Gemini API key is on file.
         alpacaPaper:
           type: boolean
 
@@ -1382,6 +1385,8 @@ components:
         finnhubApiKey:
           type: ["string", "null"]
         discordWebhookUrl:
+          type: ["string", "null"]
+        geminiApiKey:
           type: ["string", "null"]
 
 

@@ -455,6 +455,8 @@ export interface ApiKeyStatus {
   polygonConfigured?: boolean;
   finnhubConfigured?: boolean;
   discordConfigured?: boolean;
+  /** True when a Google Gemini API key is on file. */
+  geminiConfigured?: boolean;
   alpacaPaper?: boolean;
 }
 
@@ -479,6 +481,8 @@ export interface ApiKeyInput {
   finnhubApiKey?: string | null;
   /** @nullable */
   discordWebhookUrl?: string | null;
+  /** @nullable */
+  geminiApiKey?: string | null;
 }
 
 export interface ScreenerResult {

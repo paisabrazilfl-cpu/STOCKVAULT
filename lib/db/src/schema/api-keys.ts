@@ -16,6 +16,7 @@ export const apiKeysTable = pgTable("api_keys", {
   polygonApiKeyEnc: text("polygon_api_key_enc"),
   finnhubApiKeyEnc: text("finnhub_api_key_enc"),
   discordWebhookUrlEnc: text("discord_webhook_url_enc"),
+  geminiApiKeyEnc: text("gemini_api_key_enc"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });
 

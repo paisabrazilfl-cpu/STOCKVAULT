@@ -27,6 +27,7 @@ function statusOf(row: ApiKey | undefined) {
     polygonConfigured: isSet(row?.polygonApiKeyEnc),
     finnhubConfigured: isSet(row?.finnhubApiKeyEnc),
     discordConfigured: isSet(row?.discordWebhookUrlEnc),
+    geminiConfigured: isSet(row?.geminiApiKeyEnc),
     alpacaPaper: row?.alpacaPaper ?? true,
   };
 }
@@ -56,6 +57,7 @@ router.put("/api-keys", async (req, res): Promise<void> => {
   if (d.polygonApiKey != null) patch.polygonApiKeyEnc = d.polygonApiKey ? encrypt(d.polygonApiKey) : null;
   if (d.finnhubApiKey != null) patch.finnhubApiKeyEnc = d.finnhubApiKey ? encrypt(d.finnhubApiKey) : null;
   if (d.discordWebhookUrl != null) patch.discordWebhookUrlEnc = d.discordWebhookUrl ? encrypt(d.discordWebhookUrl) : null;
+  if (d.geminiApiKey != null) patch.geminiApiKeyEnc = d.geminiApiKey ? encrypt(d.geminiApiKey) : null;
 
   let row;
   if (existing.length === 0) {

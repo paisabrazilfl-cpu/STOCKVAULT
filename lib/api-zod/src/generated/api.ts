@@ -824,6 +824,7 @@ export const GetApiKeysResponse = zod.object({
   "polygonConfigured": zod.boolean().optional(),
   "finnhubConfigured": zod.boolean().optional(),
   "discordConfigured": zod.boolean().optional(),
+  "geminiConfigured": zod.boolean().optional().describe('True when a Google Gemini API key is on file.'),
   "alpacaPaper": zod.boolean().optional()
 })
 
@@ -841,7 +842,8 @@ export const UpdateApiKeysBody = zod.object({
   "tradierApiKey": zod.string().nullish(),
   "polygonApiKey": zod.string().nullish(),
   "finnhubApiKey": zod.string().nullish(),
-  "discordWebhookUrl": zod.string().nullish()
+  "discordWebhookUrl": zod.string().nullish(),
+  "geminiApiKey": zod.string().nullish()
 })
 
 export const UpdateApiKeysResponse = zod.object({
@@ -854,6 +856,7 @@ export const UpdateApiKeysResponse = zod.object({
   "polygonConfigured": zod.boolean().optional(),
   "finnhubConfigured": zod.boolean().optional(),
   "discordConfigured": zod.boolean().optional(),
+  "geminiConfigured": zod.boolean().optional().describe('True when a Google Gemini API key is on file.'),
   "alpacaPaper": zod.boolean().optional()
 })
 
