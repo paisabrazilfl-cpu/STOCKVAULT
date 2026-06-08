@@ -58,7 +58,7 @@ A full-stack, multi-tenant, SOC 2-aligned stock scanning platform with tri-state
 
 _Populate as you build — explicit user instructions worth remembering across sessions._
 
-- **📍 CURRENT LATEST BRANCH:** `claude/2026-06-08-sandbox-funding-end-to-end` — always holds the newest, complete project. When in doubt, use this branch. (Update this line on every push.)
+- **📍 CURRENT LATEST BRANCH:** `claude/2026-06-08-trade-basket-buy-watchlists-on-alpaca` — always holds the newest, complete project. When in doubt, use this branch. (Update this line on every push.)
 - **Push branch naming (INTERNAL RULE):** Every push goes to a branch whose name reads as methodical notes — ALWAYS include the date and a short description of what changed (e.g. `claude/2026-06-08-broker-api-kyc-accounts`).
 - **One always-current branch (INTERNAL RULE):** Don't fragment. Keep advancing a single integration branch that is always the merge of the latest project with no loss of function; record it in the pointer above so it's never lost. Spin a fresh dated branch only when the change is a distinct new milestone.
 - **Be self-sufficient (INTERNAL RULE):** Don't ask the user to fix things you can fix yourself. Self-reflect — "can I fix this?" — and if so, fix it.

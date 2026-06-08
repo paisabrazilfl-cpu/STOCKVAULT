@@ -22,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatPercent } from "@/lib/format";
 import { RefreshCw } from "lucide-react";
 import { BrokerOnboarding } from "./broker-onboarding";
+import { TradeBasket } from "@/components/trade-basket";
 
 // ── Funding panel: instant virtual deposit (sandbox) ─────────────────────────
 function FundingPanel() {
@@ -282,6 +283,8 @@ function BrokerApiAccount() {
           <FundingPanel />
 
           <OrderTicket />
+
+          <TradeBasket />
 
           <Card className="bg-card border-border">
             <CardHeader><CardTitle className="text-sm uppercase tracking-wider">Positions</CardTitle></CardHeader>
