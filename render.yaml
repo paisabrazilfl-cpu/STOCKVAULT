@@ -1,0 +1,73 @@
+# Render blueprint (Infrastructure as Code).
+#
+# Connect via the Render dashboard → "New +" → "Blueprint" → pick this repo.
+# Render reads your already-connected GitHub repo; you do NOT paste any API
+# token here. Secret env vars below use `sync: false`, which makes Render
+# prompt you to enter them securely in the dashboard (never committed).
+#
+# Docs: https://render.com/docs/blueprint-spec
+
+databases:
+  - name: stockvault-db
+    plan: free
+    databaseName: stockvault
+    user: stockvault
+
+services:
+  # ── API server (Express) ───────────────────────────────────────────────────
+  - type: web
+    name: stockvault-api
+    runtime: node
+    plan: free
+    rootDir: .
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @workspace/api-server run build
+    startCommand: pnpm --filter @workspace/api-server run start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Render injects PORT automatically; the server reads process.env.PORT.
+      - key: DATABASE_URL
+        fromDatabase:
+          name: stockvault-db
+          property: connectionString
+      # 32-byte secret for AES-256-GCM. Render generates one on first deploy.
+      # WARNING: changing this later breaks decryption of stored secrets.
+      - key: ENCRYPTION_SECRET
+        generateValue: true
+      # ── Alpaca Trading API (server-wired single account) ──────────────────
+      - key: APCA_API_KEY_ID
+        sync: false
+      - key: APCA_API_SECRET_KEY
+        sync: false
+      - key: ALPACA_PAPER
+        value: "true"
+      # ── Alpaca Broker API (per-user brokerage accounts) ───────────────────
+      - key: ALPACA_BROKER_API_KEY
+        sync: false
+      - key: ALPACA_BROKER_API_SECRET
+        sync: false
+      - key: ALPACA_BROKER_SANDBOX
+        value: "true"
+      # ── Clerk auth (optional) ─────────────────────────────────────────────
+      - key: CLERK_SECRET_KEY
+        sync: false
+      - key: CLERK_PUBLISHABLE_KEY
+        sync: false
+
+  # ── Frontend (Vite static site) ────────────────────────────────────────────
+  - type: web
+    name: stockvault-web
+    runtime: static
+    rootDir: .
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @workspace/motion-scanner run build
+    staticPublishPath: artifacts/motion-scanner/dist
+    routes:
+      # Proxy API calls to the API service so the SPA can call /api/* directly.
+      - type: rewrite
+        source: /api/*
+        destination: https://stockvault-api.onrender.com/api/*
+      # SPA fallback for client-side routing.
+      - type: rewrite
+        source: /*
+        destination: /index.html
