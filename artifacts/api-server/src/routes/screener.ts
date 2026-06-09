@@ -10,34 +10,147 @@ const router = Router();
 // ── Universe definitions ──────────────────────────────────────────────────
 
 // ─ Broad indices ─────────────────────────────────────────────────────────
-const UNIVERSE_SP100 = [
-  "AAPL","MSFT","NVDA","AMZN","GOOGL","META","LLY","AVGO","JPM",
-  "TSLA","UNH","XOM","V","COST","NFLX","ORCL","MA","WMT","JNJ",
-  "PG","HD","ABBV","BAC","KO","MRK","CVX","CRM","PEP","AMD",
-  "TMO","CSCO","ADBE","ACN","MCD","ABT","PM","NEE","NKE","WFC",
-  "LIN","DIS","DHR","TXN","AMGN","UPS","LOW","INTU","QCOM","IBM",
-  "GS","BLK","CAT","SPGI","AXP","GILD","MDT","PLD","DE",
-  "SBUX","ADI","ADP","MMC","CB","NOW","ISRG","BKNG","REGN","VRTX",
-  "SYK","C","GE","MO","CI","ETN","SCHW","LRCX","T","ZTS",
-  "PGR","USB","TJX","EOG","SO","DUK","PNC","NSC","VZ","BMY",
-  "CME","CL","FISV","AON","ITW","F","GM","FCX","PYPL","UBER",
+
+// Full S&P 500 (~503 constituents as of 2025)
+const UNIVERSE_SP500 = [
+  // A
+  "AAPL","ABBV","ABT","ACN","ADBE","ADI","ADM","ADP","ADSK","AEE",
+  "AEP","AES","AFL","AIG","AIZ","AJG","AKAM","ALB","ALGN","ALK",
+  "ALL","ALLE","AMAT","AMCR","AMD","AME","AMGN","AMP","AMT","AMZN",
+  "ANET","ANSS","AON","AOS","APA","APD","APH","APTV","ARE","ATO",
+  "ATVI","AVB","AVGO","AVY","AWK","AXP","AZO",
+  // B
+  "BA","BAC","BAX","BBWI","BBY","BDX","BEN","BF.B","BG","BIIB",
+  "BIO","BK","BKNG","BKR","BLK","BMY","BR","BRK.B","BRO","BSX",
+  "BWA","BXP",
+  // C
+  "C","CAG","CAH","CARR","CAT","CB","CBOE","CBRE","CCI","CCL",
+  "CDAY","CDNS","CDW","CE","CEG","CF","CFG","CHD","CHRW","CHTR",
+  "CI","CINF","CL","CLX","CMA","CMCSA","CME","CMG","CMI","CMS",
+  "CNC","CNP","COF","COO","COP","COR","COST","CPAY","CPB","CPRT",
+  "CPT","CRL","CRM","CSCO","CSGP","CSX","CTAS","CTLT","CTRA","CTSH",
+  "CTVA","CVS","CVX",
+  // D
+  "D","DAL","DAY","DD","DE","DECK","DFS","DG","DGX","DHI",
+  "DHR","DIS","DLTR","DOV","DOW","DPZ","DRI","DTE","DUK","DVA","DVN",
+  // E
+  "DXCM","EA","EBAY","ECL","ED","EFX","EIX","EL","EMN","EMR",
+  "ENPH","EOG","EPAM","EQIX","EQR","EQT","ES","ESS","ETN","ETR",
+  "ERIE","EVRG","EW","EXC","EXPD","EXPE","EXR",
+  // F
+  "F","FANG","FAST","FBHS","FCX","FDS","FDX","FE","FFIV","FI",
+  "FICO","FIS","FISV","FITB","FLT","FMC","FOX","FOXA","FRT","FSLR",
+  "FTNT","FTV",
+  // G
+  "GD","GDDY","GE","GEHC","GEN","GILD","GIS","GL","GLW","GM",
+  "GNRC","GOOG","GOOGL","GPC","GPN","GRMN","GS","GWW",
+  // H
+  "HAL","HAS","HBAN","HCA","PEAK","HD","HOLX","HON","HPE","HPQ",
+  "HRL","HSIC","HST","HSY","HUBB","HUM","HWM","HII",
+  // I
+  "IBM","ICE","IDXX","IEX","IFF","ILMN","INCY","INTC","INTU","INVH",
+  "IP","IPG","IQV","IR","IRM","ISRG","IT","ITW","IVZ",
+  // J
+  "J","JBHT","JCI","JKHY","JNJ","JNPR","JPM",
+  // K
+  "K","KDP","KEY","KEYS","KHC","KIM","KLAC","KMB","KMI","KMX",
+  "KO","KR",
+  // L
+  "KVUE","L","LDOS","LEN","LH","LHX","LIN","LKQ","LLY","LMT",
+  "LNT","LOW","LRCX","LULU","LUV","LVS","LW","LYB","LYV",
+  // M
+  "MA","MAA","MAR","MAS","MCD","MCHP","MCK","MCO","MDLZ","MDT",
+  "MET","META","MGM","MHK","MKC","MKTX","MLM","MMC","MMM","MNST",
+  "MO","MOH","MOS","MPC","MPWR","MRK","MRNA","MRO","MS","MSCI",
+  "MSFT","MSI","MTB","MTCH","MTD","MU","NCLH",
+  // N
+  "NDAQ","NDSN","NEE","NEM","NFLX","NI","NKE","NOC","NOW","NRG",
+  "NSC","NTAP","NTRS","NUE","NVDA","NVR","NWS","NWSA","NXPI",
+  // O
+  "O","ODFL","OGN","OKE","OMC","ON","ORCL","ORLY","OTIS","OXY",
+  // P
+  "PARA","PAYC","PAYX","PCAR","PCG","PEG","PEP","PFE","PFG","PG",
+  "PGR","PH","PHM","PKG","PLD","PM","PNC","PNR","PNW","PODD",
+  "POOL","PPG","PPL","PRU","PSA","PSX","PTC","PVH","PWR","PXD",
+  // Q-R
+  "QCOM","QRVO","RCL","RE","REG","REGN","RF","RHI","RJF","RL",
+  "RMD","ROK","ROL","ROP","ROST","RSG","RTX","RVTY",
+  // S
+  "SBAC","SBNY","SBUX","SCHW","SEE","SHW","SIVB","SJM","SLB","SNA",
+  "SNPS","SO","SOLV","SPG","SPGI","SRE","STE","STLD","STT","STX",
+  "STZ","SWK","SWKS","SYF","SYK","SYY",
+  // T
+  "T","TAP","TDG","TDY","TECH","TEL","TER","TFC","TFX","TGT",
+  "TMO","TMUS","TPR","TRGP","TRMB","TROW","TRV","TSCO","TSLA","TSN",
+  "TT","TTWO","TXN","TXT","TYL",
+  // U-V
+  "UAL","UDR","UHS","ULTA","UNH","UNP","UPS","URI","USB",
+  "V","VFC","VICI","VLO","VLTO","VMC","VRSK","VRSN","VRTX","VTR","VTRS","VZ",
+  // W-Z
+  "WAB","WAT","WBA","WBD","WDC","WEC","WELL","WFC","WHR","WM",
+  "WMB","WMT","WRB","WRK","WST","WTW","WY","WYNN",
+  "XEL","XOM","XRAY","XYL","YUM","ZBH","ZBRA","ZION","ZTS",
 ];
 
+// Full Nasdaq 100 (101 securities as of 2025)
 const UNIVERSE_NASDAQ100 = [
-  "AAPL","MSFT","NVDA","AMZN","META","GOOGL","AVGO","TSLA","COST","NFLX",
-  "ORCL","ADBE","AMD","QCOM","INTU","TXN","CSCO","AMGN","ISRG","HON",
-  "BKNG","VRTX","REGN","PANW","LRCX","KLAC","AMAT","SNPS","CDNS","MRVL",
-  "ADI","CRWD","MELI","ASML","MDB","DDOG","TEAM","WDAY","ZS","FTNT",
-  "PCAR","PAYX","CTAS","FAST","ODFL","BIIB","IDXX","GEHC","EXC","FANG",
-  "DLTR","WBD","VRSK","ON","ALGN","ROST","AEP","XEL","CTSH","ANSS",
-  "ILMN","MRNA","TTWO","SIRI","NXPI","APP","PLTR","ABNB","CEG","MKL",
-  "ENPH","CPRT","DXCM","GILD","SBUX","KDP","MAR","PYPL","MDLZ","AZN",
+  "AAPL","ABNB","ADBE","ADI","ADP","ADSK","AEP","AMAT","AMGN","AMZN",
+  "ANSS","APP","ARM","ASML","AVGO","AZN","BIIB","BKNG","BKR","CCEP",
+  "CDNS","CDW","CEG","CHTR","CMCSA","COIN","COST","CPRT","CRWD","CSCO",
+  "CSGP","CTAS","CTSH","DASH","DDOG","DLTR","DXCM","EA","EXC","FANG",
+  "FAST","FTNT","GEHC","GILD","GOOG","GOOGL","GFS","HON","IDXX","ILMN",
+  "INTC","INTU","ISRG","KDP","KHC","KLAC","LIN","LRCX","LULU","MAR",
+  "MCHP","MDB","MDLZ","MELI","META","MNST","MRNA","MRVL","MSFT","MU",
+  "NFLX","NVDA","NXPI","ODFL","ON","ORCL","ORLY","PANW","PAYX","PCAR",
+  "PDD","PEP","PLTR","PYPL","QCOM","REGN","ROST","SBUX","SMCI","SNPS",
+  "TEAM","TMUS","TSLA","TTD","TTWO","TXN","VRSK","VRTX","WBD","WDAY","ZS",
 ];
 
+// Dow Jones Industrial Average (30 components — updated 2025)
 const UNIVERSE_DOW30 = [
-  "AAPL","MSFT","JPM","V","WMT","MCD","HON","HD","CAT","IBM",
-  "GS","BA","UNH","JNJ","PG","CVX","AMGN","DIS","MMM","KO",
-  "CRM","AXP","MRK","NKE","TRV","DOW","CSCO","VZ","WBA","INTC",
+  "AAPL","AMGN","AMZN","AXP","BA","CAT","CRM","CSCO","CVX","DIS",
+  "DOW","GS","HD","HON","IBM","INTC","JNJ","JPM","KO","MCD",
+  "MMM","MRK","MSFT","NKE","PG","SHW","TRV","UNH","V","VZ","WMT",
+];
+
+// Russell 2000 — top ~200 most-liquid small caps (full index is 2000 stocks;
+// scanning all of them would take too long, so we pick the most-traded names)
+const UNIVERSE_RUSSELL2000 = [
+  "AFRM","HOOD","UPST","SOFI","LC","DAVE","OPEN","UWMC","PFSI",
+  "CELH","USFD","CHWY","W","PRCT","HIMS","ACMR","RELY",
+  "ASAN","BRZE","CWAN","ALTR","PAGS","CAAP","TFII",
+  "COUR","UDMY","DUOL","SMAR","DOMO","YEXT","FSLY","BAND","LPSN",
+  "MNDY","BILL","PCTY","PAYC","TOST","FOUR","RPAY","PAYO",
+  "CRDO","SMMT","COTY","IPAR","ELF","LNTH","GKOS","RXRX",
+  "ENSG","AMED","SGRY","AEIS","CALX","CGNX","NOVT","AZEK","TREX",
+  "FND","BOOT","PLNT","XPOF","ARKO","SAM","FIZZ","COKE","MGPI",
+  "PRMW","FRPT","SPSC","MMSI","TMDX","AXNX","NVCR","INSP","GMED",
+  "STAA","LUNG","RVMD","PCVX","VCEL","NUVB","KURA","IRTC","ITCI",
+  "VERA","DRS","BWXT","KTOS","RKLB","LUNR","RDW","ASTS","ACHR",
+  "JOBY","LILM","ASTR","MNTS","VORB","SPIR","SATL","PL",
+  "SHAK","CAVA","WING","TXRH","DINE","BJRI","CAKE","DIN","JACK",
+  "LOCO","ARCO","TACO","PZZA","NDLS","KRUS","BROS","SBIG",
+  "RELY","EVLV","STEP","PIPR","HLNE","VCTR","APAM","VRTS","LFST",
+  "IBKR","LPLA","BGCP","MKTX","VIRT","SNEX","COWN","GLNG",
+  "MATX","INSW","STNG","TNK","ASC","GOGL","SFL","ESGR","HCI",
+  "KNSL","RLI","PLMR","HRTG","UFCS","WDFC","ENS","AAON","ATKR",
+  "SPXC","RBC","GGG","NDSN","FLS","MIDD","JOHN","TTC","SWX",
+  "GTLS","PRLB","SITE","BLDR","IBP","APOG","ROCK",
+];
+
+// S&P MidCap 400 — top ~100 most-liquid mid caps
+const UNIVERSE_MIDCAP = [
+  "WSM","RH","DECK","CROX","SKX","FOXF","BC","SCI","POOL","LULU",
+  "FIVE","BJ","OLLI","CASY","WOOF","DKS","ASO","HIBB","AEO","ANF",
+  "BURL","URBN","EXPR","GPS","JWN","KSS","M","NORDSTROM","TPR","CPRI",
+  "WH","WYNDHAM","CHH","PLYA","TNL","HGV","VAC","SIX","FUN","SEAS",
+  "PENN","CZR","BYD","MGM","DKNG","RSI","GENI","CHDN","FLUT",
+  "BALY","WYNN","LVS","ERI","RRR","MCRI",
+  "AXON","TYL","GWRE","QTWO","NCNO","ALRM","TENB","VRNS","SAIL",
+  "QLYS","CYBR","JAMF","RPD","SCWX","KNBE","SMCI","DELL","HPE",
+  "NTAP","PSTG","BOX","OKTA","ZI","GTLB","CFLT","ESTC","NEWR",
+  "MANH","AZPN","APPN","COUP","PLAN","FROG","BRZE","SQSP","DOCS",
+  "DOCU","PCOR","YOU","AI","BBAI","SOUN",
 ];
 
 // ─ GICS Sectors ──────────────────────────────────────────────────────────
@@ -46,6 +159,9 @@ const UNIVERSE_TECH = [
   "INTU","QCOM","ADI","TXN","CRM","NOW","LRCX","AMAT","KLAC","SNPS",
   "CDNS","MRVL","PANW","FTNT","CRWD","ZS","NET","SNOW","MDB","DDOG",
   "PLTR","APP","TTD","COIN","UBER","LYFT","SHOP","SPOT","SQ","HOOD",
+  "ADSK","ANSS","CTSH","IT","EPAM","GDDY","GEN","KEYS","MPWR","MSI",
+  "NXPI","ON","PTC","ROP","SWKS","TER","TRMB","TYL","VRSN","ZBRA",
+  "SMCI","DELL","HPE","HPQ","STX","WDC","NTAP","PSTG","ANET","FFIV",
 ];
 
 const UNIVERSE_FINANCE = [
@@ -53,6 +169,9 @@ const UNIVERSE_FINANCE = [
   "USB","PNC","COF","DFS","SPGI","MCO","ICE","CME","CB",
   "MMC","AON","MET","PRU","AFL","ALL","PGR","AIG","TROW","CINF",
   "FDS","RJF","SF","NTRS","STT","BK","FITB","RF","HBAN","CFG",
+  "KEY","CMA","ZION","FRC","SIVB","SBNY","WAL","EWBC","FHN",
+  "MTB","TFC","ALLY","SYF","NDAQ","CBOE","MKTX","MSCI","BR",
+  "FI","FIS","FISV","GPN","WRB","RE","L","GL","AIZ","LNC",
 ];
 
 const UNIVERSE_HEALTH = [
@@ -60,18 +179,25 @@ const UNIVERSE_HEALTH = [
   "MDT","SYK","ISRG","REGN","VRTX","CI","BMY","ZTS","BIIB",
   "ILMN","BDX","DXCM","IDXX","IQV","HCA","DGX","LH","CAH","MCK",
   "CNC","MOH","HUM","CVS","GEHC","SOLV","PODD","ALGN","EW","BAX",
+  "PFE","MRNA","BSX","RMD","HOLX","MTD","STE","WST","TECH","BIO",
+  "CRL","RVTY","INCY","JAZZ","ALNY","BMRN","EXEL","IONS","SRPT","HALO",
 ];
 
 const UNIVERSE_ENERGY = [
   "XOM","CVX","EOG","COP","SLB","MPC","PSX","VLO","OXY",
   "HES","DVN","BKR","HAL","MRO","APA","CTRA","NOV","HP","TRGP","KMI",
   "WMB","OKE","LNG","CVI","DINO","SM","PR","CIVI","MGY","VTLE",
+  "PXD","FANG","EQT","DTM","AM","AR","RRC","SWN","CNX","CHK",
 ];
 
 const UNIVERSE_CONSUMER = [
   "AMZN","TSLA","COST","HD","MCD","NKE","SBUX","LOW","TJX","TGT",
   "DIS","NFLX","BKNG","MAR","HLT","YUM","LULU","ROST","ULTA","DG",
   "DLTR","POOL","WSM","RH","ORLY","AZO","CASY","WBA","KR","SYY",
+  "WMT","PG","KO","PEP","CL","CLX","KHC","GIS","HSY","MKC",
+  "SJM","K","CPB","HRL","MNST","KDP","STZ","TAP","BF.B","PM",
+  "MO","EL","KVUE","CHD","SPB","BBWI","TPR","PVH","RL","LVS",
+  "WYNN","MGM","CCL","RCL","NCLH","CMG","DPZ","DKNG","LYV","EXPE",
 ];
 
 const UNIVERSE_INDUSTRIALS = [
@@ -79,30 +205,37 @@ const UNIVERSE_INDUSTRIALS = [
   "ETN","EMR","ITW","PH","ROK","AME","FTV","DOV","GNRC","XYL",
   "FAST","ODFL","CHRW","NSC","CSX","UNP","CP","CNI","WAB","EXPD",
   "LHX","LDOS","BAH","SAIC","CACI","DRS","HII","TDG","HEICO","TXT",
+  "MMM","CMI","IR","OTIS","CARR","JCI","AOS","ALLE","SWK","SNA",
+  "FDX","DAL","UAL","LUV","ALK","JBHT","RHI","PAYX","CTAS","VRSK",
+  "RSG","WM","PWR","PCAR","URI","TSCO","NDSN","ROP","IEX","HUBB",
 ];
 
 const UNIVERSE_UTILITIES = [
   "NEE","SO","DUK","AEP","SRE","D","EXC","XEL","PCG","ED",
   "AWK","PPL","FE","ETR","AES","NRG","CMS","LNT","PNW","NI",
   "EVRG","OGE","WEC","WTRG","SWX","AVA","IDA","BKH","POR","NWE",
+  "CEG","PEG","DTE","EIX","ES","AEE","CNP","ATO","PNR",
 ];
 
 const UNIVERSE_MATERIALS = [
   "LIN","APD","ECL","SHW","PPG","NEM","FCX","NUE","STLD","RS",
   "CF","MOS","FMC","ALB","BALL","PKG","IP","WRK","SEE","SON",
   "VMC","MLM","EXP","SLGN","GEF","CLF","AA","X","CMC","ATI",
+  "AVY","CE","DD","EMN","IFF","LYB","CTVA","AMCR","BG","OGN",
 ];
 
 const UNIVERSE_REALESTATE = [
   "PLD","AMT","EQIX","CCI","WELL","O","SPG","DLR","PSA","AVB",
   "EQR","INVH","NLY","AGNC","MPW","VTR","PEAK","HST","KIM","FRT",
   "REG","BRX","EPR","SKT","NNN","STAG","REXR","EGP","FR","COLD",
+  "ARE","BXP","CPT","ESS","MAA","UDR","VICI","IRM","SBAC","EXR",
 ];
 
 const UNIVERSE_COMMS = [
   "GOOGL","META","NFLX","DIS","T","VZ","CMCSA","TMUS","CHTR","LYV",
   "EA","TTWO","RBLX","SNAP","PINS","SPOT","WBD","PARA","FOXA","FOX",
   "NYT","NWSA","OMC","IPG","ZETA","IAS","DV","MGNI","TTD","PUBM",
+  "MTCH","GOOG","ATVI",
 ];
 
 // ─ Thematic ──────────────────────────────────────────────────────────────
@@ -111,21 +244,26 @@ const UNIVERSE_SEMIS = [
   "KLAC","SNPS","CDNS","MRVL","ON","NXPI","SWKS","QRVO","MPWR","WOLF",
   "SLAB","SITM","ALGM","AEHR","FORM","ACLS","UCTT","ONTO","AMBA","SMTC",
   "OLED","MKSI","COHU","ICHR","CAMT","ENTG","AZTA","BRKS","KLIC","CCMP",
+  "ARM","GFS","MCHP","TER","INTC",
 ];
 
 const UNIVERSE_BIOTECH = [
-  "AMGN","GILD","REGN","VRTX","BIIB","MRNA","ILMN","DXCM","IDXX","SGEN",
+  "AMGN","GILD","REGN","VRTX","BIIB","MRNA","ILMN","DXCM","IDXX",
   "ALNY","BMRN","EXEL","IONS","HALO","SRPT","ARWR","FOLD","KRYS","RARE",
   "ACAD","INVA","ARVN","ROIV","KYMR","BLUE","RCKT","EDIT","NTLA","CRSP",
-  "BEAM","PACB","VERV","PRME","TGTX","IMVT","JAZZ","INCY","SRTX","ACAD",
+  "BEAM","PACB","VERV","PRME","TGTX","IMVT","JAZZ","INCY","SRTX",
+  "PCVX","NUVB","KURA","RVMD","VCEL","RXRX","GKOS","LNTH","SMMT",
 ];
 
 const UNIVERSE_SMALLCAP = [
-  "AFRM","HOOD","UPST","SOFI","LC","DAVE","OPEN","UWMC","PFSI","GHLD",
-  "CELH","USFD","CHWY","W","PRCT","HIMS","ACMR","VLD","SEER","RELY",
-  "ASAN","BRZE","CWAN","ALTR","TASK","TASK","GTX","PAGS","CAAP","TFII",
+  "AFRM","HOOD","UPST","SOFI","LC","DAVE","OPEN","UWMC","PFSI",
+  "CELH","USFD","CHWY","W","PRCT","HIMS","ACMR","RELY",
+  "ASAN","BRZE","CWAN","ALTR","PAGS","CAAP","TFII",
   "COUR","UDMY","DUOL","SMAR","DOMO","YEXT","FSLY","BAND","LPSN","HUBS",
-  "MNDY","BILL","PCTY","PAYC","TOST","FOUR","GPN","RPAY","EVERI","PAYO",
+  "MNDY","BILL","PCTY","PAYC","TOST","FOUR","GPN","RPAY","PAYO",
+  "SHAK","CAVA","WING","TXRH","BROS","RKLB","LUNR","ASTS","JOBY",
+  "STEP","PIPR","HLNE","VCTR","APAM","IBKR","LPLA",
+  "CRDO","AXON","DKNG","ELF","COTY","IPAR","BOOT","FND","PLNT",
 ];
 
 const UNIVERSE_MAGS7 = [
@@ -136,6 +274,7 @@ const UNIVERSE_AICLOUD = [
   "NVDA","MSFT","GOOGL","AMZN","META","ORCL","CRM","NOW","SNOW","MDB",
   "DDOG","PLTR","AI","BBAI","SOUN","GFAI","ARQQ","IQ","PATH","AAON",
   "ANET","SMCI","DELL","HPE","NTAP","PSTG","BOX","OKTA","ZI","GTLB",
+  "ARM","CRWD","PANW","ZS","NET","ESTC","CFLT","NEWR","DATADOG","S",
 ];
 
 const UNIVERSE_DIVIDEND = [
@@ -143,10 +282,12 @@ const UNIVERSE_DIVIDEND = [
   "PM","T","VZ","O","NNN","STAG","D","SO","DUK","ED",
   "AEP","XEL","WEC","CMS","LNT","PPL","NFG","NI","SWX","PNW",
   "ABBV","BMY","MRK","AMGN","GILD","ABT","MDT","BDX","SYK","ZBH",
+  "KMB","SJM","HRL","GPC","EMR","ITW","SWK","DOV","APD","SHW",
 ];
 
 const ALL_TICKERS = [...new Set([
-  ...UNIVERSE_SP100, ...UNIVERSE_NASDAQ100, ...UNIVERSE_DOW30,
+  ...UNIVERSE_SP500, ...UNIVERSE_NASDAQ100, ...UNIVERSE_DOW30,
+  ...UNIVERSE_RUSSELL2000, ...UNIVERSE_MIDCAP,
   ...UNIVERSE_TECH, ...UNIVERSE_FINANCE, ...UNIVERSE_HEALTH,
   ...UNIVERSE_ENERGY, ...UNIVERSE_CONSUMER, ...UNIVERSE_INDUSTRIALS,
   ...UNIVERSE_UTILITIES, ...UNIVERSE_MATERIALS, ...UNIVERSE_REALESTATE,
@@ -157,9 +298,11 @@ const ALL_TICKERS = [...new Set([
 
 const UNIVERSES: Record<string, string[]> = {
   // Broad indices
-  sp100:    UNIVERSE_SP100,
-  nasdaq100:UNIVERSE_NASDAQ100,
-  dow30:    UNIVERSE_DOW30,
+  sp500:       UNIVERSE_SP500,
+  nasdaq100:   UNIVERSE_NASDAQ100,
+  dow30:       UNIVERSE_DOW30,
+  russell2000: UNIVERSE_RUSSELL2000,
+  midcap:      UNIVERSE_MIDCAP,
   // GICS sectors
   tech:     UNIVERSE_TECH,
   finance:  UNIVERSE_FINANCE,
@@ -207,7 +350,7 @@ async function getTenantKeys(tenantId: number): Promise<TenantProviderKeys> {
 router.get("/screener", async (req, res): Promise<void> => {
   const q = req.query as Record<string, string | undefined>;
 
-  const universeKey   = (q.universe ?? "sp100") as string;
+  const universeKey   = (q.universe ?? "sp500") as string;
   const bust          = q.bust === "true";
 
   const priceMin  = parseFloat(q.priceMin  ?? "1");
@@ -236,7 +379,7 @@ router.get("/screener", async (req, res): Promise<void> => {
   const macd3mHistPos    = q.macd3mHistPositive === "true";
   const breakoutOnly     = q.breakoutOnly      === "true";
 
-  const tickers = UNIVERSES[universeKey] ?? UNIVERSES.sp100;
+  const tickers = UNIVERSES[universeKey] ?? UNIVERSES.sp500;
   const key = `${req.tenantId}:${universeKey}`;
   const cached = cache.get(key);
   const stale = !cached || bust || Date.now() - cached.cachedAt.getTime() > TTL_MS;

@@ -626,7 +626,7 @@ export const runScreenerQueryAdxMinDefault = 0;
 export const runScreenerQueryRvolMinDefault = 0;
 export const runScreenerQueryScoreMinDefault = 0;
 export const runScreenerQueryVerdictFilterDefault = `all`;
-export const runScreenerQueryUniverseDefault = `sp100`;
+export const runScreenerQueryUniverseDefault = `sp500`;
 
 export const RunScreenerQueryParams = zod.object({
   "priceMin": zod.coerce.number().default(runScreenerQueryPriceMinDefault),
@@ -648,7 +648,7 @@ export const RunScreenerQueryParams = zod.object({
   "range52wMin": zod.coerce.number().optional().describe('52-week high \/ low multiple, e.g. 2 = \"2x range\"'),
   "mom1mMin": zod.coerce.number().optional().describe('Minimum trailing ~1-month momentum as a fraction, e.g. 0.20 = +20%'),
   "nearHigh52wPct": zod.coerce.number().optional().describe('Must trade within this fraction of the 52-week high, e.g. 0.10 = within 10%'),
-  "universe": zod.enum(['sp100', 'nasdaq100', 'dow30', 'tech', 'finance', 'health', 'energy', 'consumer', 'industrials', 'utilities', 'materials', 'realestate', 'comms', 'semis', 'biotech', 'smallcap', 'mags7', 'aicloud', 'dividend', 'all']).default(runScreenerQueryUniverseDefault),
+  "universe": zod.enum(['sp500', 'nasdaq100', 'dow30', 'russell2000', 'midcap', 'tech', 'finance', 'health', 'energy', 'consumer', 'industrials', 'utilities', 'materials', 'realestate', 'comms', 'semis', 'biotech', 'smallcap', 'mags7', 'aicloud', 'dividend', 'all']).default(runScreenerQueryUniverseDefault),
   "bust": zod.coerce.boolean().optional()
 })
 

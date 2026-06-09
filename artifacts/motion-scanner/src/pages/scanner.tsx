@@ -763,7 +763,7 @@ interface ScreenerFilters {
 }
 
 const DEFAULT_FILTERS: ScreenerFilters = {
-  universe: "sp100",
+  universe: "sp500",
   priceMin: "1",
   priceMax: "10000",
   rsiMin: "0",
@@ -854,11 +854,13 @@ function FilterPanel({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">⚡ All (~300+ tickers)</SelectItem>
+            <SelectItem value="all">⚡ All (~800+ tickers)</SelectItem>
             <div className="px-2 py-1 text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mt-1">Broad Indices</div>
-            <SelectItem value="sp100">S&amp;P 100</SelectItem>
+            <SelectItem value="sp500">S&amp;P 500 (~503)</SelectItem>
             <SelectItem value="nasdaq100">Nasdaq 100</SelectItem>
             <SelectItem value="dow30">Dow Jones 30</SelectItem>
+            <SelectItem value="russell2000">Russell 2000 (top 200)</SelectItem>
+            <SelectItem value="midcap">S&amp;P MidCap 400 (top 100)</SelectItem>
             <div className="px-2 py-1 text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mt-1">GICS Sectors</div>
             <SelectItem value="tech">Technology</SelectItem>
             <SelectItem value="finance">Financials</SelectItem>
