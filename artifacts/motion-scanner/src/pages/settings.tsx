@@ -521,7 +521,7 @@ function ApiKeysSection({ keys, apiDown }: { keys?: ApiKeyStatus; apiDown?: bool
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground uppercase">Model</Label>
                 <Input value={aiModel} onChange={(e) => setAiModel(e.target.value)}
-                  placeholder="nvidia/nemotron-3-ultra-550b-a55b" className="font-mono text-xs" />
+                  placeholder="minimaxai/minimax-m2.7" className="font-mono text-xs" />
               </div>
             </div>
           </div>

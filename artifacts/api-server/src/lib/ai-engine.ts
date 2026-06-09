@@ -2,9 +2,9 @@ import { db, apiKeysTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { decrypt } from "./crypto";
 
-// Defaults: NVIDIA NIM serving Nemotron (OpenAI-compatible).
+// Defaults: NVIDIA NIM serving MiniMax M2 (OpenAI-compatible).
 export const DEFAULT_AI_BASE_URL = "https://integrate.api.nvidia.com/v1";
-export const DEFAULT_AI_MODEL = "nvidia/nemotron-3-ultra-550b-a55b";
+export const DEFAULT_AI_MODEL = "minimaxai/minimax-m2.7";
 
 export interface AiConfig {
   apiKey?: string;

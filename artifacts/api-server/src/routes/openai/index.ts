@@ -27,10 +27,10 @@ interface ChatCompletionTool {
 
 const router = Router();
 
-// AI model id. Defaults to NVIDIA's Nemotron (served via the OpenAI-compatible
+// AI model id. Defaults to NVIDIA's MiniMax M2 (served via the OpenAI-compatible
 // NIM endpoint at integrate.api.nvidia.com/v1). Override with AI_MODEL to point
 // at any other OpenAI-compatible model.
-const AI_MODEL = process.env.AI_MODEL || "nvidia/nemotron-3-ultra-550b-a55b";
+const AI_MODEL = process.env.AI_MODEL || "minimaxai/minimax-m2.7";
 
 // ── Tenant API keys ──────────────────────────────────────────────────────────
 
@@ -332,6 +332,8 @@ router.post("/openai/conversations/:id/messages", async (req, res) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const stream = await (aiClient.chat.completions.create as any)({
         model: ai.model || AI_MODEL,
+        temperature: 1,
+        top_p: 0.95,
         max_tokens: 8192,
         messages: loopMessages,
         tools: TOOLS,

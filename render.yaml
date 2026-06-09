@@ -68,14 +68,14 @@ services:
       - key: GEMINI_API_KEY
         sync: false
       # ── AI agent backend (OpenAI-compatible) ──────────────────────────────
-      # Defaults to NVIDIA NIM serving Nemotron. The API key is a secret —
+      # Defaults to NVIDIA NIM serving MiniMax M2. The API key is a secret —
       # paste your nvapi-… key in the Render dashboard (never commit it).
       - key: AI_INTEGRATIONS_OPENAI_BASE_URL
         value: https://integrate.api.nvidia.com/v1
       - key: AI_INTEGRATIONS_OPENAI_API_KEY
         sync: false
       - key: AI_MODEL
-        value: nvidia/nemotron-3-ultra-550b-a55b
+        value: minimaxai/minimax-m2.7
 
   # ── Frontend (Vite static site) ────────────────────────────────────────────
   - type: web
