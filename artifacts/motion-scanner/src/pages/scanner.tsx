@@ -1,3 +1,4 @@
+import { AlexScreener } from '../components/AlexScreener';
 import { useState, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -1223,6 +1224,8 @@ function Screener() {
 export function Scanner() {
   return (
     <div className="p-6 space-y-5">
+      <AlexScreener />
+
       <h1 className="text-2xl font-bold">Stock Finder</h1>
 
       <Tabs defaultValue="screener" className="w-full">
