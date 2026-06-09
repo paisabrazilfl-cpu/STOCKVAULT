@@ -221,7 +221,7 @@ export function TickerChart({ ticker }: { ticker: string }) {
   }, [data, chartType]);
 
   const fmt = (n?: number, d = 2) => (n != null ? n.toFixed(d) : "—");
-  const chgColor = (crosshair.change ?? 0) >= 0 ? "text-[hsl(var(--go-color))]" : "text-red-400";
+  const chgColor = (crosshair.change ?? 0) >= 0 ? "text-[hsl(var(--go-color))]" : "text-red-600";
 
   return (
     <div className="space-y-2">

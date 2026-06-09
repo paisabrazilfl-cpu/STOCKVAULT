@@ -75,41 +75,41 @@ const clerkAppearance = {
     socialButtonsPlacement: "top" as const,
   },
   variables: {
-    colorPrimary: "#a8c4e0",
-    colorForeground: "#d8e3f0",
-    colorMutedForeground: "#7f92a8",
-    colorDanger: "#e05c5c",
-    colorBackground: "#071428",
-    colorInput: "#0f1f38",
-    colorInputForeground: "#d8e3f0",
-    colorNeutral: "#1a2d44",
+    colorPrimary: "#1a2d44",
+    colorForeground: "#0a1628",
+    colorMutedForeground: "#64748b",
+    colorDanger: "#dc2626",
+    colorBackground: "#ffffff",
+    colorInput: "#f8fafc",
+    colorInputForeground: "#0a1628",
+    colorNeutral: "#e2e8f0",
     fontFamily: "'JetBrains Mono', 'Courier New', monospace",
     borderRadius: "0.25rem",
   },
   elements: {
     rootBox: "w-full flex justify-center",
-    cardBox: "bg-[#071428] border border-[#1a2d44] rounded w-[440px] max-w-full overflow-hidden shadow-2xl",
+    cardBox: "bg-white border border-gray-200 rounded w-[440px] max-w-full overflow-hidden shadow-lg",
     card: "!shadow-none !border-0 !bg-transparent !rounded-none",
     footer: "!shadow-none !border-0 !bg-transparent !rounded-none",
-    headerTitle: "text-[#d8e3f0] font-bold",
-    headerSubtitle: "text-[#7f92a8]",
-    socialButtonsBlockButtonText: "text-[#d8e3f0] font-medium",
-    formFieldLabel: "text-[#7f92a8] text-xs uppercase tracking-wider",
-    footerActionLink: "text-[#5fa8d3]",
-    footerActionText: "text-[#7f92a8]",
-    dividerText: "text-[#7f92a8]",
-    identityPreviewEditButton: "text-[#5fa8d3]",
-    formFieldSuccessText: "text-green-400",
-    alertText: "text-[#d8e3f0]",
+    headerTitle: "text-gray-900 font-bold",
+    headerSubtitle: "text-gray-500",
+    socialButtonsBlockButtonText: "text-gray-700 font-medium",
+    formFieldLabel: "text-gray-500 text-xs uppercase tracking-wider",
+    footerActionLink: "text-blue-600",
+    footerActionText: "text-gray-500",
+    dividerText: "text-gray-400",
+    identityPreviewEditButton: "text-blue-600",
+    formFieldSuccessText: "text-green-600",
+    alertText: "text-gray-900",
     logoBox: "mb-2",
     logoImage: "h-9 w-auto",
-    socialButtonsBlockButton: "border-[#1a2d44] bg-[#0f1f38] hover:bg-[#1a2d44] text-[#d8e3f0]",
-    formButtonPrimary: "bg-[#1a3a60] hover:bg-[#204a7a] text-white",
-    formFieldInput: "bg-[#0f1f38] border-[#1a2d44] text-[#d8e3f0] text-sm",
-    footerAction: "border-t border-[#1a2d44]",
-    dividerLine: "bg-[#1a2d44]",
-    alert: "border-[#1a2d44] bg-[#0f1f38]",
-    otpCodeFieldInput: "bg-[#0f1f38] border-[#1a2d44] text-[#d8e3f0]",
+    socialButtonsBlockButton: "border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-700",
+    formButtonPrimary: "bg-gray-900 hover:bg-gray-800 text-white",
+    formFieldInput: "bg-gray-50 border-gray-200 text-gray-900 text-sm",
+    footerAction: "border-t border-gray-200",
+    dividerLine: "bg-gray-200",
+    alert: "border-gray-200 bg-gray-50",
+    otpCodeFieldInput: "bg-gray-50 border-gray-200 text-gray-900",
     formFieldRow: "",
     main: "",
   },
@@ -136,7 +136,7 @@ function LandingPage() {
       </header>
 
       <main className="flex-1 flex flex-col items-center justify-center text-center px-6 py-16 gap-10">
-        <div className="inline-flex items-center gap-2 border border-green-500/30 rounded px-3 py-1 text-xs text-green-400">
+        <div className="inline-flex items-center gap-2 border border-green-500/30 rounded px-3 py-1 text-xs text-green-600">
           <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block" />
           Live Market Intelligence · v3.0
         </div>
@@ -375,9 +375,6 @@ function ClerkProviderWithRoutes() {
 // ── Root ──────────────────────────────────────────────────────────────────────
 
 function App() {
-  useEffect(() => {
-    document.documentElement.classList.add("dark");
-  }, []);
 
   return (
     <WouterRouter base={basePath}>

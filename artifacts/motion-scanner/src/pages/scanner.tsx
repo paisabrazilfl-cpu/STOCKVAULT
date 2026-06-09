@@ -28,8 +28,8 @@ import { formatPercent, formatCurrency } from "@/lib/format";
 function VerdictBadge({ verdict }: { verdict: string }) {
   const styles: Record<string, string> = {
     GO:   "bg-[hsl(var(--go-color))]/20 text-[hsl(var(--go-color))] border-[hsl(var(--go-color))]/40",
-    HOLD: "bg-yellow-500/20 text-yellow-400 border-yellow-500/40",
-    ABORT:"bg-red-500/20 text-red-400 border-red-500/40",
+    HOLD: "bg-yellow-500/20 text-yellow-600 border-yellow-500/40",
+    ABORT:"bg-red-500/20 text-red-600 border-red-500/40",
   };
   return (
     <span className={`inline-flex items-center px-2 py-0.5 rounded border text-xs font-bold tracking-wide ${styles[verdict] ?? "bg-muted text-muted-foreground"}`}>
@@ -55,9 +55,9 @@ function ProviderChips({ providers }: { providers?: string[] }) {
   if (!providers?.length) return null;
   const labels: Record<string, string> = { yahoo_finance: "YF", polygon: "POLY", finnhub: "FH" };
   const colors: Record<string, string> = {
-    yahoo_finance: "border-blue-500/40 text-blue-400",
-    polygon:       "border-purple-500/40 text-purple-400",
-    finnhub:       "border-orange-500/40 text-orange-400",
+    yahoo_finance: "border-blue-500/40 text-blue-600",
+    polygon:       "border-purple-500/40 text-purple-600",
+    finnhub:       "border-orange-500/40 text-orange-600",
   };
   return (
     <div className="flex items-center gap-1.5">
@@ -75,7 +75,7 @@ function Num({ v, digits = 1, suffix = "", colored = false }: { v: number | null
   const text = `${v.toFixed(digits)}${suffix}`;
   if (!colored) return <span className="font-mono">{text}</span>;
   const pos = v >= 0;
-  return <span className={`font-mono ${pos ? "text-[hsl(var(--go-color))]" : "text-red-400"}`}>{pos ? "+" : ""}{text}</span>;
+  return <span className={`font-mono ${pos ? "text-[hsl(var(--go-color))]" : "text-red-600"}`}>{pos ? "+" : ""}{text}</span>;
 }
 
 // ── Ticker detail sheet (shared between Manual + Screener) ─────────────────
@@ -139,7 +139,7 @@ function TickerDetail({ c }: { c: CandidateRecord }) {
             ))}
             <div className="flex justify-between border-b border-border/40 py-1">
               <span className="text-muted-foreground">EMA Stack</span>
-              <span className={tech?.ema_stack_ok ? "text-[hsl(var(--go-color))]" : "text-red-400"}>
+              <span className={tech?.ema_stack_ok ? "text-[hsl(var(--go-color))]" : "text-red-600"}>
                 {tech?.ema_stack_ok ? "BULL" : "BEAR"}
               </span>
             </div>
@@ -247,7 +247,7 @@ function TickerDetail({ c }: { c: CandidateRecord }) {
               <div className="grid grid-cols-3 gap-3 text-center">
                 <div className="bg-red-500/10 border border-red-500/20 rounded p-3">
                   <div className="text-xs text-muted-foreground mb-1">Stop</div>
-                  <div className="font-mono text-red-400">${mc.stop_price?.toFixed(2)}</div>
+                  <div className="font-mono text-red-600">${mc.stop_price?.toFixed(2)}</div>
                 </div>
                 <div className="bg-muted/20 border border-border rounded p-3">
                   <div className="text-xs text-muted-foreground mb-1">Entry</div>
@@ -636,8 +636,8 @@ function ManualScan() {
           <div className="grid grid-cols-3 gap-3">
             {[
               { label: "GO",    count: result.candidates.length, cls: "text-[hsl(var(--go-color))]",   card: "bg-[hsl(var(--go-color))]/10 border-[hsl(var(--go-color))]/25", sub: "All gates pass" },
-              { label: "HOLD",  count: result.hold.length,       cls: "text-yellow-400",               card: "bg-yellow-500/10 border-yellow-500/25",                          sub: "Partial qualification" },
-              { label: "ABORT", count: result.rejected.length,   cls: "text-red-400",                  card: "bg-red-500/10 border-red-500/25",                                sub: "Failed screening" },
+              { label: "HOLD",  count: result.hold.length,       cls: "text-yellow-600",               card: "bg-yellow-500/10 border-yellow-500/25",                          sub: "Partial qualification" },
+              { label: "ABORT", count: result.rejected.length,   cls: "text-red-600",                  card: "bg-red-500/10 border-red-500/25",                                sub: "Failed screening" },
             ].map(({ label, count, cls, card, sub }) => (
               <Card key={label} className={card}>
                 <CardContent className="p-4 flex items-center gap-4">
@@ -1128,7 +1128,7 @@ function Screener() {
         {/* Stats bar */}
         {data && !isFetching && (
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <span className="inline-flex items-center gap-1 text-xs border border-blue-500/40 text-blue-400 rounded px-1.5 py-0.5 font-mono">
+            <span className="inline-flex items-center gap-1 text-xs border border-blue-500/40 text-blue-600 rounded px-1.5 py-0.5 font-mono">
               YF
             </span>
             <span>
@@ -1145,7 +1145,7 @@ function Screener() {
             <div className="ml-auto flex gap-2 text-xs">
               {(["GO","HOLD","ABORT"] as const).map((v) => {
                 const cnt = results.filter((r) => r.verdict === v).length;
-                const cls = v === "GO" ? "text-[hsl(var(--go-color))]" : v === "HOLD" ? "text-yellow-400" : "text-red-400";
+                const cls = v === "GO" ? "text-[hsl(var(--go-color))]" : v === "HOLD" ? "text-yellow-600" : "text-red-600";
                 return (
                   <span key={v} className={cls}>
                     {v} <span className="font-bold">{cnt}</span>

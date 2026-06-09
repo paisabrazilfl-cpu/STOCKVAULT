@@ -20,14 +20,14 @@ const CATEGORY_LABELS: Record<Category, string> = {
 
 function SentimentIcon({ s }: { s: string }) {
   if (s === "bullish") return <TrendingUp className="h-3 w-3 text-[hsl(var(--go-color))]" />;
-  if (s === "bearish") return <TrendingDown className="h-3 w-3 text-red-400" />;
+  if (s === "bearish") return <TrendingDown className="h-3 w-3 text-red-600" />;
   return <Minus className="h-3 w-3 text-muted-foreground" />;
 }
 
 function SentimentBadge({ s }: { s: string }) {
   const styles: Record<string, string> = {
     bullish: "border-[hsl(var(--go-color))]/40 text-[hsl(var(--go-color))] bg-[hsl(var(--go-color))]/10",
-    bearish: "border-red-500/40 text-red-400 bg-red-500/10",
+    bearish: "border-red-500/40 text-red-600 bg-red-500/10",
     neutral: "border-border text-muted-foreground bg-muted/20",
   };
   return (
@@ -54,9 +54,9 @@ function SourceBadge({ label }: { label: string }) {
 
 function CategoryBadge({ cat }: { cat: string }) {
   const styles: Record<string, string> = {
-    general: "border-blue-500/40 text-blue-400",
-    forex: "border-purple-500/40 text-purple-400",
-    merger: "border-orange-500/40 text-orange-400",
+    general: "border-blue-500/40 text-blue-600",
+    forex: "border-purple-500/40 text-purple-600",
+    merger: "border-orange-500/40 text-orange-600",
   };
   const labels: Record<string, string> = { general: "US", forex: "GLOBAL", merger: "M&A" };
   return (
@@ -209,7 +209,7 @@ export function News() {
         <div className="flex items-center gap-4 p-3 bg-card border border-border rounded-lg text-xs font-mono flex-wrap">
           <span className="text-muted-foreground uppercase tracking-wider">Market Pulse</span>
           <span className="text-[hsl(var(--go-color))]">▲ {bullCount} bullish</span>
-          <span className="text-red-400">▼ {bearCount} bearish</span>
+          <span className="text-red-600">▼ {bearCount} bearish</span>
           <span className="text-muted-foreground">— {articles.length - bullCount - bearCount} neutral</span>
           <div className="flex-1 min-w-24 h-1.5 bg-muted rounded-full overflow-hidden">
             <div
@@ -220,7 +220,7 @@ export function News() {
               }}
             />
           </div>
-          <span className={`font-bold ${sentimentBias > 0.1 ? "text-[hsl(var(--go-color))]" : sentimentBias < -0.1 ? "text-red-400" : "text-yellow-400"}`}>
+          <span className={`font-bold ${sentimentBias > 0.1 ? "text-[hsl(var(--go-color))]" : sentimentBias < -0.1 ? "text-red-600" : "text-yellow-600"}`}>
             {sentimentBias > 0.1 ? "RISK-ON" : sentimentBias < -0.1 ? "RISK-OFF" : "MIXED"}
           </span>
         </div>

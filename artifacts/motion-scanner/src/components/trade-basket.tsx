@@ -165,7 +165,7 @@ export function TradeBasket() {
                   className="font-mono h-7 w-20 text-sm"
                 />
                 <div className="flex-1" />
-                <button onClick={() => remove(it.symbol)} className="text-muted-foreground hover:text-red-400">
+                <button onClick={() => remove(it.symbol)} className="text-muted-foreground hover:text-red-600">
                   <X className="h-4 w-4" />
                 </button>
               </div>

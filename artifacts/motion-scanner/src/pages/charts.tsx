@@ -520,7 +520,7 @@ export function Charts() {
   }
 
   const fmt2 = (n?: number) => n != null ? n.toFixed(2) : "—";
-  const chgColor = (crosshair.change ?? 0) >= 0 ? "text-[hsl(var(--go-color))]" : "text-red-400";
+  const chgColor = (crosshair.change ?? 0) >= 0 ? "text-[hsl(var(--go-color))]" : "text-red-600";
 
   return (
     <div className="flex h-full bg-background font-mono text-sm overflow-hidden">
@@ -765,7 +765,7 @@ export function Charts() {
             <>
               <span>O <span className="text-foreground">{fmt2(crosshair.open)}</span></span>
               <span>H <span className="text-[hsl(var(--go-color))]">{fmt2(crosshair.high)}</span></span>
-              <span>L <span className="text-red-400">{fmt2(crosshair.low)}</span></span>
+              <span>L <span className="text-red-600">{fmt2(crosshair.low)}</span></span>
               <span>C <span className="text-foreground font-bold">{fmt2(crosshair.close)}</span></span>
             </>
           )}

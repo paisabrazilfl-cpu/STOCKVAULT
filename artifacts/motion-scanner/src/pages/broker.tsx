@@ -175,10 +175,10 @@ function PositionsTable({ positions }: { positions?: Position[] }) {
               <TableCell className="text-right font-mono">{p.entryPrice !== undefined && p.entryPrice !== null ? formatCurrency(p.entryPrice) : "—"}</TableCell>
               <TableCell className="text-right font-mono">{p.currentPrice !== undefined && p.currentPrice !== null ? formatCurrency(p.currentPrice) : "—"}</TableCell>
               <TableCell className="text-right font-mono">{formatCurrency(p.marketValue)}</TableCell>
-              <TableCell className={`text-right font-mono ${positive ? "text-[hsl(var(--go-color))]" : "text-red-400"}`}>
+              <TableCell className={`text-right font-mono ${positive ? "text-[hsl(var(--go-color))]" : "text-red-600"}`}>
                 {positive ? "+" : ""}{formatCurrency(p.unrealizedPl)}
               </TableCell>
-              <TableCell className={`text-right font-mono ${positive ? "text-[hsl(var(--go-color))]" : "text-red-400"}`}>
+              <TableCell className={`text-right font-mono ${positive ? "text-[hsl(var(--go-color))]" : "text-red-600"}`}>
                 {positive ? "+" : ""}{formatPercent(plPct)}
               </TableCell>
             </TableRow>
@@ -195,7 +195,7 @@ function PositionsTable({ positions }: { positions?: Position[] }) {
 }
 
 function StatCard({ label, value, accent }: { label: string; value: string; accent?: "pos" | "neg" }) {
-  const color = accent === "pos" ? "text-[hsl(var(--go-color))]" : accent === "neg" ? "text-red-400" : "";
+  const color = accent === "pos" ? "text-[hsl(var(--go-color))]" : accent === "neg" ? "text-red-600" : "";
   return (
     <Card className="bg-card border-border">
       <CardHeader className="pb-2">
@@ -251,7 +251,7 @@ function BrokerApiAccount() {
             variant="outline"
             className={statusTone(account?.status) === "pos"
               ? "text-[hsl(var(--go-color))] border-[hsl(var(--go-color))]/30"
-              : "text-yellow-400 border-yellow-500/30"}
+              : "text-yellow-600 border-yellow-500/30"}
           >
             {account?.status ?? "UNKNOWN"}
           </Badge>
@@ -259,7 +259,7 @@ function BrokerApiAccount() {
       </div>
 
       {!active && (
-        <div className="text-yellow-400 bg-yellow-500/10 border border-yellow-500/20 rounded p-4">
+        <div className="text-yellow-600 bg-yellow-500/10 border border-yellow-500/20 rounded p-4">
           <p className="font-bold mb-1">Account under review</p>
           <p className="text-sm">
             Your application was submitted (status: {account?.status}). Trading unlocks once Alpaca activates the account.
@@ -340,7 +340,7 @@ function TradingApiBroker() {
   if (accountError) {
     return (
       <div className="p-6">
-        <div className="text-yellow-400 bg-yellow-500/10 border border-yellow-500/20 rounded p-4">
+        <div className="text-yellow-600 bg-yellow-500/10 border border-yellow-500/20 rounded p-4">
           <p className="font-bold mb-1">Broker not connected</p>
           <p className="text-sm">Configure your Alpaca API keys in Settings to connect to paper trading.</p>
         </div>

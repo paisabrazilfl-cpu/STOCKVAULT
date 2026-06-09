@@ -185,7 +185,7 @@ export function Notes() {
                     tabIndex={0}
                     onClick={(e) => handleDelete(note.id, e)}
                     onKeyDown={(e) => { if (e.key === "Enter") handleDelete(note.id, e as unknown as React.MouseEvent); }}
-                    className="flex-shrink-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-400 transition-all mt-0.5 cursor-pointer"
+                    className="flex-shrink-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-600 transition-all mt-0.5 cursor-pointer"
                     title="Delete"
                   >
                     <Trash2 className="h-3 w-3" />
@@ -234,7 +234,7 @@ export function Notes() {
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-7 w-7 p-0 text-muted-foreground hover:text-red-400"
+                  className="h-7 w-7 p-0 text-muted-foreground hover:text-red-600"
                   onClick={(e) => handleDelete(activeId, e)}
                   title="Delete note"
                 >

@@ -62,61 +62,60 @@
 }
 
 :root {
-  /* Default to dark terminal */
-  color-scheme: dark;
-  
-  --background: 224 71% 4%;
-  --foreground: 213 31% 91%;
+  color-scheme: light;
 
-  --muted: 223 47% 11%;
-  --muted-foreground: 215.4 16.3% 56.9%;
+  --background: 0 0% 100%;
+  --foreground: 224 71% 4%;
 
-  --popover: 224 71% 4%;
-  --popover-foreground: 215 20.2% 65.1%;
-  --popover-border: 216 34% 17%;
+  --muted: 220 14% 96%;
+  --muted-foreground: 220 9% 46%;
 
-  --card: 224 71% 4%;
-  --card-foreground: 213 31% 91%;
-  --card-border: 216 34% 17%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 224 71% 4%;
+  --popover-border: 220 13% 91%;
 
-  --border: 216 34% 17%;
-  --input: 216 34% 17%;
+  --card: 0 0% 100%;
+  --card-foreground: 224 71% 4%;
+  --card-border: 220 13% 91%;
 
-  --primary: 210 40% 98%;
-  --primary-foreground: 222.2 47.4% 11.2%;
+  --border: 220 13% 91%;
+  --input: 220 13% 91%;
 
-  --secondary: 222.2 47.4% 11.2%;
-  --secondary-foreground: 210 40% 98%;
+  --primary: 222 47% 11%;
+  --primary-foreground: 210 40% 98%;
 
-  --accent: 216 34% 17%;
-  --accent-foreground: 210 40% 98%;
+  --secondary: 220 14% 96%;
+  --secondary-foreground: 222 47% 11%;
 
-  --destructive: 0 63% 31%;
-  --destructive-foreground: 210 40% 98%;
+  --accent: 220 14% 96%;
+  --accent-foreground: 222 47% 11%;
 
-  --ring: 216 34% 17%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
 
-  --sidebar: 224 71% 4%;
-  --sidebar-foreground: 213 31% 91%;
-  --sidebar-border: 216 34% 17%;
-  --sidebar-primary: 210 40% 98%;
-  --sidebar-primary-foreground: 222.2 47.4% 11.2%;
-  --sidebar-accent: 216 34% 17%;
-  --sidebar-accent-foreground: 210 40% 98%;
-  --sidebar-ring: 216 34% 17%;
+  --ring: 222 47% 11%;
+
+  --sidebar: 220 14% 96%;
+  --sidebar-foreground: 224 71% 4%;
+  --sidebar-border: 220 13% 91%;
+  --sidebar-primary: 222 47% 11%;
+  --sidebar-primary-foreground: 210 40% 98%;
+  --sidebar-accent: 220 14% 93%;
+  --sidebar-accent-foreground: 222 47% 11%;
+  --sidebar-ring: 222 47% 11%;
 
   --app-font-sans: 'Inter', sans-serif;
   --app-font-mono: 'JetBrains Mono', monospace;
   --radius: 0.25rem;
 
-  --chart-1: 142 71% 45%; /* GO - Green */
-  --chart-2: 38 92% 50%; /* HOLD - Amber */
-  --chart-3: 348 83% 47%; /* ABORT - Red */
-  --chart-4: 217 91% 60%;
-  --chart-5: 280 65% 60%;
+  --chart-1: 142 71% 35%;
+  --chart-2: 38 92% 45%;
+  --chart-3: 348 83% 47%;
+  --chart-4: 217 91% 50%;
+  --chart-5: 280 65% 50%;
 
-  --go-color: 142 71% 45%;
-  --hold-color: 38 92% 50%;
+  --go-color: 142 71% 35%;
+  --hold-color: 38 92% 45%;
   --abort-color: 348 83% 47%;
 }
 

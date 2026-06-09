@@ -14,8 +14,8 @@ const PAGE_SIZE = 25;
 function VerdictBadge({ verdict }: { verdict: string }) {
   const colors: Record<string, string> = {
     GO: "bg-[hsl(var(--go-color))]/20 text-[hsl(var(--go-color))] border-[hsl(var(--go-color))]/30",
-    HOLD: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-    ABORT: "bg-red-500/20 text-red-400 border-red-500/30",
+    HOLD: "bg-yellow-500/20 text-yellow-600 border-yellow-500/30",
+    ABORT: "bg-red-500/20 text-red-600 border-red-500/30",
   };
   return (
     <span className={`inline-flex items-center px-1.5 py-0.5 rounded border text-xs font-bold ${colors[verdict] ?? "bg-muted text-muted-foreground"}`}>
@@ -44,8 +44,8 @@ function ScanDetail({ id }: { id: number }) {
       )}
       <div className="flex gap-3 text-sm">
         <span className="text-[hsl(var(--go-color))]">{data?.goCount ?? 0} GO</span>
-        <span className="text-yellow-400">{data?.holdCount ?? 0} HOLD</span>
-        <span className="text-red-400">{data?.rejectCount ?? 0} ABORT</span>
+        <span className="text-yellow-600">{data?.holdCount ?? 0} HOLD</span>
+        <span className="text-red-600">{data?.rejectCount ?? 0} ABORT</span>
         <span className="text-muted-foreground">{data?.tickerCount ?? 0} total</span>
       </div>
       <Table>
@@ -124,8 +124,8 @@ export function History() {
                     </TableCell>
                     <TableCell className="text-right font-mono">{item.tickerCount}</TableCell>
                     <TableCell className="text-right text-[hsl(var(--go-color))] font-mono">{item.goCount}</TableCell>
-                    <TableCell className="text-right text-yellow-400 font-mono">{item.holdCount}</TableCell>
-                    <TableCell className="text-right text-red-400 font-mono">{item.rejectCount}</TableCell>
+                    <TableCell className="text-right text-yellow-600 font-mono">{item.holdCount}</TableCell>
+                    <TableCell className="text-right text-red-600 font-mono">{item.rejectCount}</TableCell>
                     <TableCell className="text-right">
                       <ChevronRight className="h-4 w-4 text-muted-foreground" />
                     </TableCell>

@@ -12,12 +12,12 @@ const PAGE_SIZE = 50;
 
 const ACTION_COLORS: Record<string, string> = {
   scan: "text-[hsl(var(--go-color))]",
-  watchlist_create: "text-blue-400",
-  watchlist_update: "text-blue-400",
-  watchlist_delete: "text-red-400",
-  config_update: "text-yellow-400",
-  broker_execute: "text-purple-400",
-  api_key_update: "text-orange-400",
+  watchlist_create: "text-blue-600",
+  watchlist_update: "text-blue-600",
+  watchlist_delete: "text-red-600",
+  config_update: "text-yellow-600",
+  broker_execute: "text-purple-600",
+  api_key_update: "text-orange-600",
 };
 
 export function AuditLogs() {

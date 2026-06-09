@@ -124,7 +124,7 @@ export function Watchlists() {
                   <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditing(wl)}>
                     <Pencil className="h-4 w-4" />
                   </Button>
-                  <Button size="icon" variant="ghost" className="h-8 w-8 text-red-400 hover:text-red-300" onClick={() => setDeleting(wl)}>
+                  <Button size="icon" variant="ghost" className="h-8 w-8 text-red-600 hover:text-red-600" onClick={() => setDeleting(wl)}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>

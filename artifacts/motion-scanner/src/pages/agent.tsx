@@ -59,7 +59,7 @@ function ToolCallCard({ event }: { event: ToolEvent }) {
     <div className={cn(
       "flex items-start gap-2 py-1.5 px-3 rounded-md text-xs border my-1 transition-all",
       isDone
-        ? "bg-green-950/20 border-green-500/20 text-green-400"
+        ? "bg-green-950/20 border-green-500/20 text-green-600"
         : "bg-primary/5 border-primary/20 text-primary"
     )}>
       {isDone
@@ -90,7 +90,7 @@ function MarkdownContent({ content }: { content: string }) {
   const html = content
     .replace(/```(\w+)?\n?([\s\S]*?)```/g, (_: string, _lang: string, code: string) =>
       `<pre class="bg-black/40 border border-border rounded p-3 my-2 overflow-x-auto text-xs"><code>${code.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code></pre>`)
-    .replace(/`([^`]+)`/g, '<code class="bg-black/40 px-1 rounded text-xs font-mono text-green-400">$1</code>')
+    .replace(/`([^`]+)`/g, '<code class="bg-black/40 px-1 rounded text-xs font-mono text-green-600">$1</code>')
     .replace(/\*\*([^*]+)\*\*/g, '<strong class="text-foreground font-semibold">$1</strong>')
     .replace(/^### (.+)$/gm, '<h3 class="text-sm font-bold text-foreground mt-3 mb-1">$1</h3>')
     .replace(/^## (.+)$/gm, '<h2 class="text-base font-bold text-foreground mt-4 mb-1 border-b border-border pb-1">$1</h2>')
@@ -147,9 +147,9 @@ const ALEX_PARAMS = {
 };
 
 function AlexVerdictIcon({ verdict }: { verdict: string }) {
-  if (verdict === "GO") return <ArrowUpRight className="h-3.5 w-3.5 text-green-400" />;
-  if (verdict === "ABORT") return <ArrowDownRight className="h-3.5 w-3.5 text-red-400" />;
-  return <Minus className="h-3.5 w-3.5 text-yellow-400" />;
+  if (verdict === "GO") return <ArrowUpRight className="h-3.5 w-3.5 text-green-600" />;
+  if (verdict === "ABORT") return <ArrowDownRight className="h-3.5 w-3.5 text-red-600" />;
+  return <Minus className="h-3.5 w-3.5 text-yellow-600" />;
 }
 
 function AlexScreenerPanel({ onClose }: { onClose: () => void }) {
@@ -160,11 +160,11 @@ function AlexScreenerPanel({ onClose }: { onClose: () => void }) {
     <div className="border border-yellow-500/30 rounded-lg bg-yellow-500/5 overflow-hidden">
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-yellow-500/20 bg-yellow-500/10">
         <div className="flex items-center gap-2">
-          <Zap className="h-4 w-4 text-yellow-400" />
-          <span className="text-xs font-bold text-yellow-300 uppercase tracking-wider">Alex's Screener</span>
-          <span className="text-[10px] text-yellow-400/70">2× Range · $1-$10 · 20% Mom · ≤10% from High</span>
+          <Zap className="h-4 w-4 text-yellow-600" />
+          <span className="text-xs font-bold text-yellow-600 uppercase tracking-wider">Alex's Screener</span>
+          <span className="text-[10px] text-yellow-600/70">2× Range · $1-$10 · 20% Mom · ≤10% from High</span>
         </div>
-        <Button size="icon" variant="ghost" className="h-6 w-6 text-yellow-400/70 hover:text-yellow-300" onClick={onClose}>
+        <Button size="icon" variant="ghost" className="h-6 w-6 text-yellow-600/70 hover:text-yellow-600" onClick={onClose}>
           <X className="h-3.5 w-3.5" />
         </Button>
       </div>
@@ -178,7 +178,7 @@ function AlexScreenerPanel({ onClose }: { onClose: () => void }) {
         )}
 
         {isError && (
-          <p className="text-xs text-red-400 text-center py-4">Failed to run screener. Is the API server running?</p>
+          <p className="text-xs text-red-600 text-center py-4">Failed to run screener. Is the API server running?</p>
         )}
 
         {!isLoading && !isError && results.length === 0 && (
@@ -190,7 +190,7 @@ function AlexScreenerPanel({ onClose }: { onClose: () => void }) {
         {!isLoading && results.length > 0 && (
           <>
             <div className="text-xs text-muted-foreground mb-3">
-              <span className="text-yellow-300 font-semibold">{results.length}</span> ticker{results.length !== 1 ? "s" : ""} passed
+              <span className="text-yellow-600 font-semibold">{results.length}</span> ticker{results.length !== 1 ? "s" : ""} passed
               {data?.scanned ? ` (out of ${data.scanned} scanned)` : ""}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[380px] overflow-y-auto pr-1">
@@ -203,9 +203,9 @@ function AlexScreenerPanel({ onClose }: { onClose: () => void }) {
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-bold text-foreground">{r.ticker}</span>
                         <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0",
-                          r.verdict === "GO" ? "border-green-500/40 text-green-400" :
-                          r.verdict === "ABORT" ? "border-red-500/40 text-red-400" :
-                          "border-yellow-500/40 text-yellow-400"
+                          r.verdict === "GO" ? "border-green-500/40 text-green-600" :
+                          r.verdict === "ABORT" ? "border-red-500/40 text-red-600" :
+                          "border-yellow-500/40 text-yellow-600"
                         )}>
                           {r.verdict}
                         </Badge>
@@ -431,8 +431,8 @@ export function Agent() {
               className={cn(
                 "text-xs gap-1.5 h-7",
                 showAlexScreener
-                  ? "bg-yellow-500/20 border-yellow-500/50 text-yellow-300 hover:bg-yellow-500/30"
-                  : "border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10"
+                  ? "bg-yellow-500/20 border-yellow-500/50 text-yellow-600 hover:bg-yellow-500/30"
+                  : "border-yellow-500/30 text-yellow-600 hover:bg-yellow-500/10"
               )}
               onClick={() => setShowAlexScreener((v) => !v)}
             >
@@ -445,7 +445,7 @@ export function Agent() {
                 {pendingTools.map((t) => toolLabel(t.name)).join(", ")}
               </Badge>
             )}
-            <Badge variant="outline" className={cn("text-xs gap-1", streaming ? "border-yellow-500/40 text-yellow-400" : "border-green-500/40 text-green-400")}>
+            <Badge variant="outline" className={cn("text-xs gap-1", streaming ? "border-yellow-500/40 text-yellow-600" : "border-green-500/40 text-green-600")}>
               <span className={cn("w-1.5 h-1.5 rounded-full inline-block", streaming ? "bg-yellow-500 animate-pulse" : "bg-green-500")} />
               {streaming ? "Thinking…" : "Ready"}
             </Badge>
@@ -476,12 +476,12 @@ export function Agent() {
               {/* Alex's Screener one-click button */}
               <button
                 onClick={() => setShowAlexScreener(true)}
-                className="flex items-center gap-2 px-5 py-3 rounded-lg border-2 border-yellow-500/40 bg-yellow-500/10 hover:bg-yellow-500/20 hover:border-yellow-500/60 transition-all text-yellow-300 group"
+                className="flex items-center gap-2 px-5 py-3 rounded-lg border-2 border-yellow-500/40 bg-yellow-500/10 hover:bg-yellow-500/20 hover:border-yellow-500/60 transition-all text-yellow-600 group"
               >
-                <Zap className="h-5 w-5 text-yellow-400 group-hover:animate-pulse" />
+                <Zap className="h-5 w-5 text-yellow-600 group-hover:animate-pulse" />
                 <div className="text-left">
                   <span className="font-bold text-sm block">Alex's Screener</span>
-                  <span className="text-[10px] text-yellow-400/70">2× Range · $1-$10 · 20% Mom · ≤10% from High</span>
+                  <span className="text-[10px] text-yellow-600/70">2× Range · $1-$10 · 20% Mom · ≤10% from High</span>
                 </div>
               </button>
 

@@ -16,7 +16,7 @@ function ChangeBar({ value }: { value: number }) {
           style={{ width: `${pct}%` }}
         />
       </div>
-      <span className={`text-xs w-14 text-right font-mono ${positive ? "text-[hsl(var(--go-color))]" : "text-red-400"}`}>
+      <span className={`text-xs w-14 text-right font-mono ${positive ? "text-[hsl(var(--go-color))]" : "text-red-600"}`}>
         {positive ? "+" : ""}{formatPercent(value)}
       </span>
     </div>
@@ -38,7 +38,7 @@ export function SectorRotation() {
   if (error) {
     return (
       <div className="p-6">
-        <div className="text-red-400 bg-red-500/10 border border-red-500/20 rounded p-4">
+        <div className="text-red-600 bg-red-500/10 border border-red-500/20 rounded p-4">
           Failed to load sector data. Ensure Yahoo Finance is accessible.
         </div>
       </div>
@@ -56,7 +56,7 @@ export function SectorRotation() {
   if (sectors.length === 0) {
     return (
       <div className="p-6">
-        <div className="text-yellow-400 bg-yellow-500/10 border border-yellow-500/20 rounded p-4">
+        <div className="text-yellow-600 bg-yellow-500/10 border border-yellow-500/20 rounded p-4">
           Sector data is temporarily unavailable — the market data source (Yahoo Finance)
           is rate-limiting or unreachable right now. This usually clears within a few minutes; try again shortly.
         </div>
@@ -98,12 +98,12 @@ export function SectorRotation() {
           </Card>
           <Card className="bg-red-500/5 border-red-500/20">
             <CardHeader className="pb-2">
-              <CardTitle className="text-xs uppercase tracking-wider text-red-400">Laggards</CardTitle>
+              <CardTitle className="text-xs uppercase tracking-wider text-red-600">Laggards</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-1.5">
                 {laggards.map((s) => (
-                  <Badge key={s.etf} className="bg-red-500/20 text-red-400 border-red-500/30 font-mono">
+                  <Badge key={s.etf} className="bg-red-500/20 text-red-600 border-red-500/30 font-mono">
                     {s.etf}
                   </Badge>
                 ))}
@@ -140,7 +140,7 @@ export function SectorRotation() {
                   <td className="px-4 py-3"><ChangeBar value={s.ret1d} /></td>
                   <td className="px-4 py-3"><ChangeBar value={s.ret5d} /></td>
                   <td className="px-4 py-3 text-right font-mono">
-                    <span className={s.ret20d >= 0 ? "text-[hsl(var(--go-color))]" : "text-red-400"}>
+                    <span className={s.ret20d >= 0 ? "text-[hsl(var(--go-color))]" : "text-red-600"}>
                       {s.ret20d >= 0 ? "+" : ""}{formatPercent(s.ret20d)}
                     </span>
                   </td>
@@ -153,7 +153,7 @@ export function SectorRotation() {
                       </span>
                     )}
                     {s.laggard && (
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded border text-xs font-bold bg-red-500/20 text-red-400 border-red-500/30">
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded border text-xs font-bold bg-red-500/20 text-red-600 border-red-500/30">
                         LAG
                       </span>
                     )}

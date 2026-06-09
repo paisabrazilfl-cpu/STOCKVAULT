@@ -395,7 +395,7 @@ function ApiKeysSection({ keys, apiDown }: { keys?: ApiKeyStatus; apiDown?: bool
       </CardHeader>
       <CardContent className="space-y-3">
         {apiDown && (
-          <div className="rounded border border-yellow-500/30 bg-yellow-500/10 p-3 text-sm text-yellow-200">
+          <div className="rounded border border-yellow-600/30 bg-yellow-50 p-3 text-sm text-yellow-800">
             API server is unreachable — you can fill in your keys now and save once the server is back online.
           </div>
         )}
