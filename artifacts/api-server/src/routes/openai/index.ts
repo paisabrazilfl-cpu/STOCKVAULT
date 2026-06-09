@@ -26,6 +26,11 @@ interface ChatCompletionTool {
 
 const router = Router();
 
+// AI model id. Defaults to NVIDIA's Nemotron (served via the OpenAI-compatible
+// NIM endpoint at integrate.api.nvidia.com/v1). Override with AI_MODEL to point
+// at any other OpenAI-compatible model.
+const AI_MODEL = process.env.AI_MODEL || "nvidia/nemotron-3-ultra-550b-a55b";
+
 // ── Tenant API keys ──────────────────────────────────────────────────────────
 
 async function getTenantKeys(tenantId: number): Promise<TenantProviderKeys> {
@@ -317,8 +322,8 @@ router.post("/openai/conversations/:id/messages", async (req, res) => {
       // Stream the response so content chunks are forwarded in real time
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const stream = await (openai.chat.completions.create as any)({
-        model: "gpt-5.4",
-        max_completion_tokens: 8192,
+        model: AI_MODEL,
+        max_tokens: 8192,
         messages: loopMessages,
         tools: TOOLS,
         stream: true,
