@@ -730,6 +730,34 @@ paths:
               schema:
                 $ref: "#/components/schemas/NewsFeed"
 
+  # ── TICKER SEARCH ─────────────────────────────────────────────────────────
+  /tickers/search:
+    get:
+      operationId: searchTickers
+      tags: [scan]
+      summary: Search the ticker reference directory (Polygon / Massive)
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Symbol or company name to search for
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+      responses:
+        "200":
+          description: Matching tickers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TickerSearchResult"
+
   # ── CHART ─────────────────────────────────────────────────────────────────
   /chart/{ticker}:
     get:
@@ -1499,6 +1527,41 @@ components:
           type: string
         category:
           type: string
+
+    # ── TICKER SEARCH ──────────────────────────────────────────────────────
+    TickerRef:
+      type: object
+      required: [ticker, name, market, active]
+      properties:
+        ticker:
+          type: string
+        name:
+          type: string
+        market:
+          type: string
+        primaryExchange:
+          type: string
+          nullable: true
+        type:
+          type: string
+          nullable: true
+        currency:
+          type: string
+          nullable: true
+        active:
+          type: boolean
+
+    TickerSearchResult:
+      type: object
+      required: [results, source]
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/TickerRef"
+        source:
+          type: string
+          description: Upstream provider used (polygon / massive), or "none" when no key is set.
 
     # ── CHART ─────────────────────────────────────────────────────────────
     Candle:

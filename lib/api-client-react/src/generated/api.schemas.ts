@@ -559,6 +559,22 @@ export interface NewsFeed {
   category: string;
 }
 
+export interface TickerRef {
+  ticker: string;
+  name: string;
+  market: string;
+  primaryExchange?: string | null;
+  type?: string | null;
+  currency?: string | null;
+  active: boolean;
+}
+
+export interface TickerSearchResult {
+  results: TickerRef[];
+  /** Upstream provider used (polygon / massive), or "none" when no key is set. */
+  source: string;
+}
+
 export interface Candle {
   time: number;
   open: number;
@@ -730,6 +746,18 @@ export const GetNewsCategory = {
   merger: 'merger',
   all: 'all',
 } as const;
+
+export type SearchTickersParams = {
+/**
+ * Symbol or company name to search for
+ */
+q: string;
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+limit?: number;
+};
 
 export type GetChartParams = {
 range?: GetChartRange;

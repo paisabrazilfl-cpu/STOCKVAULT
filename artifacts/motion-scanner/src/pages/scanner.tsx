@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useRunScan, useListWatchlists, useRunScreener,
-  useUpdateWatchlist, useCreateWatchlist,
+  useUpdateWatchlist, useCreateWatchlist, useSearchTickers,
 } from "@workspace/api-client-react";
 import type { ScanResult, CandidateRecord, RunScreenerParams, Watchlist } from "@workspace/api-client-react";
 import { TickerChart } from "@/components/TickerChart";
@@ -552,6 +552,57 @@ function ResultsTable({
 }
 
 // ── Manual scan tab ────────────────────────────────────────────────────────
+// Symbol search — type a company name or symbol, click a match to add it to
+// the scan list. Backed by the Polygon/Massive ticker reference directory;
+// silently yields nothing when no provider key is configured.
+function TickerSearch({ onAdd }: { onAdd: (symbol: string) => void }) {
+  const [query, setQuery] = useState("");
+  const enabled = query.trim().length >= 2;
+  const { data, isFetching } = useSearchTickers(
+    { q: query.trim(), limit: 8 },
+    { query: { enabled, staleTime: 60_000, queryKey: ["/api/tickers/search", query.trim()] } },
+  );
+  const results = data?.results ?? [];
+
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs text-muted-foreground uppercase">Search symbols</Label>
+      <Input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Search a company or symbol, e.g. apple…"
+        className="text-sm"
+      />
+      {enabled && (
+        <div className="rounded-md border border-border divide-y divide-border max-h-48 overflow-y-auto">
+          {isFetching && results.length === 0 && (
+            <div className="px-3 py-2 text-xs text-muted-foreground">Searching…</div>
+          )}
+          {!isFetching && results.length === 0 && (
+            <div className="px-3 py-2 text-xs text-muted-foreground">
+              No matches. (Symbol search needs a Polygon/Massive key — add one in Settings.)
+            </div>
+          )}
+          {results.map((r) => (
+            <button
+              key={r.ticker}
+              type="button"
+              onClick={() => { onAdd(r.ticker); setQuery(""); }}
+              className="w-full flex items-center justify-between gap-2 px-3 py-2 text-left hover:bg-muted/40 transition-colors"
+            >
+              <span className="flex items-center gap-2 min-w-0">
+                <span className="font-mono font-semibold text-sm shrink-0">{r.ticker}</span>
+                <span className="text-xs text-muted-foreground truncate">{r.name}</span>
+              </span>
+              <Plus className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ManualScan() {
   const [tickerInput, setTickerInput] = useState("AAPL,MSFT,NVDA,AMZN,TSLA,META,GOOGL,JPM");
   const [selectedWatchlist, setSelectedWatchlist] = useState<string>("none");
@@ -562,6 +613,14 @@ function ManualScan() {
   const { mutate: runScan, isPending } = useRunScan({
     mutation: { onSuccess: (data) => setResult(data) },
   });
+
+  const addTicker = (symbol: string) => {
+    const sym = symbol.toUpperCase();
+    const existing = tickerInput.split(/[\s,]+/).map((t) => t.trim().toUpperCase()).filter(Boolean);
+    if (existing.includes(sym)) return;
+    setTickerInput([...existing, sym].join(","));
+    setSelectedWatchlist("none");
+  };
 
   const handleScan = () => {
     const wl = selectedWatchlist !== "none"
@@ -586,6 +645,7 @@ function ManualScan() {
           <CardTitle className="text-sm uppercase tracking-wider">Configure Scan</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
+          <TickerSearch onAdd={addTicker} />
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground uppercase">Tickers</Label>

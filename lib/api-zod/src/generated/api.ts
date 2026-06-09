@@ -757,6 +757,33 @@ export const GetNewsResponse = zod.object({
 
 
 /**
+ * @summary Search the ticker reference directory (Polygon / Massive)
+ */
+export const searchTickersQueryLimitDefault = 20;
+export const searchTickersQueryLimitMax = 100;
+
+
+
+export const SearchTickersQueryParams = zod.object({
+  "q": zod.coerce.string().describe('Symbol or company name to search for'),
+  "limit": zod.coerce.number().min(1).max(searchTickersQueryLimitMax).default(searchTickersQueryLimitDefault)
+})
+
+export const SearchTickersResponse = zod.object({
+  "results": zod.array(zod.object({
+  "ticker": zod.string(),
+  "name": zod.string(),
+  "market": zod.string(),
+  "primaryExchange": zod.string().nullish(),
+  "type": zod.string().nullish(),
+  "currency": zod.string().nullish(),
+  "active": zod.boolean()
+})),
+  "source": zod.string().describe('Upstream provider used (polygon \/ massive), or \"none\" when no key is set.')
+})
+
+
+/**
  * @summary OHLCV candle data for a ticker
  */
 export const GetChartParams = zod.object({

@@ -76,6 +76,14 @@ services:
         sync: false
       - key: AI_MODEL
         value: minimaxai/minimax-m2.7
+      # ── Ticker reference search (Polygon or Massive — identical API) ───────
+      # Symbol search uses /v3/reference/tickers. Defaults to Polygon's host;
+      # set TICKERS_BASE_URL=https://api.massive.com to use Massive instead.
+      # The key falls back to each tenant's stored Polygon key when unset.
+      - key: TICKERS_BASE_URL
+        value: https://api.polygon.io
+      - key: POLYGON_API_KEY
+        sync: false
 
   # ── Frontend (Vite static site) ────────────────────────────────────────────
   - type: web

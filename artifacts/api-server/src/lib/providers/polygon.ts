@@ -45,6 +45,49 @@ export interface PolygonData {
   source: "polygon";
 }
 
+// Ticker reference search. Polygon and Massive expose the identical
+// `/v3/reference/tickers` endpoint, so the same key + code works against
+// either host — set TICKERS_BASE_URL=https://api.massive.com to use Massive.
+const TICKERS_BASE = process.env.TICKERS_BASE_URL || BASE;
+
+export interface TickerRef {
+  ticker: string;
+  name: string;
+  market: string;
+  primaryExchange: string | null;
+  type: string | null;
+  currency: string | null;
+  active: boolean;
+}
+
+/**
+ * Search the ticker reference directory by symbol or company name.
+ * Returns [] when no key is configured or the upstream call fails — callers
+ * degrade gracefully (search just yields no matches).
+ */
+export async function searchTickers(query: string, apiKey: string, limit = 20): Promise<TickerRef[]> {
+  if (!apiKey || !query.trim()) return [];
+  try {
+    const { data } = await axios.get(`${TICKERS_BASE}/v3/reference/tickers`, {
+      timeout: 10000,
+      headers: { Authorization: `Bearer ${apiKey}` },
+      params: { search: query.trim(), active: true, limit: Math.min(Math.max(limit, 1), 100), market: "stocks" },
+    });
+    const results = (data?.results ?? []) as any[];
+    return results.map((r) => ({
+      ticker: String(r.ticker ?? ""),
+      name: String(r.name ?? ""),
+      market: String(r.market ?? ""),
+      primaryExchange: r.primary_exchange ?? null,
+      type: r.type ?? null,
+      currency: r.currency_name ?? null,
+      active: Boolean(r.active),
+    })).filter((r) => r.ticker);
+  } catch {
+    return [];
+  }
+}
+
 async function pgGet<T>(path: string, apiKey: string): Promise<T | null> {
   try {
     const { data } = await axios.get(`${BASE}${path}`, {

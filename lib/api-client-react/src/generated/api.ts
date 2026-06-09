@@ -60,7 +60,9 @@ import type {
   ScanRequest,
   ScanResult,
   ScreenerResult,
+  SearchTickersParams,
   SectorRotation,
+  TickerSearchResult,
   Watchlist,
   WatchlistInput
 } from './api.schemas';
@@ -2628,6 +2630,90 @@ export function useGetNews<TData = Awaited<ReturnType<typeof getNews>>, TError =
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetNewsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getSearchTickersUrl = (params: SearchTickersParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/tickers/search?${stringifiedParams}` : `/api/tickers/search`
+}
+
+/**
+ * @summary Search the ticker reference directory (Polygon / Massive)
+ */
+export const searchTickers = async (params: SearchTickersParams, options?: RequestInit): Promise<TickerSearchResult> => {
+
+  return customFetch<TickerSearchResult>(getSearchTickersUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getSearchTickersQueryKey = (params?: SearchTickersParams,) => {
+    return [
+    `/api/tickers/search`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getSearchTickersQueryOptions = <TData = Awaited<ReturnType<typeof searchTickers>>, TError = ErrorType<unknown>>(params: SearchTickersParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof searchTickers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getSearchTickersQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof searchTickers>>> = ({ signal }) => searchTickers(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof searchTickers>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type SearchTickersQueryResult = NonNullable<Awaited<ReturnType<typeof searchTickers>>>
+export type SearchTickersQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Search the ticker reference directory (Polygon / Massive)
+ */
+
+export function useSearchTickers<TData = Awaited<ReturnType<typeof searchTickers>>, TError = ErrorType<unknown>>(
+ params: SearchTickersParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof searchTickers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getSearchTickersQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
