@@ -337,16 +337,16 @@ function ProviderRow(p: ProviderRowProps) {
   );
 }
 
-function ApiKeysSection({ keys }: { keys: ApiKeyStatus }) {
+function ApiKeysSection({ keys, apiDown }: { keys?: ApiKeyStatus; apiDown?: boolean }) {
   const qc = useQueryClient();
   const { toast } = useToast();
 
   const [alpacaApiKey, setAlpacaApiKey] = useState("");
   const [alpacaSecretKey, setAlpacaSecretKey] = useState("");
-  const [alpacaPaper, setAlpacaPaper] = useState(keys.alpacaPaper ?? true);
+  const [alpacaPaper, setAlpacaPaper] = useState(keys?.alpacaPaper ?? true);
   const [brokerApiKey, setBrokerApiKey] = useState("");
   const [brokerSecretKey, setBrokerSecretKey] = useState("");
-  const [brokerSandbox, setBrokerSandbox] = useState(keys.alpacaBrokerSandbox ?? true);
+  const [brokerSandbox, setBrokerSandbox] = useState(keys?.alpacaBrokerSandbox ?? true);
   const [polygonApiKey, setPolygonApiKey] = useState("");
   const [finnhubApiKey, setFinnhubApiKey] = useState("");
   const [geminiApiKey, setGeminiApiKey] = useState("");
@@ -359,6 +359,9 @@ function ApiKeysSection({ keys }: { keys: ApiKeyStatus }) {
         toast({ title: "API keys saved", description: "All keys encrypted with AES-256-GCM." });
         setAlpacaApiKey(""); setAlpacaSecretKey(""); setBrokerApiKey(""); setBrokerSecretKey("");
         setPolygonApiKey(""); setFinnhubApiKey(""); setGeminiApiKey("");
+      },
+      onError: () => {
+        toast({ title: "Could not save", description: "API server is unreachable. Keys will save once it's back online.", variant: "destructive" });
       },
     },
   });
@@ -391,6 +394,11 @@ function ApiKeysSection({ keys }: { keys: ApiKeyStatus }) {
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
+        {apiDown && (
+          <div className="rounded border border-yellow-500/30 bg-yellow-500/10 p-3 text-sm text-yellow-200">
+            API server is unreachable — you can fill in your keys now and save once the server is back online.
+          </div>
+        )}
         {/* Yahoo Finance — always active */}
         <div className="rounded border border-[hsl(var(--go-color))]/20 bg-[hsl(var(--go-color))]/5 p-4">
           <div className="flex items-center justify-between">
@@ -408,7 +416,7 @@ function ApiKeysSection({ keys }: { keys: ApiKeyStatus }) {
         <ProviderRow
           name="Polygon.io"
           description="Real-time quotes, options flow (P/C ratio, IV, call/put volumes), news headlines"
-          configured={keys.polygonConfigured}
+          configured={keys?.polygonConfigured}
           signupUrl="https://polygon.io"
           keyLabel="API Key"
           keyPlaceholder="Enter Polygon API key..."
@@ -419,7 +427,7 @@ function ApiKeysSection({ keys }: { keys: ApiKeyStatus }) {
         <ProviderRow
           name="Finnhub"
           description="Real-time quote, news sentiment score, earnings calendar, EPS surprise, company profile"
-          configured={keys.finnhubConfigured}
+          configured={keys?.finnhubConfigured}
           signupUrl="https://finnhub.io"
           keyLabel="API Key"
           keyPlaceholder="Enter Finnhub API key..."
@@ -427,7 +435,7 @@ function ApiKeysSection({ keys }: { keys: ApiKeyStatus }) {
           onKeyChange={setFinnhubApiKey}
         />
 
-        {keys.geminiManaged ? (
+        {keys?.geminiManaged ? (
           <div className="rounded border border-[hsl(var(--go-color))]/20 bg-[hsl(var(--go-color))]/5 p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -446,7 +454,7 @@ function ApiKeysSection({ keys }: { keys: ApiKeyStatus }) {
           <ProviderRow
             name="Google Gemini"
             description="AI completions, embeddings, multimodal analysis — powers the Market Analysis Agent"
-            configured={keys.geminiConfigured}
+            configured={keys?.geminiConfigured}
             signupUrl="https://ai.google.dev"
             keyLabel="API Key"
             keyPlaceholder="Enter Gemini API key..."
@@ -455,7 +463,7 @@ function ApiKeysSection({ keys }: { keys: ApiKeyStatus }) {
           />
         )}
 
-        {keys.alpacaManaged ? (
+        {keys?.alpacaManaged ? (
           <div className="rounded border border-[hsl(var(--go-color))]/20 bg-[hsl(var(--go-color))]/5 p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -475,7 +483,7 @@ function ApiKeysSection({ keys }: { keys: ApiKeyStatus }) {
           <ProviderRow
             name="Alpaca Paper Trading"
             description="Automated paper trade execution, account positions, P&L"
-            configured={keys.alpacaConfigured}
+            configured={keys?.alpacaConfigured}
             signupUrl="https://alpaca.markets"
             keyLabel="API Key"
             keyPlaceholder="PKXXXXXXXX..."
@@ -498,7 +506,7 @@ function ApiKeysSection({ keys }: { keys: ApiKeyStatus }) {
         )}
 
         {/* ── Alpaca Broker API (per-user brokerage accounts) ───────────────── */}
-        {keys.alpacaBrokerManaged ? (
+        {keys?.alpacaBrokerManaged ? (
           <div className="rounded border border-[hsl(var(--go-color))]/20 bg-[hsl(var(--go-color))]/5 p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -524,7 +532,7 @@ function ApiKeysSection({ keys }: { keys: ApiKeyStatus }) {
               </div>
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1.5 text-xs">
-                  <StatusDot configured={keys.alpacaBrokerConfigured} />
+                  <StatusDot configured={keys?.alpacaBrokerConfigured} />
                 </div>
                 <a href="https://broker-app.alpaca.markets/" target="_blank" rel="noopener noreferrer"
                   className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
@@ -556,12 +564,12 @@ function ApiKeysSection({ keys }: { keys: ApiKeyStatus }) {
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground uppercase">Broker API Key ID</Label>
                 <Input type="password" value={brokerApiKey} onChange={(e) => setBrokerApiKey(e.target.value)}
-                  placeholder={keys.alpacaBrokerConfigured ? "••••••••••••" : "CKXXXXXXXXXXXXXXXXXX"} className="font-mono text-xs" />
+                  placeholder={keys?.alpacaBrokerConfigured ? "••••••••••••" : "CKXXXXXXXXXXXXXXXXXX"} className="font-mono text-xs" />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground uppercase">Broker Secret</Label>
                 <Input type="password" value={brokerSecretKey} onChange={(e) => setBrokerSecretKey(e.target.value)}
-                  placeholder={keys.alpacaBrokerConfigured ? "••••••••••••" : "Enter secret..."} className="font-mono text-xs" />
+                  placeholder={keys?.alpacaBrokerConfigured ? "••••••••••••" : "Enter secret..."} className="font-mono text-xs" />
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -583,24 +591,24 @@ function ApiKeysSection({ keys }: { keys: ApiKeyStatus }) {
 }
 
 export function Settings() {
-  const { data: config, isLoading: configLoading } = useGetConfig();
-  const { data: keys, isLoading: keysLoading } = useGetApiKeys();
+  const { data: config, isLoading: configLoading, isError: configError } = useGetConfig();
+  const { data: keys, isLoading: keysLoading, isError: keysError } = useGetApiKeys();
 
-  if (configLoading || keysLoading) {
-    return (
-      <div className="p-6 space-y-4">
-        <Skeleton className="h-8 w-40" />
-        <Skeleton className="h-64 w-full" />
-        <Skeleton className="h-80 w-full" />
-      </div>
-    );
-  }
+  const apiDown = configError || keysError;
 
   return (
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold">Settings</h1>
-      {config && <ConfigSection config={config} />}
-      {keys && <ApiKeysSection keys={keys} />}
+      {configLoading ? (
+        <Skeleton className="h-64 w-full" />
+      ) : config ? (
+        <ConfigSection config={config} />
+      ) : null}
+      {keysLoading ? (
+        <Skeleton className="h-80 w-full" />
+      ) : (
+        <ApiKeysSection keys={keys} apiDown={apiDown} />
+      )}
     </div>
   );
 }
