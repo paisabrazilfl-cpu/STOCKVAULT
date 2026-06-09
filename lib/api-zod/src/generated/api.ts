@@ -826,6 +826,10 @@ export const GetApiKeysResponse = zod.object({
   "discordConfigured": zod.boolean().optional(),
   "geminiConfigured": zod.boolean().optional().describe('True when a Google Gemini API key is on file.'),
   "geminiManaged": zod.boolean().optional().describe('True when the Gemini key comes from server env (GEMINI_API_KEY).'),
+  "aiConfigured": zod.boolean().optional().describe('True when an AI engine API key is on file (per-tenant or server env).'),
+  "aiManaged": zod.boolean().optional().describe('True when the AI engine key comes from server env (AI_INTEGRATIONS_OPENAI_API_KEY). When set, the Settings input is read-only.'),
+  "aiBaseUrl": zod.string().nullish().describe('Current AI engine base URL (OpenAI-compatible endpoint).'),
+  "aiModel": zod.string().nullish().describe('Current AI engine model id.'),
   "alpacaPaper": zod.boolean().optional()
 })
 
@@ -844,7 +848,10 @@ export const UpdateApiKeysBody = zod.object({
   "polygonApiKey": zod.string().nullish(),
   "finnhubApiKey": zod.string().nullish(),
   "discordWebhookUrl": zod.string().nullish(),
-  "geminiApiKey": zod.string().nullish()
+  "geminiApiKey": zod.string().nullish(),
+  "aiApiKey": zod.string().nullish(),
+  "aiBaseUrl": zod.string().nullish(),
+  "aiModel": zod.string().nullish()
 })
 
 export const UpdateApiKeysResponse = zod.object({
@@ -859,6 +866,10 @@ export const UpdateApiKeysResponse = zod.object({
   "discordConfigured": zod.boolean().optional(),
   "geminiConfigured": zod.boolean().optional().describe('True when a Google Gemini API key is on file.'),
   "geminiManaged": zod.boolean().optional().describe('True when the Gemini key comes from server env (GEMINI_API_KEY).'),
+  "aiConfigured": zod.boolean().optional().describe('True when an AI engine API key is on file (per-tenant or server env).'),
+  "aiManaged": zod.boolean().optional().describe('True when the AI engine key comes from server env (AI_INTEGRATIONS_OPENAI_API_KEY). When set, the Settings input is read-only.'),
+  "aiBaseUrl": zod.string().nullish().describe('Current AI engine base URL (OpenAI-compatible endpoint).'),
+  "aiModel": zod.string().nullish().describe('Current AI engine model id.'),
   "alpacaPaper": zod.boolean().optional()
 })
 

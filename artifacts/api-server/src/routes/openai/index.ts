@@ -2,7 +2,7 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { conversations, messages, watchlistsTable, scanResultsTable, apiKeysTable } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
-import { openai } from "@workspace/integrations-openai-ai-server";
+import { openai, createOpenAIClient } from "@workspace/integrations-openai-ai-server";
 import {
   CreateOpenaiConversationBody,
   SendOpenaiMessageBody,
@@ -11,6 +11,7 @@ import { runScan, DEFAULT_CONFIG } from "../../lib/scanner";
 import { getSectorRotation } from "../../lib/sector";
 import { fetchYahooChart } from "../../lib/providers/yahoo";
 import { decrypt } from "../../lib/crypto";
+import { getTenantAiConfig } from "../../lib/ai-engine";
 import type { TenantProviderKeys } from "../../lib/providers";
 
 // Minimal OpenAI chat types (avoids importing from transitive `openai` pkg)
@@ -317,12 +318,20 @@ router.post("/openai/conversations/:id/messages", async (req, res) => {
   let fullResponse = "";
   const MAX_TURNS = 6;
 
+  // Resolve the AI engine for this tenant. A per-tenant key (entered in
+  // Settings) builds a dedicated client; otherwise we use the server-wide
+  // env-based singleton. Model/base URL follow the same precedence.
+  const ai = await getTenantAiConfig(req.tenantId);
+  const aiClient = ai.apiKey
+    ? createOpenAIClient({ apiKey: ai.apiKey, baseURL: ai.baseUrl })
+    : openai;
+
   try {
     for (let turn = 0; turn < MAX_TURNS; turn++) {
       // Stream the response so content chunks are forwarded in real time
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const stream = await (openai.chat.completions.create as any)({
-        model: AI_MODEL,
+      const stream = await (aiClient.chat.completions.create as any)({
+        model: ai.model || AI_MODEL,
         max_tokens: 8192,
         messages: loopMessages,
         tools: TOOLS,

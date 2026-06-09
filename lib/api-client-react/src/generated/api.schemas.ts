@@ -459,6 +459,20 @@ export interface ApiKeyStatus {
   geminiConfigured?: boolean;
   /** True when the Gemini key comes from server env (GEMINI_API_KEY). */
   geminiManaged?: boolean;
+  /** True when an AI engine API key is on file (per-tenant or server env). */
+  aiConfigured?: boolean;
+  /** True when the AI engine key comes from server env (AI_INTEGRATIONS_OPENAI_API_KEY). When set, the Settings input is read-only. */
+  aiManaged?: boolean;
+  /**
+     * Current AI engine base URL (OpenAI-compatible endpoint).
+     * @nullable
+     */
+  aiBaseUrl?: string | null;
+  /**
+     * Current AI engine model id.
+     * @nullable
+     */
+  aiModel?: string | null;
   alpacaPaper?: boolean;
 }
 
@@ -485,6 +499,12 @@ export interface ApiKeyInput {
   discordWebhookUrl?: string | null;
   /** @nullable */
   geminiApiKey?: string | null;
+  /** @nullable */
+  aiApiKey?: string | null;
+  /** @nullable */
+  aiBaseUrl?: string | null;
+  /** @nullable */
+  aiModel?: string | null;
 }
 
 export interface ScreenerResult {

@@ -1363,6 +1363,21 @@ components:
         geminiManaged:
           type: boolean
           description: True when the Gemini key comes from server env (GEMINI_API_KEY).
+        aiConfigured:
+          type: boolean
+          description: True when an AI engine API key is on file (per-tenant or server env).
+        aiManaged:
+          type: boolean
+          description: >-
+            True when the AI engine key comes from server env
+            (AI_INTEGRATIONS_OPENAI_API_KEY). When set, the Settings input is
+            read-only.
+        aiBaseUrl:
+          type: ["string", "null"]
+          description: Current AI engine base URL (OpenAI-compatible endpoint).
+        aiModel:
+          type: ["string", "null"]
+          description: Current AI engine model id.
         alpacaPaper:
           type: boolean
 
@@ -1390,6 +1405,12 @@ components:
         discordWebhookUrl:
           type: ["string", "null"]
         geminiApiKey:
+          type: ["string", "null"]
+        aiApiKey:
+          type: ["string", "null"]
+        aiBaseUrl:
+          type: ["string", "null"]
+        aiModel:
           type: ["string", "null"]
 
 

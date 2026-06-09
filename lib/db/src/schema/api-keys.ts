@@ -17,6 +17,11 @@ export const apiKeysTable = pgTable("api_keys", {
   finnhubApiKeyEnc: text("finnhub_api_key_enc"),
   discordWebhookUrlEnc: text("discord_webhook_url_enc"),
   geminiApiKeyEnc: text("gemini_api_key_enc"),
+  // AI engine (OpenAI-compatible) — key encrypted, base URL + model in clear.
+  // Powers the Market Analysis Agent. Defaults to NVIDIA NIM (Nemotron).
+  aiApiKeyEnc: text("ai_api_key_enc"),
+  aiBaseUrl: text("ai_base_url"),
+  aiModel: text("ai_model"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });
 

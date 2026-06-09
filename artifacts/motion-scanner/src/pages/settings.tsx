@@ -350,6 +350,9 @@ function ApiKeysSection({ keys, apiDown }: { keys?: ApiKeyStatus; apiDown?: bool
   const [polygonApiKey, setPolygonApiKey] = useState("");
   const [finnhubApiKey, setFinnhubApiKey] = useState("");
   const [geminiApiKey, setGeminiApiKey] = useState("");
+  const [aiApiKey, setAiApiKey] = useState("");
+  const [aiBaseUrl, setAiBaseUrl] = useState(keys?.aiBaseUrl ?? "");
+  const [aiModel, setAiModel] = useState(keys?.aiModel ?? "");
 
   const { mutate: update, isPending } = useUpdateApiKeys({
     mutation: {
@@ -358,7 +361,7 @@ function ApiKeysSection({ keys, apiDown }: { keys?: ApiKeyStatus; apiDown?: bool
         qc.invalidateQueries({ queryKey: ["/api/broker/accounts/me"] });
         toast({ title: "API keys saved", description: "All keys encrypted with AES-256-GCM." });
         setAlpacaApiKey(""); setAlpacaSecretKey(""); setBrokerApiKey(""); setBrokerSecretKey("");
-        setPolygonApiKey(""); setFinnhubApiKey(""); setGeminiApiKey("");
+        setPolygonApiKey(""); setFinnhubApiKey(""); setGeminiApiKey(""); setAiApiKey("");
       },
       onError: () => {
         toast({ title: "Could not save", description: "API server is unreachable. Keys will save once it's back online.", variant: "destructive" });
@@ -366,8 +369,9 @@ function ApiKeysSection({ keys, apiDown }: { keys?: ApiKeyStatus; apiDown?: bool
     },
   });
 
+  const aiChanged = aiApiKey || aiBaseUrl !== (keys?.aiBaseUrl ?? "") || aiModel !== (keys?.aiModel ?? "");
   const hasChanges =
-    alpacaApiKey || alpacaSecretKey || brokerApiKey || brokerSecretKey || polygonApiKey || finnhubApiKey || geminiApiKey;
+    alpacaApiKey || alpacaSecretKey || brokerApiKey || brokerSecretKey || polygonApiKey || finnhubApiKey || geminiApiKey || aiChanged;
 
   const handleSave = () => {
     update({
@@ -381,6 +385,9 @@ function ApiKeysSection({ keys, apiDown }: { keys?: ApiKeyStatus; apiDown?: bool
         polygonApiKey: polygonApiKey || undefined,
         finnhubApiKey: finnhubApiKey || undefined,
         geminiApiKey: geminiApiKey || undefined,
+        aiApiKey: aiApiKey || undefined,
+        aiBaseUrl: aiBaseUrl || undefined,
+        aiModel: aiModel || undefined,
       },
     });
   };
@@ -461,6 +468,63 @@ function ApiKeysSection({ keys, apiDown }: { keys?: ApiKeyStatus; apiDown?: bool
             keyValue={geminiApiKey}
             onKeyChange={setGeminiApiKey}
           />
+        )}
+
+        {/* ── AI Engine (the Market Analysis Agent's brain) ─────────────────── */}
+        {keys?.aiManaged ? (
+          <div className="rounded border border-[hsl(var(--go-color))]/20 bg-[hsl(var(--go-color))]/5 p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-medium">AI Engine</div>
+                <div className="text-xs text-muted-foreground">
+                  Wired in via server configuration (AI_INTEGRATIONS_OPENAI_API_KEY).
+                  Model: <span className="font-mono">{keys?.aiModel}</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs">
+                <CheckCircle className="h-4 w-4 text-[hsl(var(--go-color))]" />
+                <span className="text-[hsl(var(--go-color))]">Connected (server)</span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded border border-border p-4 space-y-3">
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="text-sm font-medium">AI Engine</div>
+                <div className="text-xs text-muted-foreground">
+                  Powers the Market Analysis Agent. Any OpenAI-compatible endpoint
+                  (NVIDIA NIM, OpenAI, Together, Groq…). Defaults to NVIDIA Nemotron.
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 text-xs">
+                  <StatusDot configured={keys?.aiConfigured} />
+                </div>
+                <a href="https://build.nvidia.com" target="_blank" rel="noopener noreferrer"
+                  className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
+                  <ExternalLink className="h-3 w-3" />Get key
+                </a>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground uppercase">API Key</Label>
+              <Input type="password" value={aiApiKey} onChange={(e) => setAiApiKey(e.target.value)}
+                placeholder={keys?.aiConfigured ? "••••••••••••" : "nvapi-… / sk-…"} className="font-mono text-xs" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground uppercase">Base URL</Label>
+                <Input value={aiBaseUrl} onChange={(e) => setAiBaseUrl(e.target.value)}
+                  placeholder="https://integrate.api.nvidia.com/v1" className="font-mono text-xs" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground uppercase">Model</Label>
+                <Input value={aiModel} onChange={(e) => setAiModel(e.target.value)}
+                  placeholder="nvidia/nemotron-3-ultra-550b-a55b" className="font-mono text-xs" />
+              </div>
+            </div>
+          </div>
         )}
 
         {keys?.alpacaManaged ? (
