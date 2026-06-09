@@ -10,8 +10,9 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle, XCircle, ExternalLink } from "lucide-react";
+import { CheckCircle, XCircle, ExternalLink, Sparkles, KeyRound, Info } from "lucide-react";
 
 function StatusDot({ configured }: { configured?: boolean }) {
   return configured
@@ -396,14 +397,30 @@ function ApiKeysSection({ keys, apiDown }: { keys?: ApiKeyStatus; apiDown?: bool
     <Card className="bg-card border-border">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm uppercase tracking-wider">Data Providers & API Keys</CardTitle>
-          <Badge variant="outline" className="text-xs text-muted-foreground">AES-256-GCM Encrypted</Badge>
+          <div>
+            <CardTitle className="text-base">Your accounts &amp; keys</CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              Paste a key to turn on a feature. Only the <strong>AI Engine</strong> is needed to start — the rest are optional.
+            </p>
+          </div>
+          <Badge variant="outline" className="text-xs text-muted-foreground flex items-center gap-1 shrink-0">
+            <KeyRound className="h-3 w-3" /> Encrypted
+          </Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
         {apiDown && (
-          <div className="rounded border border-yellow-600/30 bg-yellow-50 p-3 text-sm text-yellow-800">
-            API server is unreachable — you can fill in your keys now and save once the server is back online.
+          <div className="rounded-lg border border-yellow-500/40 bg-yellow-50 p-4 text-sm text-yellow-900">
+            <div className="flex items-start gap-2">
+              <Info className="h-4 w-4 mt-0.5 shrink-0" />
+              <div className="space-y-1">
+                <div className="font-semibold">We can't reach the server right now</div>
+                <div className="text-yellow-800">
+                  That's why the <strong>Save</strong> button won't store your key yet. Nothing you typed is lost —
+                  fill everything in, and as soon as the server is back online, hit Save and it will go through.
+                </div>
+              </div>
+            </div>
           </div>
         )}
         {/* Yahoo Finance — always active */}
@@ -420,9 +437,11 @@ function ApiKeysSection({ keys, apiDown }: { keys?: ApiKeyStatus; apiDown?: bool
           </div>
         </div>
 
+        <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider pt-1">Optional — extra data (skip if unsure)</div>
+
         <ProviderRow
           name="Polygon.io"
-          description="Real-time quotes, options flow (P/C ratio, IV, call/put volumes), news headlines"
+          description="Optional. Adds real-time quotes and options data. Skip this if you're just starting out."
           configured={keys?.polygonConfigured}
           signupUrl="https://polygon.io"
           keyLabel="API Key"
@@ -433,7 +452,7 @@ function ApiKeysSection({ keys, apiDown }: { keys?: ApiKeyStatus; apiDown?: bool
 
         <ProviderRow
           name="Finnhub"
-          description="Real-time quote, news sentiment score, earnings calendar, EPS surprise, company profile"
+          description="Optional. Adds news sentiment and earnings data. Safe to skip for now."
           configured={keys?.finnhubConfigured}
           signupUrl="https://finnhub.io"
           keyLabel="API Key"
@@ -488,41 +507,63 @@ function ApiKeysSection({ keys, apiDown }: { keys?: ApiKeyStatus; apiDown?: bool
             </div>
           </div>
         ) : (
-          <div className="rounded border border-border p-4 space-y-3">
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="text-sm font-medium">AI Engine</div>
-                <div className="text-xs text-muted-foreground">
-                  Powers the Market Analysis Agent. Any OpenAI-compatible endpoint
-                  (NVIDIA NIM, OpenAI, Together, Groq…). Defaults to NVIDIA Nemotron.
+          <div className="rounded-lg border-2 border-primary/30 bg-primary/5 p-4 space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-2">
+                <Sparkles className="h-4 w-4 mt-0.5 text-primary shrink-0" />
+                <div>
+                  <div className="text-sm font-semibold">AI Engine — the brain of your AI Assistant</div>
+                  <div className="text-xs text-muted-foreground">
+                    This is the key the chat assistant uses to read live charts and answer your questions.
+                    Add it once and the Assistant comes alive.
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1.5 text-xs">
-                  <StatusDot configured={keys?.aiConfigured} />
-                </div>
-                <a href="https://build.nvidia.com" target="_blank" rel="noopener noreferrer"
-                  className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
-                  <ExternalLink className="h-3 w-3" />Get key
-                </a>
+              <div className="flex items-center gap-1.5 text-xs shrink-0">
+                <StatusDot configured={keys?.aiConfigured} />
               </div>
             </div>
+
+            {/* Plain-English, numbered setup steps */}
+            <div className="rounded-md bg-muted/30 p-3 text-xs text-muted-foreground space-y-1.5">
+              <div className="font-semibold text-foreground">How to connect it (takes ~2 minutes)</div>
+              <ol className="list-decimal list-inside space-y-1">
+                <li>
+                  Open{" "}
+                  <a href="https://build.nvidia.com" target="_blank" rel="noopener noreferrer"
+                    className="underline font-medium inline-flex items-center gap-0.5">
+                    build.nvidia.com <ExternalLink className="h-3 w-3" />
+                  </a>{" "}
+                  and sign in (it's free).
+                </li>
+                <li>Click <span className="font-medium">"Get API Key"</span> and copy the key that starts with <span className="font-mono">nvapi-</span>.</li>
+                <li>Paste it into the <span className="font-medium">API Key</span> box below.</li>
+                <li>Leave Base URL and Model as-is (they're already filled in for you), then press <span className="font-medium">Save</span>.</li>
+              </ol>
+            </div>
+
             <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground uppercase">API Key</Label>
+              <Label className="text-xs uppercase flex items-center gap-1.5">
+                <KeyRound className="h-3 w-3" /> API Key <span className="text-muted-foreground normal-case">(paste your nvapi-… key here)</span>
+              </Label>
               <Input type="password" value={aiApiKey} onChange={(e) => setAiApiKey(e.target.value)}
-                placeholder={keys?.aiConfigured ? "••••••••••••" : "nvapi-… / sk-…"} className="font-mono text-xs" />
+                placeholder={keys?.aiConfigured ? "••••••••••••" : "nvapi-…"} className="font-mono text-xs" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground uppercase">Base URL</Label>
+                <Label className="text-xs text-muted-foreground uppercase">Base URL <span className="normal-case">(leave as-is)</span></Label>
                 <Input value={aiBaseUrl} onChange={(e) => setAiBaseUrl(e.target.value)}
                   placeholder="https://integrate.api.nvidia.com/v1" className="font-mono text-xs" />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground uppercase">Model</Label>
+                <Label className="text-xs text-muted-foreground uppercase">Model <span className="normal-case">(leave as-is)</span></Label>
                 <Input value={aiModel} onChange={(e) => setAiModel(e.target.value)}
                   placeholder="minimaxai/minimax-m2.7" className="font-mono text-xs" />
               </div>
+            </div>
+            <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <Info className="h-3 w-3 shrink-0" />
+              Advanced: you can point this at any OpenAI-compatible service (OpenAI, Together, Groq…) by changing the Base URL and Model.
             </div>
           </div>
         )}
@@ -661,18 +702,56 @@ export function Settings() {
   const apiDown = configError || keysError;
 
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold">Settings</h1>
-      {configLoading ? (
-        <Skeleton className="h-64 w-full" />
-      ) : config ? (
-        <ConfigSection config={config} />
-      ) : null}
+    <div className="p-6 space-y-6 max-w-3xl mx-auto">
+      <div>
+        <h1 className="text-2xl font-bold">Settings</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Connect your accounts here so the app can fetch data and power the AI Assistant.
+          New here? You only need <strong>one</strong> thing to get started — the <strong>AI Engine</strong> key below.
+        </p>
+      </div>
+
+      {/* Friendly 3-step guide for first-time users */}
+      <Card className="bg-primary/5 border-primary/20">
+        <CardContent className="py-4">
+          <div className="text-sm font-semibold mb-2 flex items-center gap-1.5">
+            <Sparkles className="h-4 w-4 text-primary" /> Quick start
+          </div>
+          <ol className="text-sm text-muted-foreground space-y-1.5 list-decimal list-inside">
+            <li>Find the <strong>AI Engine</strong> card below and paste in your free key — that's the only required step.</li>
+            <li>Press <strong>Save API Keys</strong>. Your keys are encrypted and stay private.</li>
+            <li>Everything else on this page is <strong>optional</strong> — add it later only if you want extra data or trading.</li>
+          </ol>
+        </CardContent>
+      </Card>
+
+      {/* API keys first — it's what most people come here to do */}
       {keysLoading ? (
         <Skeleton className="h-80 w-full" />
       ) : (
         <ApiKeysSection keys={keys} apiDown={apiDown} />
       )}
+
+      {/* Advanced scan tuning — hidden by default so newcomers aren't overwhelmed */}
+      {configLoading ? (
+        <Skeleton className="h-16 w-full" />
+      ) : config ? (
+        <Accordion type="single" collapsible className="rounded-lg border border-border bg-card px-4">
+          <AccordionItem value="advanced" className="border-0">
+            <AccordionTrigger className="text-sm hover:no-underline">
+              <div className="text-left">
+                <div className="font-semibold">Advanced scan settings <span className="text-muted-foreground font-normal">(optional)</span></div>
+                <div className="text-xs text-muted-foreground font-normal mt-0.5">
+                  Fine-tune the technical rules (RSI, MACD, moving averages…). Most people can skip this.
+                </div>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="pb-4">
+              <ConfigSection config={config} />
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      ) : null}
     </div>
   );
 }
