@@ -19,19 +19,35 @@ import { cn } from "@/lib/utils";
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 
-const NAV_ITEMS = [
-  { href: "/", label: "Dashboard", icon: Activity },
-  { href: "/scanner", label: "Stock Finder", icon: BarChart2 },
-  { href: "/charts", label: "Charts", icon: CandlestickChart },
-  { href: "/agent", label: "Agent", icon: Bot },
-  { href: "/sector", label: "Sector Rotation", icon: BarChart2 },
-  { href: "/watchlists", label: "Watchlists", icon: List },
-  { href: "/broker", label: "Broker", icon: Briefcase },
-  { href: "/notes", label: "Notes", icon: StickyNote },
-  { href: "/news", label: "News", icon: Newspaper },
-  { href: "/history", label: "History", icon: History },
-  { href: "/audit", label: "Audit Logs", icon: ShieldAlert },
-  { href: "/settings", label: "Settings", icon: Settings },
+// Grouped nav so the 12 destinations read as a few small, scannable clusters
+// instead of one long list — much easier for a newcomer to find their way.
+const NAV_SECTIONS: { title: string; items: { href: string; label: string; icon: typeof Activity }[] }[] = [
+  {
+    title: "Analyze",
+    items: [
+      { href: "/", label: "Dashboard", icon: Activity },
+      { href: "/scanner", label: "Stock Finder", icon: BarChart2 },
+      { href: "/charts", label: "Charts", icon: CandlestickChart },
+      { href: "/agent", label: "AI Assistant", icon: Bot },
+      { href: "/sector", label: "Sector Rotation", icon: BarChart2 },
+    ],
+  },
+  {
+    title: "Organize",
+    items: [
+      { href: "/watchlists", label: "Watchlists", icon: List },
+      { href: "/notes", label: "Notes", icon: StickyNote },
+      { href: "/news", label: "News", icon: Newspaper },
+    ],
+  },
+  {
+    title: "Trade & Records",
+    items: [
+      { href: "/broker", label: "Broker", icon: Briefcase },
+      { href: "/history", label: "History", icon: History },
+      { href: "/audit", label: "Audit Logs", icon: ShieldAlert },
+    ],
+  },
 ];
 
 // Single-tenant footer shown when Clerk auth isn't configured. Renders no Clerk
@@ -96,38 +112,76 @@ function ClerkUserMenu() {
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
 
+  const settingsActive = location === "/settings";
+
   return (
-    <div className="flex h-screen bg-background text-foreground overflow-hidden font-mono text-sm">
-      <nav className="w-64 border-r border-border bg-sidebar flex flex-col">
-        <div className="p-4 border-b border-border flex items-center gap-2">
-          <Activity className="h-5 w-5 text-[hsl(var(--go-color))]" />
-          <span className="font-bold tracking-tight">MOTION SCANNER</span>
+    <div className="flex h-screen bg-background text-foreground overflow-hidden text-sm">
+      <nav className="w-60 border-r border-border bg-sidebar flex flex-col">
+        {/* Brand */}
+        <div className="px-4 h-14 border-b border-border flex items-center gap-2.5 shrink-0">
+          <div className="h-8 w-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+            <Activity className="h-4 w-4 text-[hsl(var(--go-color))]" />
+          </div>
+          <div className="leading-tight">
+            <div className="font-bold tracking-tight text-[15px]">STOCKVAULT</div>
+            <div className="text-[10px] text-muted-foreground">Motion Scanner v3.0</div>
+          </div>
         </div>
-        <div className="flex-1 overflow-y-auto py-4">
-          <ul className="space-y-1 px-2">
-            {NAV_ITEMS.map((item) => {
-              const isActive = location === item.href;
-              const Icon = item.icon;
-              return (
-                <li key={item.href}>
-                  <Link href={item.href}>
-                    <div
-                      className={cn(
-                        "flex items-center gap-3 px-3 py-2 rounded-md transition-colors cursor-pointer",
-                        isActive
-                          ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                          : "text-sidebar-foreground hover:bg-sidebar-accent/50",
-                      )}
-                    >
-                      <Icon className="h-4 w-4" />
-                      {item.label}
-                    </div>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+
+        {/* Grouped navigation */}
+        <div className="flex-1 overflow-y-auto py-3">
+          {NAV_SECTIONS.map((section) => (
+            <div key={section.title} className="px-3 mb-4">
+              <div className="px-2 mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                {section.title}
+              </div>
+              <ul className="space-y-0.5">
+                {section.items.map((item) => {
+                  const isActive = location === item.href;
+                  const Icon = item.icon;
+                  return (
+                    <li key={item.href}>
+                      <Link href={item.href}>
+                        <div
+                          className={cn(
+                            "relative flex items-center gap-3 px-3 py-2 rounded-md transition-colors cursor-pointer",
+                            isActive
+                              ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                              : "text-sidebar-foreground hover:bg-sidebar-accent/50",
+                          )}
+                        >
+                          {isActive && (
+                            <span className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full bg-primary" />
+                          )}
+                          <Icon className={cn("h-4 w-4 shrink-0", isActive ? "text-primary" : "text-muted-foreground")} />
+                          {item.label}
+                        </div>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
         </div>
+
+        {/* Settings pinned at the bottom of the nav */}
+        <div className="px-3 pb-2">
+          <Link href="/settings">
+            <div
+              className={cn(
+                "relative flex items-center gap-3 px-3 py-2 rounded-md transition-colors cursor-pointer",
+                settingsActive
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                  : "text-sidebar-foreground hover:bg-sidebar-accent/50",
+              )}
+            >
+              <Settings className={cn("h-4 w-4 shrink-0", settingsActive ? "text-primary" : "text-muted-foreground")} />
+              Settings
+            </div>
+          </Link>
+        </div>
+
         {AUTH_ENABLED ? <ClerkUserMenu /> : <DemoUserMenu />}
       </nav>
       <main className="flex-1 overflow-y-auto bg-background">{children}</main>
