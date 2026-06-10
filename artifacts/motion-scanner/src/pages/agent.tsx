@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { apiUrl } from "@/lib/api-base";
 import {
   useListOpenaiConversations,
   useCreateOpenaiConversation,
@@ -295,7 +296,7 @@ export function Agent() {
     abortRef.current = new AbortController();
 
     try {
-      const res = await fetch(`/api/openai/conversations/${targetConvId}/messages`, {
+      const res = await fetch(apiUrl(`/api/openai/conversations/${targetConvId}/messages`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: content.trim() }),

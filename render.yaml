@@ -104,10 +104,16 @@ services:
       # Vite inlines it at BUILD time, so a change requires a redeploy.
       - key: VITE_CLERK_PUBLISHABLE_KEY
         sync: false
+      # Where the frontend sends /api requests. Baked in at BUILD time. The
+      # live API service is stockvault-5qjg; change this if the API service
+      # gets a different host. Set it to "/" to use same-origin requests
+      # (requires the /api/* rewrite below to be active on the static site).
+      - key: VITE_API_BASE_URL
+        value: https://stockvault-5qjg.onrender.com
     routes:
       - type: rewrite
         source: /api/*
-        destination: https://stockvault-api.onrender.com/api/*
+        destination: https://stockvault-5qjg.onrender.com/api/*
       # SPA fallback — every non-API route serves the React app.
       - type: rewrite
         source: /*
