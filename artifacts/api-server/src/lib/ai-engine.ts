@@ -2,9 +2,34 @@ import { db, apiKeysTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { decrypt } from "./crypto";
 
-// Defaults: NVIDIA NIM serving MiniMax M2 (OpenAI-compatible).
+// Defaults: NVIDIA NIM serving Nemotron 3 Ultra (OpenAI-compatible).
 export const DEFAULT_AI_BASE_URL = "https://integrate.api.nvidia.com/v1";
-export const DEFAULT_AI_MODEL = "minimaxai/minimax-m2.7";
+export const DEFAULT_AI_MODEL = "nvidia/nemotron-3-ultra-550b-a55b";
+
+/** Max tokens for a single completion (Nemotron supports long outputs). */
+export const DEFAULT_MAX_TOKENS = 16384;
+/** Reasoning-token budget passed to NIM thinking-capable models. */
+export const DEFAULT_REASONING_BUDGET = Number(process.env.AI_REASONING_BUDGET || 16384);
+
+/** True for NIM models that support enable_thinking / reasoning_content. */
+export function isReasoningModel(model: string): boolean {
+  return /nemotron/i.test(model);
+}
+
+/**
+ * Extra request params for thinking-capable NIM models. Spread into the
+ * chat.completions.create payload; OpenAI SDK forwards unknown keys verbatim.
+ * Empty object for models that don't support thinking (sending
+ * chat_template_kwargs to them can 400).
+ */
+export function reasoningParams(model: string): Record<string, unknown> {
+  if (!isReasoningModel(model)) return {};
+  if (process.env.AI_ENABLE_THINKING === "false") return {};
+  return {
+    chat_template_kwargs: { enable_thinking: true },
+    reasoning_budget: DEFAULT_REASONING_BUDGET,
+  };
+}
 
 export interface AiConfig {
   apiKey?: string;
