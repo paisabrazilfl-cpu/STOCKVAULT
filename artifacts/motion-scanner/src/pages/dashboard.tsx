@@ -33,7 +33,7 @@ export function Dashboard() {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-6 max-w-6xl mx-auto">
+      <div className="p-4 md:p-6 space-y-6 max-w-6xl mx-auto">
         <Skeleton className="h-8 w-48" />
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-24 w-full rounded-xl" />)}
@@ -44,7 +44,7 @@ export function Dashboard() {
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-6xl mx-auto">
+    <div className="p-4 md:p-6 space-y-6 max-w-6xl mx-auto">
       <div>
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <p className="text-sm text-muted-foreground mt-1">A quick snapshot of your scanning activity.</p>

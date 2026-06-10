@@ -20,7 +20,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
-import { RefreshCw, Filter, SlidersHorizontal, BarChart2, Bookmark, BookmarkCheck, Plus, Check, Loader2, ListPlus, Zap } from "lucide-react";
+import { RefreshCw, Filter, SlidersHorizontal, BarChart2, Bookmark, BookmarkCheck, ChevronDown, Plus, Check, Loader2, ListPlus, Zap } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { formatPercent, formatCurrency } from "@/lib/format";
 
 // ── Shared sub-components ──────────────────────────────────────────────────
@@ -111,7 +112,7 @@ function TickerDetail({ c }: { c: CandidateRecord }) {
         </TabsContent>
 
         <TabsContent value="technical" className="space-y-3 pt-2">
-          <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
             {[
               ["RSI(14)", tech?.rsi, 1],
               ["ADX(14)", tech?.adx, 1],
@@ -153,7 +154,7 @@ function TickerDetail({ c }: { c: CandidateRecord }) {
           {flow && (
             <div className="mt-3">
               <div className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Flow</div>
-              <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
                 <div className="flex justify-between border-b border-border/40 py-1">
                   <span className="text-muted-foreground">RS vs SPY</span>
                   <Num v={Number(flow.rel_strength_spy)*100} digits={2} suffix="%" colored />
@@ -171,7 +172,7 @@ function TickerDetail({ c }: { c: CandidateRecord }) {
 
         <TabsContent value="options" className="space-y-3 pt-2">
           {options?.ok ? (
-            <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
               {[
                 ["Flow Score",   <ScoreBar score={Number(options.flowScore)} width="w-20" />],
                 ["P/C Ratio",    <Num v={options.putCallRatio as number} digits={2} />],
@@ -199,7 +200,7 @@ function TickerDetail({ c }: { c: CandidateRecord }) {
           {sentiment && (
             <div className="mt-3">
               <div className="text-xs text-muted-foreground uppercase tracking-wider mb-2">News Sentiment</div>
-              <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
                 {[
                   ["Score",     <Num v={sentiment.score as number} digits={3} colored />],
                   ["Bullish %", <Num v={sentiment.bullishPct as number} digits={1} suffix="%" />],
@@ -222,7 +223,7 @@ function TickerDetail({ c }: { c: CandidateRecord }) {
         </TabsContent>
 
         <TabsContent value="fundamental" className="space-y-3 pt-2">
-          <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
             {[
               ["Sector",       <span className="font-mono text-xs">{String(fund?.sector ?? "—")}</span>],
               ["Industry",     <span className="font-mono text-xs truncate max-w-28">{String(fund?.industry ?? "—")}</span>],
@@ -258,7 +259,7 @@ function TickerDetail({ c }: { c: CandidateRecord }) {
                   <div className="font-mono text-[hsl(var(--go-color))]">${mc.target_price?.toFixed(2)}</div>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
                 {[
                   ["Win Rate",  <span className="font-mono text-[hsl(var(--go-color))]">{(Number(mc.win_rate)*100).toFixed(1)}%</span>],
                   ["Exp. R",   <Num v={mc.expected_R} digits={2} colored />],
@@ -646,7 +647,7 @@ function ManualScan() {
         </CardHeader>
         <CardContent className="space-y-3">
           <TickerSearch onAdd={addTicker} />
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground uppercase">Tickers</Label>
               <Input
@@ -693,7 +694,7 @@ function ManualScan() {
           <div className="flex items-center justify-between">
             {activeProviders && <ProviderChips providers={activeProviders} />}
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[
               { label: "GO",    count: result.candidates.length, cls: "text-[hsl(var(--go-color))]",   card: "bg-[hsl(var(--go-color))]/10 border-[hsl(var(--go-color))]/25", sub: "All gates pass" },
               { label: "HOLD",  count: result.hold.length,       cls: "text-yellow-600",               card: "bg-yellow-500/10 border-yellow-500/25",                          sub: "Partial qualification" },
@@ -725,7 +726,7 @@ function ManualScan() {
       )}
 
       <Sheet open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
-        <SheetContent className="w-[520px] sm:max-w-[520px] overflow-y-auto">
+        <SheetContent className="w-full sm:w-[520px] sm:max-w-[520px] overflow-y-auto">
           <SheetHeader>
             <SheetTitle className="text-left">Ticker Detail</SheetTitle>
           </SheetHeader>
@@ -1061,6 +1062,8 @@ function Screener() {
   const [activeFilters, setActiveFilters] = useState<ScreenerFilters>(DEFAULT_FILTERS);
   const [selected, setSelected] = useState<CandidateRecord | null>(null);
   const [bust, setBust] = useState(false);
+  // Mobile/tablet only — filters collapse so results stay front and center.
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const buildParams = useCallback((f: ScreenerFilters, bustCache: boolean): RunScreenerParams => ({
     universe: f.universe as RunScreenerParams["universe"],
@@ -1100,6 +1103,7 @@ function Screener() {
   const handleRun = () => {
     setBust(false);
     setActiveFilters(filters);
+    setFiltersOpen(false);
   };
 
   const handleRefresh = () => {
@@ -1112,6 +1116,7 @@ function Screener() {
     setBust(false);
     setFilters(ALEX_FILTERS);
     setActiveFilters(ALEX_FILTERS);
+    setFiltersOpen(false);
   };
 
   const filterCount = activeFilterCount(filters);
@@ -1119,20 +1124,36 @@ function Screener() {
   const results = (data?.results ?? []) as CandidateRecord[];
 
   return (
-    <div className="flex gap-5 h-full">
-      {/* ── Left filter panel ─────────────────────────────────────────── */}
-      <div className="w-64 flex-shrink-0">
-        <Card className="bg-card border-border sticky top-4">
-          <CardHeader className="pb-3">
+    <div className="flex flex-col lg:flex-row gap-4 lg:gap-5 h-full">
+      {/* ── Filter panel: stacked + collapsible on phones/tablets, fixed
+            left column on desktop ───────────────────────────────────── */}
+      <div className="w-full lg:w-64 lg:flex-shrink-0">
+        <Card className="bg-card border-border lg:sticky lg:top-4">
+          <CardHeader
+            className="pb-3 cursor-pointer lg:cursor-default select-none"
+            onClick={() => setFiltersOpen((o) => !o)}
+          >
             <CardTitle className="text-sm uppercase tracking-wider flex items-center gap-2">
               <SlidersHorizontal className="h-4 w-4" />
               Filters
               {filterCount > 0 && (
                 <Badge variant="secondary" className="ml-auto text-xs">{filterCount}</Badge>
               )}
+              <ChevronDown
+                className={cn(
+                  "h-4 w-4 lg:hidden transition-transform",
+                  filterCount === 0 && "ml-auto",
+                  filtersOpen && "rotate-180",
+                )}
+              />
             </CardTitle>
           </CardHeader>
-          <CardContent className="max-h-[calc(100vh-220px)] overflow-y-auto pr-2 space-y-0">
+          <CardContent
+            className={cn(
+              "lg:max-h-[calc(100vh-220px)] overflow-y-auto pr-2 space-y-0",
+              filtersOpen ? "block" : "hidden lg:block",
+            )}
+          >
             <FilterPanel filters={filters} onChange={setFilters} />
           </CardContent>
           <div className="p-4 pt-0 space-y-2">
@@ -1189,7 +1210,7 @@ function Screener() {
 
         {/* Stats bar */}
         {data && !isFetching && (
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
             <span className="inline-flex items-center gap-1 text-xs border border-blue-500/40 text-blue-600 rounded px-1.5 py-0.5 font-mono">
               YF
             </span>
@@ -1270,7 +1291,7 @@ function Screener() {
       </div>
 
       <Sheet open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
-        <SheetContent className="w-[520px] sm:max-w-[520px] overflow-y-auto">
+        <SheetContent className="w-full sm:w-[520px] sm:max-w-[520px] overflow-y-auto">
           <SheetHeader>
             <SheetTitle className="text-left">Ticker Detail</SheetTitle>
           </SheetHeader>
@@ -1284,8 +1305,8 @@ function Screener() {
 // ── Main "Stock Finder" page ───────────────────────────────────────────────
 export function Scanner() {
   return (
-    <div className="p-6 space-y-5">
-      <h1 className="text-2xl font-bold">Stock Finder</h1>
+    <div className="p-4 md:p-6 space-y-5">
+      <h1 className="text-xl md:text-2xl font-bold">Stock Finder</h1>
 
       <Tabs defaultValue="screener" className="w-full">
         <TabsList className="mb-5">

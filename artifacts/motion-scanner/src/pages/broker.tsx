@@ -208,7 +208,7 @@ function StatCard({ label, value, accent }: { label: string; value: string; acce
 
 function LoadingState() {
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-4 md:p-6 space-y-4">
       <Skeleton className="h-8 w-48" />
       <div className="grid grid-cols-4 gap-4">{[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-28" />)}</div>
       <Skeleton className="h-64 w-full" />
@@ -240,7 +240,7 @@ function BrokerApiAccount() {
   const totalPnl = positions?.reduce((s, p) => s + (p.unrealizedPl ?? 0), 0) ?? 0;
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Brokerage Account</h1>
         <div className="flex items-center gap-2">
@@ -351,7 +351,7 @@ function TradingApiBroker() {
   const totalPnl = positions?.reduce((sum, p) => sum + (p.unrealizedPl ?? 0), 0) ?? 0;
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Broker</h1>
         <Badge variant="outline" className="text-[hsl(var(--go-color))] border-[hsl(var(--go-color))]/30">Paper Trading</Badge>

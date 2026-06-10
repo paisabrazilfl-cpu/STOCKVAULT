@@ -535,7 +535,7 @@ export function Charts() {
     <div className="flex h-full bg-background font-mono text-sm overflow-hidden">
 
       {/* ── LEFT SIDEBAR ── */}
-      <aside className="w-44 flex-shrink-0 border-r border-border flex flex-col bg-sidebar overflow-hidden">
+      <aside className="w-44 flex-shrink-0 border-r border-border hidden md:flex flex-col bg-sidebar overflow-hidden">
         {/* Symbol search */}
         <div className="p-2 border-b border-border">
           <div className="relative">
@@ -651,6 +651,20 @@ export function Charts() {
 
       {/* ── CHART WORKSPACE ── */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+        {/* Mobile symbol search — the sidebar is hidden below md */}
+        <div className="md:hidden p-2 border-b border-border shrink-0">
+          <div className="relative">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value.toUpperCase())}
+              onKeyDown={(e) => { if (e.key === "Enter") loadTicker(searchInput); }}
+              placeholder="Symbol… (Enter to load)"
+              className="pl-7 h-8 text-xs font-mono bg-background/50"
+            />
+          </div>
+        </div>
 
         {/* Top bar */}
         <div className="flex items-center gap-3 px-3 py-2 border-b border-border bg-background/60 flex-wrap shrink-0">

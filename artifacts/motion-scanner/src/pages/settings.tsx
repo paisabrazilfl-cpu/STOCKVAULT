@@ -113,7 +113,7 @@ function ConfigSection({ config }: { config: ScanConfig }) {
         {/* ── Base thresholds ────────────────────────────────────────────── */}
         <div>
           <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Base Thresholds</div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {([
               ["RSI Oversold", rsiOversold, setRsiOversold],
               ["RSI Overbought", rsiOverbought, setRsiOverbought],
@@ -184,7 +184,7 @@ function ConfigSection({ config }: { config: ScanConfig }) {
           </div>
           {stochFilter && (
             <div className="space-y-3">
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {([
                   ["%K Period", stochKPeriod, setStochKPeriod],
                   ["Slow %K Period", stochSlowPeriod, setStochSlowPeriod],
@@ -196,7 +196,7 @@ function ConfigSection({ config }: { config: ScanConfig }) {
                   </div>
                 ))}
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {([
                   ["Oversold ≤", stochOversold, setStochOversold],
                   ["Overbought ≥", stochOverbought, setStochOverbought],
@@ -319,7 +319,7 @@ function ProviderRow(p: ProviderRowProps) {
           </a>
         </div>
       </div>
-      <div className={`grid gap-3 ${p.secretLabel ? "grid-cols-2" : "grid-cols-1"}`}>
+      <div className={`grid gap-3 ${p.secretLabel ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"}`}>
         <div className="space-y-1.5">
           <Label className="text-xs text-muted-foreground uppercase">{p.keyLabel}</Label>
           <Input type="password" value={p.keyValue} onChange={(e) => p.onKeyChange(e.target.value)}
@@ -549,7 +549,7 @@ function ApiKeysSection({ keys, apiDown }: { keys?: ApiKeyStatus; apiDown?: bool
               <Input type="password" value={aiApiKey} onChange={(e) => setAiApiKey(e.target.value)}
                 placeholder={keys?.aiConfigured ? "••••••••••••" : "nvapi-…"} className="font-mono text-xs" />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground uppercase">Base URL <span className="normal-case">(leave as-is)</span></Label>
                 <Input value={aiBaseUrl} onChange={(e) => setAiBaseUrl(e.target.value)}
@@ -665,7 +665,7 @@ function ApiKeysSection({ keys, apiDown }: { keys?: ApiKeyStatus; apiDown?: bool
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground uppercase">Broker API Key ID</Label>
                 <Input type="password" value={brokerApiKey} onChange={(e) => setBrokerApiKey(e.target.value)}
@@ -702,7 +702,7 @@ export function Settings() {
   const apiDown = configError || keysError;
 
   return (
-    <div className="p-6 space-y-6 max-w-3xl mx-auto">
+    <div className="p-4 md:p-6 space-y-6 max-w-3xl mx-auto">
       <div>
         <h1 className="text-2xl font-bold">Settings</h1>
         <p className="text-sm text-muted-foreground mt-1">

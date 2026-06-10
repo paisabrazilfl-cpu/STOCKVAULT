@@ -385,7 +385,7 @@ export function Agent() {
   return (
     <div className="flex h-full overflow-hidden">
       {/* ── Sidebar ─────────────────────────────────────────────────────────── */}
-      <div className="w-56 border-r border-border flex flex-col bg-sidebar shrink-0">
+      <div className="w-56 border-r border-border hidden md:flex flex-col bg-sidebar shrink-0">
         <div className="p-3 border-b border-border flex items-center justify-between">
           <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Agent</span>
           <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => startNewConversation()} title="New">
@@ -419,7 +419,7 @@ export function Agent() {
       {/* ── Chat area ──────────────────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="border-b border-border px-6 py-3 flex items-center gap-3 shrink-0">
+        <div className="border-b border-border px-3 md:px-6 py-3 flex flex-wrap items-center gap-3 shrink-0">
           <Bot className="h-5 w-5 text-primary" />
           <div>
             <h1 className="font-semibold text-sm">Market Analysis Agent</h1>
@@ -454,7 +454,7 @@ export function Agent() {
         </div>
 
         {/* Messages */}
-        <ScrollArea className="flex-1 px-6 py-4">
+        <ScrollArea className="flex-1 px-3 md:px-6 py-4">
           {/* Alex's Screener panel (shown above everything when active) */}
           {showAlexScreener && (
             <div className="max-w-3xl mx-auto mb-4">
@@ -486,7 +486,7 @@ export function Agent() {
                 </div>
               </button>
 
-              <div className="grid grid-cols-2 gap-2 w-full max-w-xl">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-xl">
                 {SUGGESTIONS.map((s) => (
                   <button
                     key={s.label}
@@ -542,7 +542,7 @@ export function Agent() {
         </ScrollArea>
 
         {/* Input */}
-        <div className="border-t border-border px-6 py-4 shrink-0">
+        <div className="border-t border-border px-3 md:px-6 py-3 md:py-4 shrink-0">
           <div className="max-w-3xl mx-auto flex gap-2 items-end">
             <Textarea
               value={input}

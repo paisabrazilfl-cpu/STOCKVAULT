@@ -93,7 +93,7 @@ export function Watchlists() {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-4">
+      <div className="p-4 md:p-6 space-y-4">
         <Skeleton className="h-8 w-48" />
         {[1, 2, 3].map((i) => <Skeleton key={i} className="h-24 w-full" />)}
       </div>
@@ -101,7 +101,7 @@ export function Watchlists() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Watchlists</h1>
         <Button size="sm" onClick={() => setShowCreate(true)}>

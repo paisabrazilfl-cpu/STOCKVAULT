@@ -31,7 +31,7 @@ export function SectorRotation() {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-4">
+      <div className="p-4 md:p-6 space-y-4">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-96 w-full" />
       </div>
@@ -68,7 +68,7 @@ export function SectorRotation() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Sector Rotation</h1>
         <div className="flex gap-4 text-sm items-center">
@@ -121,7 +121,8 @@ export function SectorRotation() {
           <CardTitle className="text-sm uppercase tracking-wider">All Sectors</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[640px]">
             <thead>
               <tr className="border-b border-border">
                 <th className="text-left px-4 py-3 text-xs text-muted-foreground uppercase tracking-wider">Sector</th>
@@ -170,6 +171,7 @@ export function SectorRotation() {
               )}
             </tbody>
           </table>
+          </div>
         </CardContent>
       </Card>
     </div>
