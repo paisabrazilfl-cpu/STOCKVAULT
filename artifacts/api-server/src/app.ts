@@ -1,4 +1,7 @@
 import express, { type Express } from "express";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import cors from "cors";
 import pinoHttp from "pino-http";
 import { clerkMiddleware } from "@clerk/express";
@@ -77,5 +80,32 @@ app.use(
     res.status(500).json({ error: "Internal server error" });
   },
 );
+
+// ── Static frontend (optional) ──────────────────────────────────────────────
+// When the motion-scanner web build sits next to this artifact, serve it: the
+// API service then doubles as the app host, so one auto-deploying Render
+// service carries the whole product (no separate static site required). API
+// routes above always win; every other GET falls back to index.html so SPA
+// deep links like /scanner resolve.
+const hereDir =
+  typeof __dirname !== "undefined"
+    ? __dirname
+    : path.dirname(fileURLToPath(import.meta.url));
+const publicDir = path.resolve(
+  hereDir,
+  "..",
+  "..",
+  "motion-scanner",
+  "dist",
+  "public",
+);
+if (fs.existsSync(path.join(publicDir, "index.html"))) {
+  app.use(express.static(publicDir));
+  app.use((req, res, next) => {
+    if (req.method !== "GET" || req.path.startsWith("/api")) return next();
+    res.sendFile(path.join(publicDir, "index.html"));
+  });
+  logger.info({ publicDir }, "serving static frontend alongside the API");
+}
 
 export default app;

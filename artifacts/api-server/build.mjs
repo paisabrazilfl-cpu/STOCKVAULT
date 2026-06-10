@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { build as esbuild } from "esbuild";
 import esbuildPluginPino from "esbuild-plugin-pino";
 import { rm } from "node:fs/promises";
+import { spawnSync } from "node:child_process";
 
 // Plugins (e.g. 'esbuild-plugin-pino') may use `require` to resolve dependencies
 globalThis.require = createRequire(import.meta.url);
@@ -120,7 +121,25 @@ globalThis.__dirname = __bannerPath.dirname(globalThis.__filename);
   });
 }
 
-buildAll().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+// Also build the motion-scanner frontend so this service can serve the whole
+// app itself (see the static block in src/app.ts). Non-fatal by design: the
+// API must still build and deploy even where the web build can't run.
+function buildFrontend() {
+  const result = spawnSync(
+    "corepack",
+    ["pnpm", "--filter", "@workspace/motion-scanner", "run", "build"],
+    { stdio: "inherit", cwd: path.resolve(artifactDir, "..", "..") },
+  );
+  if (result.status !== 0) {
+    console.warn(
+      "WARN: frontend build failed or unavailable — the API will serve JSON only.",
+    );
+  }
+}
+
+buildAll()
+  .then(buildFrontend)
+  .catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
