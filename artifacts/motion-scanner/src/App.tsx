@@ -1,3 +1,4 @@
+import { AlexScreener } from './components/AlexScreener';
 import { useEffect, useRef } from "react";
 import { Switch, Route, Router as WouterRouter, Redirect, useLocation, Link } from "wouter";
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
@@ -227,7 +228,7 @@ function HomeRedirect() {
   return (
     <>
       <Show when="signed-in">
-        <Layout>
+        <Layout className="bg-gray-50/30">
           <Dashboard />
         </Layout>
       </Show>
@@ -263,7 +264,7 @@ function ClerkQueryClientCacheInvalidator() {
 
 function AuthedPages() {
   return (
-    <Layout>
+    <Layout className="bg-gray-50/30">
       <Switch>
         <Route path="/scanner" component={Scanner} />
         <Route path="/sector" component={SectorRotation} />
@@ -317,7 +318,7 @@ function NoAuthRoutes() {
       {/* No auth: send sign-in/up straight to the app */}
       <Route path="/sign-in/*?"><Redirect to="/" /></Route>
       <Route path="/sign-up/*?"><Redirect to="/" /></Route>
-      <Route path="/"><Layout><Dashboard /></Layout></Route>
+      <Route path="/"><Layout className="bg-gray-50/30"><Dashboard /></Layout></Route>
       <Route><AuthedPages /></Route>
     </Switch>
   );
