@@ -4,7 +4,7 @@ import { decrypt } from "./crypto";
 
 // Defaults: NVIDIA NIM serving Nemotron 3 Ultra (OpenAI-compatible).
 export const DEFAULT_AI_BASE_URL = "https://integrate.api.nvidia.com/v1";
-export const DEFAULT_AI_MODEL = "nvidia/nemotron-3-ultra-550b-a55b";
+export const DEFAULT_AI_MODEL = "deepseek-ai/deepseek-v4-pro";
 
 /** Max tokens for a single completion (Nemotron supports long outputs). */
 export const DEFAULT_MAX_TOKENS = 16384;
