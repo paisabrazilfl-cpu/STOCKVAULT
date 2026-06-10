@@ -67,10 +67,14 @@ function getDeploymentDomain() {
     return stripProtocol(process.env.EXPO_PUBLIC_DOMAIN);
   }
 
-  console.error(
-    "ERROR: No deployment domain found. Set REPLIT_INTERNAL_APP_DOMAIN, REPLIT_DEV_DOMAIN, or EXPO_PUBLIC_DOMAIN",
+  // No domain means we're not on Replit (e.g. CI or Render). This Expo Go
+  // static build only makes sense with a live deployment domain, so skip it
+  // instead of failing the whole workspace build.
+  console.log(
+    "Skipping mobile static build: no deployment domain set " +
+      "(REPLIT_INTERNAL_APP_DOMAIN, REPLIT_DEV_DOMAIN, or EXPO_PUBLIC_DOMAIN).",
   );
-  process.exit(1);
+  process.exit(0);
 }
 
 function prepareDirectories(timestamp) {
