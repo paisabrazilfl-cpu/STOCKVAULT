@@ -586,7 +586,7 @@ export function Agent() {
             )}
           </div>
           <p className="text-xs text-muted-foreground mt-1.5 text-center max-w-3xl mx-auto">
-            Powered by GPT-5 with live scanner access · Shift+Enter for new line
+            Powered by DeepSeek V4 Pro (NVIDIA NIM) with live scanner access · Shift+Enter for new line
           </p>
         </div>
       </div>
