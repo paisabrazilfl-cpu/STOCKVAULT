@@ -4,7 +4,12 @@
  */
 import axios from "axios";
 
-const YF_HEADERS = { "User-Agent": "Mozilla/5.0 (compatible; MotionScanner/3.0)" };
+// A real browser UA — Yahoo serves bot-ish UAs less reliably from shared IPs.
+const YF_HEADERS = {
+  "User-Agent":
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+  Accept: "application/json",
+};
 
 export interface YahooQuoteResult {
   closes: number[];
@@ -41,7 +46,15 @@ export async function fetchYahooChart(ticker: string, range = "1y"): Promise<Yah
       // try next host
     }
   }
-  return null;
+  // Yahoo blocks many datacenter IPs outright (Render, AWS, …). Fall back to
+  // Alpaca's IEX feed when server keys exist (most reliable from the cloud),
+  // then Stooq's free daily history, so charts/screener/sector keep working.
+  const { fetchAlpacaChart } = await import("./alpaca-data");
+  const alpaca = await fetchAlpacaChart(ticker, range);
+  if (alpaca) return alpaca;
+
+  const { fetchStooqChart } = await import("./stooq");
+  return fetchStooqChart(ticker, range);
 }
 
 export interface YahooFundamentals {
