@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db, apiKeysTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
-import { searchTickers } from "../lib/providers";
+import { searchTickers, searchYahooTickers } from "../lib/providers";
 import { decrypt } from "../lib/crypto";
 
 const router = Router();
@@ -31,7 +31,13 @@ router.get("/tickers/search", async (req, res) => {
 
   const limit = Math.min(Math.max(Number(req.query.limit ?? 20) || 20, 1), 100);
   const apiKey = await resolveKey(req.tenantId);
-  if (!apiKey) { res.json({ results: [], source: "none" }); return; }
+  if (!apiKey) {
+    // Zero-key fallback: free Yahoo Finance search, so symbol lookup works
+    // out of the box (no Polygon/Massive key, no database required).
+    const results = await searchYahooTickers(q, limit);
+    res.json({ results, source: results.length > 0 ? "yahoo" : "none" });
+    return;
+  }
 
   const results = await searchTickers(q, apiKey, limit);
   const source = process.env.TICKERS_BASE_URL?.includes("massive") ? "massive" : "polygon";

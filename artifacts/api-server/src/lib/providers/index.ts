@@ -4,6 +4,7 @@
  */
 export { fetchYahooChart, fetchYahooFundamentals, fetchSpyReturn } from "./yahoo";
 export { fetchPolygonData, searchTickers } from "./polygon";
+export { searchYahooTickers } from "./yahoo";
 export { fetchFinnhubData } from "./finnhub";
 export type { YahooQuoteResult, YahooFundamentals } from "./yahoo";
 export type { PolygonData, PolygonQuote, PolygonOptionsFlow, PolygonNews, TickerRef } from "./polygon";

@@ -66,4 +66,16 @@ if (process.env.CLERK_SECRET_KEY) {
 
 app.use("/api", tenantMiddleware, router);
 
+// Final error handler: API consumers must always receive JSON, never Express's
+// default HTML error page. Internals (stack traces, infra error text) are kept
+// out of the response body — they go to the structured log instead.
+app.use(
+  "/api",
+  (err: unknown, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    req.log?.error?.({ err }, "unhandled API error");
+    if (res.headersSent) return;
+    res.status(500).json({ error: "Internal server error" });
+  },
+);
+
 export default app;
