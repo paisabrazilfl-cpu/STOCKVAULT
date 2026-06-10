@@ -1,5 +1,7 @@
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useUser, useClerk } from "@clerk/react";
+import { useSearchTickers } from "@workspace/api-client-react";
 import { AUTH_ENABLED } from "@/lib/auth";
 import {
   Activity,
@@ -8,12 +10,15 @@ import {
   Settings,
   History,
   List,
+  Menu,
+  Search,
   ShieldAlert,
   Newspaper,
   StickyNote,
   CandlestickChart,
   Bot,
   LogOut,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -109,24 +114,147 @@ function ClerkUserMenu() {
   );
 }
 
+/**
+ * Global ticker search — debounced, keyboard-friendly, zero-key (the API falls
+ * back to free Yahoo search). Selecting a result deep-links to the Charts page.
+ */
+function GlobalTickerSearch({ onNavigate }: { onNavigate?: () => void }) {
+  const [, navigate] = useLocation();
+  const [query, setQuery] = useState("");
+  const [debounced, setDebounced] = useState("");
+  const [open, setOpen] = useState(false);
+  const boxRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(query.trim()), 250);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  const { data, isFetching } = useSearchTickers(
+    { q: debounced, limit: 8 },
+    { query: { queryKey: ["/api/tickers/search", debounced], enabled: debounced.length >= 1, staleTime: 60_000 } },
+  );
+  const results = data?.results ?? [];
+
+  // Close the dropdown on outside click
+  useEffect(() => {
+    function onDown(e: MouseEvent) {
+      if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, []);
+
+  const go = (symbol: string) => {
+    setQuery("");
+    setOpen(false);
+    onNavigate?.();
+    navigate(`/charts?ticker=${encodeURIComponent(symbol)}`);
+  };
+
+  return (
+    <div ref={boxRef} className="relative px-3 pt-3">
+      <div className="relative">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+        <input
+          value={query}
+          onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
+          onFocus={() => query && setOpen(true)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && query.trim()) go(results[0]?.ticker ?? query.trim().toUpperCase());
+            if (e.key === "Escape") { setOpen(false); (e.target as HTMLInputElement).blur(); }
+          }}
+          placeholder="Search any ticker…"
+          aria-label="Search tickers"
+          className="w-full h-8 pl-8 pr-2 rounded-md bg-sidebar-accent/40 border border-border text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
+        />
+      </div>
+      {open && debounced && (
+        <div className="absolute left-3 right-3 mt-1 z-50 rounded-md border border-border bg-background shadow-lg overflow-hidden">
+          {isFetching && results.length === 0 && (
+            <div className="px-3 py-2 text-xs text-muted-foreground">Searching…</div>
+          )}
+          {!isFetching && results.length === 0 && (
+            <div className="px-3 py-2 text-xs text-muted-foreground">
+              No matches — press Enter to open “{debounced.toUpperCase()}”
+            </div>
+          )}
+          {results.map((r) => (
+            <button
+              key={r.ticker}
+              onClick={() => go(r.ticker)}
+              className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-sidebar-accent/60 transition-colors"
+            >
+              <span className="text-xs font-bold text-primary w-14 shrink-0">{r.ticker}</span>
+              <span className="text-xs text-muted-foreground truncate">{r.name}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Close the mobile drawer on navigation
+  useEffect(() => { setMobileOpen(false); }, [location]);
 
   const settingsActive = location === "/settings";
 
   return (
-    <div className="flex h-screen bg-background text-foreground overflow-hidden text-sm">
-      <nav className="w-60 border-r border-border bg-sidebar flex flex-col">
+    <div className="flex flex-col md:flex-row h-screen bg-background text-foreground overflow-hidden text-sm">
+      {/* Mobile top bar */}
+      <header className="md:hidden h-12 shrink-0 border-b border-border bg-sidebar flex items-center gap-2 px-3">
+        <button
+          onClick={() => setMobileOpen(true)}
+          aria-label="Open navigation"
+          className="p-2 -ml-2 rounded-md hover:bg-sidebar-accent/60 text-foreground"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+        <Activity className="h-4 w-4 text-[hsl(var(--go-color))]" />
+        <span className="font-bold tracking-tight text-[15px]">STOCKVAULT</span>
+      </header>
+
+      {/* Backdrop for the mobile drawer */}
+      {mobileOpen && (
+        <div
+          className="md:hidden fixed inset-0 z-40 bg-black/40"
+          onClick={() => setMobileOpen(false)}
+          aria-hidden
+        />
+      )}
+
+      <nav
+        className={cn(
+          "w-60 border-r border-border bg-sidebar flex flex-col",
+          "fixed inset-y-0 left-0 z-50 transform transition-transform duration-200 md:static md:translate-x-0",
+          mobileOpen ? "translate-x-0" : "-translate-x-full",
+        )}
+      >
         {/* Brand */}
         <div className="px-4 h-14 border-b border-border flex items-center gap-2.5 shrink-0">
           <div className="h-8 w-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
             <Activity className="h-4 w-4 text-[hsl(var(--go-color))]" />
           </div>
-          <div className="leading-tight">
+          <div className="leading-tight flex-1">
             <div className="font-bold tracking-tight text-[15px]">STOCKVAULT</div>
             <div className="text-[10px] text-muted-foreground">Motion Scanner v3.0</div>
           </div>
+          <button
+            onClick={() => setMobileOpen(false)}
+            aria-label="Close navigation"
+            className="md:hidden p-1.5 rounded-md hover:bg-sidebar-accent/60 text-muted-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
+
+        {/* Global ticker search */}
+        <GlobalTickerSearch onNavigate={() => setMobileOpen(false)} />
 
         {/* Grouped navigation */}
         <div className="flex-1 overflow-y-auto py-3">

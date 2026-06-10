@@ -7,8 +7,14 @@ import { logAudit } from "../lib/audit";
 const router = Router();
 
 router.get("/watchlists", async (req, res): Promise<void> => {
-  const rows = await db.select().from(watchlistsTable)
-    .where(eq(watchlistsTable.tenantId, req.tenantId));
+  // DB-less mode: render an empty list, not a 500.
+  let rows: (typeof watchlistsTable.$inferSelect)[] = [];
+  try {
+    rows = await db.select().from(watchlistsTable)
+      .where(eq(watchlistsTable.tenantId, req.tenantId));
+  } catch (err) {
+    req.log?.warn?.({ err }, "watchlists: DB unreachable — serving empty list");
+  }
   res.json(rows.map((r) => ({
     id: r.id, name: r.name, tickers: r.tickers ?? [],
     description: r.description ?? null,

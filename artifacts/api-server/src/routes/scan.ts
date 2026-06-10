@@ -109,13 +109,20 @@ router.get("/scan/history/:id", async (req, res): Promise<void> => {
 
 // GET /dashboard/summary
 router.get("/dashboard/summary", async (req, res): Promise<void> => {
-  const rows = await db.select().from(scanResultsTable)
-    .where(eq(scanResultsTable.tenantId, req.tenantId))
-    .orderBy(desc(scanResultsTable.createdAt)).limit(10);
+  // DB-less mode: the dashboard must render (empty state), not 500.
+  let rows: (typeof scanResultsTable.$inferSelect)[] = [];
+  let total = 0;
+  try {
+    rows = await db.select().from(scanResultsTable)
+      .where(eq(scanResultsTable.tenantId, req.tenantId))
+      .orderBy(desc(scanResultsTable.createdAt)).limit(10);
 
-  const totalRows = await db.select({ count: count() }).from(scanResultsTable)
-    .where(eq(scanResultsTable.tenantId, req.tenantId));
-  const total = totalRows[0]?.count ?? 0;
+    const totalRows = await db.select({ count: count() }).from(scanResultsTable)
+      .where(eq(scanResultsTable.tenantId, req.tenantId));
+    total = totalRows[0]?.count ?? 0;
+  } catch (err) {
+    req.log?.warn?.({ err }, "dashboard/summary: DB unreachable — serving empty summary");
+  }
   const avgGo = rows.length > 0 ? rows.reduce((a, r) => a + r.goCount, 0) / rows.length : 0;
   const last = rows[0];
 
