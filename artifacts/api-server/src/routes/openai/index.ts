@@ -11,7 +11,7 @@ import { runScan, DEFAULT_CONFIG } from "../../lib/scanner";
 import { getSectorRotation } from "../../lib/sector";
 import { fetchYahooChart } from "../../lib/providers/yahoo";
 import { decrypt } from "../../lib/crypto";
-import { getTenantAiConfig } from "../../lib/ai-engine";
+import { getTenantAiConfig, aiExtraBody, DEFAULT_AI_MODEL } from "../../lib/ai-engine";
 import type { TenantProviderKeys } from "../../lib/providers";
 
 // Minimal OpenAI chat types (avoids importing from transitive `openai` pkg)
@@ -27,10 +27,10 @@ interface ChatCompletionTool {
 
 const router = Router();
 
-// AI model id. Defaults to NVIDIA's MiniMax M2 (served via the OpenAI-compatible
+// AI model id. Defaults to NVIDIA's DeepSeek V4 Pro (served via the OpenAI-compatible
 // NIM endpoint at integrate.api.nvidia.com/v1). Override with AI_MODEL to point
 // at any other OpenAI-compatible model.
-const AI_MODEL = process.env.AI_MODEL || "minimaxai/minimax-m2.7";
+const AI_MODEL = process.env.AI_MODEL || DEFAULT_AI_MODEL;
 
 // ── Tenant API keys ──────────────────────────────────────────────────────────
 
@@ -338,6 +338,8 @@ router.post("/openai/conversations/:id/messages", async (req, res) => {
         messages: loopMessages,
         tools: TOOLS,
         stream: true,
+        // DeepSeek-on-NIM reasoning switch (off by default; AI_THINKING=true to enable)
+        ...aiExtraBody(ai),
       });
 
       // Accumulate streaming response

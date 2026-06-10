@@ -2,9 +2,9 @@ import { db, apiKeysTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { decrypt } from "./crypto";
 
-// Defaults: NVIDIA NIM serving MiniMax M2 (OpenAI-compatible).
+// Defaults: NVIDIA NIM serving DeepSeek V4 Pro (OpenAI-compatible).
 export const DEFAULT_AI_BASE_URL = "https://integrate.api.nvidia.com/v1";
-export const DEFAULT_AI_MODEL = "minimaxai/minimax-m2.7";
+export const DEFAULT_AI_MODEL = "deepseek-ai/deepseek-v4-pro";
 
 export interface AiConfig {
   apiKey?: string;
@@ -12,6 +12,25 @@ export interface AiConfig {
   model: string;
   /** true when the API key comes from server env (operator-level). */
   managed: boolean;
+  /**
+   * Reasoning-mode flag for models that support a `thinking` chat-template
+   * switch (DeepSeek on NVIDIA NIM). Off by default: the agent streams
+   * answers, and reasoning traces would slow + pollute the SSE output.
+   * Opt in with AI_THINKING=true.
+   */
+  thinking: boolean;
+}
+
+/**
+ * Extra OpenAI-compatible body params required by the resolved model.
+ * DeepSeek served on NVIDIA NIM expects `chat_template_kwargs.thinking`
+ * to explicitly enable/disable its reasoning mode.
+ */
+export function aiExtraBody(cfg: Pick<AiConfig, "model" | "thinking">): Record<string, unknown> {
+  if (cfg.model.toLowerCase().includes("deepseek")) {
+    return { chat_template_kwargs: { thinking: cfg.thinking } };
+  }
+  return {};
 }
 
 /** True when the AI engine key is provided server-side via env. */
@@ -56,5 +75,6 @@ export async function getTenantAiConfig(tenantId: number): Promise<AiConfig> {
     baseUrl: envBaseUrl || row?.aiBaseUrl || DEFAULT_AI_BASE_URL,
     model: envModel || row?.aiModel || DEFAULT_AI_MODEL,
     managed: !!envKey,
+    thinking: process.env.AI_THINKING === "true",
   };
 }

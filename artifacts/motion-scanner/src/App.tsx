@@ -174,7 +174,7 @@ function LandingPage() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-2 max-w-2xl w-full text-left">
           {[
             { Icon: BarChart2, label: "Technical Scanner", desc: "RSI, ADX, EMA composite scoring with live GO/HOLD/ABORT signals across any watchlist." },
-            { Icon: Bot, label: "AI Agent", desc: "GPT-5 with live tool access — runs real scans, loads watchlists, and analyzes sector data autonomously." },
+            { Icon: Bot, label: "AI Agent", desc: "DeepSeek V4 Pro with live tool access — runs real scans, loads watchlists, and analyzes sector data autonomously." },
             { Icon: TrendingUp, label: "Sector Rotation", desc: "Live sector leadership/laggard classification and RISK_ON / RISK_OFF / NEUTRAL regime detection." },
           ].map(({ Icon, label, desc }) => (
             <div key={label} className="border border-border rounded p-4 bg-card text-left">
@@ -188,7 +188,7 @@ function LandingPage() {
 
       <footer className="border-t border-border px-8 py-3 text-center">
         <p className="text-xs text-muted-foreground">
-          Motion Scanner v3.0 · SOC 2-aligned · Powered by GPT-5
+          Motion Scanner v3.0 · SOC 2-aligned · Powered by DeepSeek V4 Pro on NVIDIA NIM
         </p>
       </footer>
     </div>
