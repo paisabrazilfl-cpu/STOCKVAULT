@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Bot, Send, Plus, Trash2, ChevronRight, Sparkles, Loader2,
   RotateCcw, Search, TrendingUp, List, History, BarChart2, CheckCircle2,
-  Zap, X, ArrowUpRight, ArrowDownRight, Minus,
+  Zap, X, ArrowUpRight, ArrowDownRight, Minus, Brain,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -240,6 +240,7 @@ export function Agent() {
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [streamingContent, setStreamingContent] = useState("");
+  const [streamingReasoning, setStreamingReasoning] = useState("");
   const [streamingTools, setStreamingTools] = useState<ToolEvent[]>([]);
   const [showAlexScreener, setShowAlexScreener] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -291,6 +292,7 @@ export function Agent() {
     setInput("");
     setStreaming(true);
     setStreamingContent("");
+    setStreamingReasoning("");
     setStreamingTools([]);
 
     abortRef.current = new AbortController();
@@ -308,6 +310,7 @@ export function Agent() {
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let accumulated = "";
+      let reasoningAccum = "";
       const toolEventsAccum: ToolEvent[] = [];
 
       while (true) {
@@ -319,7 +322,11 @@ export function Agent() {
           try {
             const data = JSON.parse(line.slice(6));
 
-            if (data.content) {
+            if (data.reasoning) {
+              reasoningAccum += data.reasoning;
+              setStreamingReasoning(reasoningAccum);
+
+            } else if (data.content) {
               accumulated += data.content;
               setStreamingContent(accumulated);
 
@@ -342,6 +349,7 @@ export function Agent() {
               };
               setMessages((prev) => [...prev, assistantMsg]);
               setStreamingContent("");
+              setStreamingReasoning("");
               setStreamingTools([]);
               setTimeout(() => refetchDetail(), 300);
 
@@ -523,17 +531,31 @@ export function Agent() {
                     </div>
                   )}
 
+                  {/* Reasoning (thinking) stream — collapsible */}
+                  {streamingReasoning && (
+                    <details className="mb-2 group" open={!streamingContent}>
+                      <summary className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer select-none list-none" data-testid="thinking-summary">
+                        <Brain className="h-3 w-3 text-primary/70" />
+                        <span>Thinking{!streamingContent ? "…" : ""}</span>
+                        <ChevronRight className="h-3 w-3 transition-transform group-open:rotate-90" />
+                      </summary>
+                      <pre className="mt-1.5 max-h-40 overflow-y-auto whitespace-pre-wrap text-[11px] leading-relaxed text-muted-foreground/80 border-l-2 border-primary/30 pl-2 font-mono" data-testid="thinking-content">
+                        {streamingReasoning}
+                      </pre>
+                    </details>
+                  )}
+
                   {streamingContent ? (
                     <>
                       <MarkdownContent content={streamingContent} />
                       <span className="inline-block w-1 h-4 bg-primary animate-pulse ml-0.5 align-middle" />
                     </>
-                  ) : (
+                  ) : !streamingReasoning ? (
                     <div className="flex items-center gap-2 text-muted-foreground text-xs">
                       <Loader2 className="h-3 w-3 animate-spin" />
                       {streamingTools.length > 0 ? "Analyzing results…" : "Thinking…"}
                     </div>
-                  )}
+                  ) : null}
                 </div>
               </div>
             )}

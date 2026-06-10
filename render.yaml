@@ -68,14 +68,14 @@ services:
       - key: GEMINI_API_KEY
         sync: false
       # ── AI agent backend (OpenAI-compatible) ──────────────────────────────
-      # Defaults to NVIDIA NIM serving MiniMax M2. The API key is a secret —
+      # Defaults to NVIDIA NIM serving Nemotron 3 Ultra. The API key is a secret —
       # paste your nvapi-… key in the Render dashboard (never commit it).
       - key: AI_INTEGRATIONS_OPENAI_BASE_URL
         value: https://integrate.api.nvidia.com/v1
       - key: AI_INTEGRATIONS_OPENAI_API_KEY
         sync: false
       - key: AI_MODEL
-        value: minimaxai/minimax-m2.7
+        value: nvidia/nemotron-3-ultra-550b-a55b
       # ── Ticker reference search (Polygon or Massive — identical API) ───────
       # Symbol search uses /v3/reference/tickers. Defaults to Polygon's host;
       # set TICKERS_BASE_URL=https://api.massive.com to use Massive instead.
