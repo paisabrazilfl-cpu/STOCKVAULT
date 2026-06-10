@@ -94,3 +94,49 @@ export async function fetchSpyReturn(days = 5): Promise<number> {
     return (closes[closes.length - 1] - prev) / prev;
   } catch { return 0; }
 }
+
+export interface YahooTickerHit {
+  ticker: string;
+  name: string;
+  market: string;
+  primaryExchange: string | null;
+  type: string | null;
+  currency: string | null;
+  active: boolean;
+}
+
+/**
+ * Free ticker search via Yahoo Finance — the zero-key fallback for
+ * /api/tickers/search, so symbol lookup works out of the box without a
+ * Polygon/Massive key. Tries both query hosts (same throttling caveat as
+ * fetchYahooChart). Returns [] on any failure — callers degrade gracefully.
+ */
+export async function searchYahooTickers(query: string, limit = 20): Promise<YahooTickerHit[]> {
+  const q = query.trim();
+  if (!q) return [];
+  const hosts = ["query1.finance.yahoo.com", "query2.finance.yahoo.com"];
+  for (const host of hosts) {
+    try {
+      const { data } = await axios.get(`https://${host}/v1/finance/search`, {
+        timeout: 8000,
+        headers: YF_HEADERS,
+        params: { q, quotesCount: Math.min(Math.max(limit, 1), 50), newsCount: 0, listsCount: 0 },
+      });
+      const quotes = (data?.quotes ?? []) as any[];
+      return quotes
+        .filter((r) => r?.symbol && (r.quoteType === "EQUITY" || r.quoteType === "ETF"))
+        .map((r) => ({
+          ticker: String(r.symbol),
+          name: String(r.longname ?? r.shortname ?? r.symbol),
+          market: "stocks",
+          primaryExchange: r.exchDisp ?? r.exchange ?? null,
+          type: r.quoteType === "ETF" ? "ETF" : "CS",
+          currency: null,
+          active: true,
+        }));
+    } catch {
+      // try the next host
+    }
+  }
+  return [];
+}

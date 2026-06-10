@@ -10,14 +10,23 @@ router.get("/audit-logs", async (req, res): Promise<void> => {
   const limit = params.success ? (params.data.limit ?? 50) : 50;
   const offset = params.success ? (params.data.offset ?? 0) : 0;
 
-  const [rows, totalRows] = await Promise.all([
-    db.select().from(auditLogsTable)
-      .where(eq(auditLogsTable.tenantId, req.tenantId))
-      .orderBy(desc(auditLogsTable.createdAt))
-      .limit(limit).offset(offset),
-    db.select({ count: count() }).from(auditLogsTable)
-      .where(eq(auditLogsTable.tenantId, req.tenantId)),
-  ]);
+  // DB-less mode: render an empty audit trail, not a 500.
+  let rows: (typeof auditLogsTable.$inferSelect)[] = [];
+  let total = 0;
+  try {
+    const [r, totalRows] = await Promise.all([
+      db.select().from(auditLogsTable)
+        .where(eq(auditLogsTable.tenantId, req.tenantId))
+        .orderBy(desc(auditLogsTable.createdAt))
+        .limit(limit).offset(offset),
+      db.select({ count: count() }).from(auditLogsTable)
+        .where(eq(auditLogsTable.tenantId, req.tenantId)),
+    ]);
+    rows = r;
+    total = totalRows[0]?.count ?? 0;
+  } catch (err) {
+    req.log?.warn?.({ err }, "audit-logs: DB unreachable — serving empty list");
+  }
 
   res.json({
     items: rows.map((r) => ({
@@ -26,7 +35,7 @@ router.get("/audit-logs", async (req, res): Promise<void> => {
       userId: r.userId ?? null, ipAddress: r.ipAddress ?? null,
       metadata: r.metadata ?? null, createdAt: r.createdAt.toISOString(),
     })),
-    total: totalRows[0]?.count ?? 0,
+    total,
   });
 });
 

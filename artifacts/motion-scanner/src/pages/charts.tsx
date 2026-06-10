@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useSearch } from "wouter";
 import { useGetChart, useListWatchlists } from "@workspace/api-client-react";
 import {
   createChart, ColorType, CandlestickSeries, LineSeries, AreaSeries, HistogramSeries,
@@ -227,6 +228,14 @@ export function Charts() {
       return [sym, ...filtered].slice(0, MAX_RECENT);
     });
   }, []);
+
+  // Deep link support: /charts?ticker=NVDA (used by the global sidebar search)
+  const searchString = useSearch();
+  useEffect(() => {
+    const fromUrl = new URLSearchParams(searchString).get("ticker");
+    if (fromUrl && fromUrl.trim().toUpperCase() !== ticker) loadTicker(fromUrl);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchString, loadTicker]);
 
   // Chart refs
   const priceContainerRef = useRef<HTMLDivElement>(null);

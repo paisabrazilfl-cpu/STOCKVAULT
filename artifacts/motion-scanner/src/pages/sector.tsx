@@ -3,11 +3,14 @@ import type { SectorEntry } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { formatPercent } from "@/lib/format";
+
 
 function ChangeBar({ value }: { value: number }) {
+  // `value` arrives from the API already in percent points (1.26 == +1.26%).
+  // Don't run it through Intl percent formatting (which multiplies by 100
+  // again — that's how Healthcare briefly showed "+126.0%" on a +1.26% day).
   const positive = value >= 0;
-  const pct = Math.min(100, Math.abs(value) * 200);
+  const pct = Math.min(100, Math.abs(value) * 20); // a ±5% move fills the bar
   return (
     <div className="flex items-center gap-2">
       <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
@@ -17,7 +20,7 @@ function ChangeBar({ value }: { value: number }) {
         />
       </div>
       <span className={`text-xs w-14 text-right font-mono ${positive ? "text-[hsl(var(--go-color))]" : "text-red-600"}`}>
-        {positive ? "+" : ""}{formatPercent(value)}
+        {positive ? "+" : ""}{value.toFixed(1)}%
       </span>
     </div>
   );
@@ -141,7 +144,7 @@ export function SectorRotation() {
                   <td className="px-4 py-3"><ChangeBar value={s.ret5d} /></td>
                   <td className="px-4 py-3 text-right font-mono">
                     <span className={s.ret20d >= 0 ? "text-[hsl(var(--go-color))]" : "text-red-600"}>
-                      {s.ret20d >= 0 ? "+" : ""}{formatPercent(s.ret20d)}
+                      {s.ret20d >= 0 ? "+" : ""}{s.ret20d.toFixed(1)}%
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right font-mono">{s.rs1d.toFixed(2)}</td>

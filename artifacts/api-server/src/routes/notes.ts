@@ -7,12 +7,18 @@ const router = Router();
 
 // GET /api/notes
 router.get("/notes", async (req, res): Promise<void> => {
-  const notes = await db
-    .select()
-    .from(notesTable)
-    .where(eq(notesTable.tenantId, req.tenantId))
-    .orderBy(notesTable.updatedAt);
-  res.json(notes);
+  // DB-less mode: render an empty list, not a 500.
+  try {
+    const notes = await db
+      .select()
+      .from(notesTable)
+      .where(eq(notesTable.tenantId, req.tenantId))
+      .orderBy(notesTable.updatedAt);
+    res.json(notes);
+  } catch (err) {
+    req.log?.warn?.({ err }, "notes: DB unreachable — serving empty list");
+    res.json([]);
+  }
 });
 
 // POST /api/notes
