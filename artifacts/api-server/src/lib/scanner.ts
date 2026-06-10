@@ -146,7 +146,7 @@ export interface SentimentData {
 export interface TriState { state: "GO" | "HOLD" | "ABORT"; reason: string; }
 
 // ── Technical indicators ─────────────────────────────────────────────────────
-function ema(prices: number[], period: number): number {
+export function ema(prices: number[], period: number): number {
   if (prices.length === 0) return 0;
   const k = 2 / (period + 1);
   let e = prices[0];
@@ -154,13 +154,13 @@ function ema(prices: number[], period: number): number {
   return e;
 }
 
-function sma(prices: number[], period: number): number {
+export function sma(prices: number[], period: number): number {
   if (prices.length === 0) return 0;
   const slice = prices.slice(-period);
   return slice.reduce((a, b) => a + b, 0) / slice.length;
 }
 
-function rsi(prices: number[], period = 14): number {
+export function rsi(prices: number[], period = 14): number {
   if (prices.length < period + 1) return 50;
   let gains = 0, losses = 0;
   for (let i = prices.length - period; i < prices.length; i++) {
@@ -171,7 +171,7 @@ function rsi(prices: number[], period = 14): number {
   return 100 - 100 / (1 + gains / losses);
 }
 
-function macd(prices: number[]): { macd: number; signal: number; hist: number } {
+export function macd(prices: number[]): { macd: number; signal: number; hist: number } {
   const fast = ema(prices, 12);
   const slow = ema(prices, 26);
   const macdLine = fast - slow;
@@ -180,7 +180,7 @@ function macd(prices: number[]): { macd: number; signal: number; hist: number } 
 }
 
 /** 3-month MACD: uses last ~65 bars (≈3 trading months) as the price universe */
-function macd3Month(prices: number[]): { macd: number; signal: number; hist: number } {
+export function macd3Month(prices: number[]): { macd: number; signal: number; hist: number } {
   const bars = prices.slice(-65);
   if (bars.length < 27) return { macd: 0, signal: 0, hist: 0 };
   const fast = ema(bars, 12);
@@ -190,7 +190,7 @@ function macd3Month(prices: number[]): { macd: number; signal: number; hist: num
   return { macd: macdLine, signal, hist: macdLine - signal };
 }
 
-function atr(highs: number[], lows: number[], closes: number[], period = 14): number {
+export function atr(highs: number[], lows: number[], closes: number[], period = 14): number {
   const trs: number[] = [];
   for (let i = 1; i < highs.length; i++) {
     trs.push(Math.max(highs[i] - lows[i], Math.abs(highs[i] - closes[i - 1]), Math.abs(lows[i] - closes[i - 1])));
@@ -199,14 +199,14 @@ function atr(highs: number[], lows: number[], closes: number[], period = 14): nu
   return slice.reduce((a, b) => a + b, 0) / Math.max(slice.length, 1);
 }
 
-function rvol(volumes: number[], period = 20): number {
+export function rvol(volumes: number[], period = 20): number {
   if (volumes.length < 2) return 1;
   const recent = volumes[volumes.length - 1];
   const avg = volumes.slice(-period - 1, -1).reduce((a, b) => a + b, 0) / Math.max(period, 1);
   return avg > 0 ? recent / avg : 1;
 }
 
-function adx(highs: number[], lows: number[], closes: number[], period = 14): number {
+export function adx(highs: number[], lows: number[], closes: number[], period = 14): number {
   if (highs.length < period * 2) return 20;
   const dmPlus: number[] = [], dmMinus: number[] = [], trs: number[] = [];
   for (let i = 1; i < highs.length; i++) {
@@ -231,7 +231,7 @@ function adx(highs: number[], lows: number[], closes: number[], period = 14): nu
  * %K = (close - lowest low over kPeriod) / (highest high - lowest low) * 100
  * %D = SMA(kPeriod raw %K values, dPeriod)
  */
-function stochastic(highs: number[], lows: number[], closes: number[], kPeriod = 14, dPeriod = 3): { k: number; d: number } {
+export function stochastic(highs: number[], lows: number[], closes: number[], kPeriod = 14, dPeriod = 3): { k: number; d: number } {
   if (closes.length < kPeriod) return { k: 50, d: 50 };
   const rawK: number[] = [];
   for (let i = kPeriod - 1; i < closes.length; i++) {
@@ -251,7 +251,7 @@ function stochastic(highs: number[], lows: number[], closes: number[], kPeriod =
  * slowK = SMA(fast %K values, slowPeriod)
  * slowD = SMA(slowK values, dPeriod)
  */
-function fullStochastic(
+export function fullStochastic(
   highs: number[], lows: number[], closes: number[],
   kPeriod = 14, slowPeriod = 3, dPeriod = 3
 ): { fastK: number; slowK: number; slowD: number } {
@@ -278,12 +278,12 @@ function fullStochastic(
   return { fastK, slowK, slowD };
 }
 
-function isBreakout(closes: number[], period = 20): boolean {
+export function isBreakout(closes: number[], period = 20): boolean {
   if (closes.length < period + 1) return false;
   return closes[closes.length - 1] > Math.max(...closes.slice(-period - 1, -1));
 }
 
-function isBreakout52w(closes: number[]): boolean {
+export function isBreakout52w(closes: number[]): boolean {
   const slice = closes.slice(-252);
   if (slice.length < 20) return false;
   return closes[closes.length - 1] >= Math.max(...slice.slice(0, -1)) * 0.97;
