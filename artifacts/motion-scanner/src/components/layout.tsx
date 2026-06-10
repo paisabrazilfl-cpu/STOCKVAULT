@@ -195,7 +195,7 @@ function GlobalTickerSearch({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-export function Layout({ children }: { children: React.ReactNode }) {
+export function Layout({ children, className }: { children: React.ReactNode; className?: string }) {
   const [location] = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -205,7 +205,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const settingsActive = location === "/settings";
 
   return (
-    <div className="flex flex-col md:flex-row h-screen bg-background text-foreground overflow-hidden text-sm">
+    <div className={cn("flex flex-col md:flex-row h-screen bg-background text-foreground overflow-hidden text-sm", className)}>
       {/* Mobile top bar */}
       <header className="md:hidden h-12 shrink-0 border-b border-border bg-sidebar flex items-center gap-2 px-3">
         <button
