@@ -37,8 +37,16 @@ const NAV_SECTIONS: { title: string; items: { href: string; label: string; icon:
       { href: "/sector", label: "Sector Rotation", icon: BarChart2 },
     ],
   },
+    {
+    title: "Automate",
+    items: [
+      { href: "/mrbot", label: "MR.BOT", icon: Bot },
+    ],
+  },
+
   {
-    title: "Organize",
+
+      title: "Organize",
     items: [
       { href: "/watchlists", label: "Watchlists", icon: List },
       { href: "/notes", label: "Notes", icon: StickyNote },
