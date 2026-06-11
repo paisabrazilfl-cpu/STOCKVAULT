@@ -2,34 +2,15 @@ import { db, apiKeysTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { decrypt } from "./crypto";
 
-// Defaults: NVIDIA NIM serving Nemotron 3 Ultra (OpenAI-compatible).
+// Defaults: NVIDIA NIM serving DeepSeek V4 Pro (OpenAI-compatible).
+// Supports: DeepSeek V4 Pro (default), Nemotron 3 Ultra, and other OpenAI-compatible models.
 export const DEFAULT_AI_BASE_URL = "https://integrate.api.nvidia.com/v1";
 export const DEFAULT_AI_MODEL = "deepseek-ai/deepseek-v4-pro";
 
-/** Max tokens for a single completion (Nemotron supports long outputs). */
+/** Max tokens for a single completion (Nemotron/DeepSeek support long outputs). */
 export const DEFAULT_MAX_TOKENS = 16384;
 /** Reasoning-token budget passed to NIM thinking-capable models. */
 export const DEFAULT_REASONING_BUDGET = Number(process.env.AI_REASONING_BUDGET || 16384);
-
-/** True for NIM models that support enable_thinking / reasoning_content. */
-export function isReasoningModel(model: string): boolean {
-  return /nemotron/i.test(model);
-}
-
-/**
- * Extra request params for thinking-capable NIM models. Spread into the
- * chat.completions.create payload; OpenAI SDK forwards unknown keys verbatim.
- * Empty object for models that don't support thinking (sending
- * chat_template_kwargs to them can 400).
- */
-export function reasoningParams(model: string): Record<string, unknown> {
-  if (!isReasoningModel(model)) return {};
-  if (process.env.AI_ENABLE_THINKING === "false") return {};
-  return {
-    chat_template_kwargs: { enable_thinking: true },
-    reasoning_budget: DEFAULT_REASONING_BUDGET,
-  };
-}
 
 export interface AiConfig {
   apiKey?: string;
@@ -37,6 +18,34 @@ export interface AiConfig {
   model: string;
   /** true when the API key comes from server env (operator-level). */
   managed: boolean;
+  /**
+   * Reasoning-mode flag for models that support a `thinking` chat-template
+   * switch (DeepSeek on NVIDIA NIM, Nemotron reasoning). Off by default: the agent
+   * streams answers, and reasoning traces would slow + pollute the SSE output.
+   * Opt in with AI_THINKING=true.
+   */
+  thinking: boolean;
+}
+
+/**
+ * Extra OpenAI-compatible body params required by the resolved model.
+ * DeepSeek on NVIDIA NIM expects `chat_template_kwargs.thinking` to
+ * explicitly enable/disable its reasoning mode.
+ * Nemotron uses `chat_template_kwargs.enable_thinking`.
+ */
+export function aiExtraBody(cfg: Pick<AiConfig, "model" | "thinking">): Record<string, unknown> {
+  const modelLower = cfg.model.toLowerCase();
+  if (modelLower.includes("deepseek")) {
+    return { chat_template_kwargs: { thinking: cfg.thinking } };
+  }
+  if (modelLower.includes("nemotron")) {
+    if (!cfg.thinking) return {};
+    return {
+      chat_template_kwargs: { enable_thinking: true },
+      reasoning_budget: DEFAULT_REASONING_BUDGET,
+    };
+  }
+  return {};
 }
 
 /** True when the AI engine key is provided server-side via env. */
@@ -81,5 +90,6 @@ export async function getTenantAiConfig(tenantId: number): Promise<AiConfig> {
     baseUrl: envBaseUrl || row?.aiBaseUrl || DEFAULT_AI_BASE_URL,
     model: envModel || row?.aiModel || DEFAULT_AI_MODEL,
     managed: !!envKey,
+    thinking: process.env.AI_THINKING === "true",
   };
 }

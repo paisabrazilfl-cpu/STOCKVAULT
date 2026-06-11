@@ -11,7 +11,7 @@ import { runScan, DEFAULT_CONFIG } from "../../lib/scanner";
 import { getSectorRotation } from "../../lib/sector";
 import { fetchYahooChart } from "../../lib/providers/yahoo";
 import { decrypt } from "../../lib/crypto";
-import { getTenantAiConfig, reasoningParams, DEFAULT_AI_MODEL, DEFAULT_MAX_TOKENS } from "../../lib/ai-engine";
+import { getTenantAiConfig, aiExtraBody, DEFAULT_AI_MODEL } from "../../lib/ai-engine";
 import type { TenantProviderKeys } from "../../lib/providers";
 
 // Minimal OpenAI chat types (avoids importing from transitive `openai` pkg)
@@ -27,9 +27,9 @@ interface ChatCompletionTool {
 
 const router = Router();
 
-// AI model id. Defaults to NVIDIA's Nemotron 3 Ultra 550B (served via the
-// OpenAI-compatible NIM endpoint at integrate.api.nvidia.com/v1). Override with
-// AI_MODEL to point at any other OpenAI-compatible model.
+// AI model id. Defaults to NVIDIA's DeepSeek V4 Pro (served via the OpenAI-compatible
+// NIM endpoint at integrate.api.nvidia.com/v1). Override with AI_MODEL to point
+// at any other OpenAI-compatible model (e.g., Nemotron 3 Ultra).
 const AI_MODEL = process.env.AI_MODEL || DEFAULT_AI_MODEL;
 
 // ── Tenant API keys ──────────────────────────────────────────────────────────
@@ -337,11 +337,13 @@ router.post("/openai/conversations/:id/messages", async (req, res) => {
         model,
         temperature: 1,
         top_p: 0.95,
-        max_tokens: DEFAULT_MAX_TOKENS,
+        max_tokens: 16384,
         messages: loopMessages,
         tools: TOOLS,
         stream: true,
-        ...reasoningParams(model),
+        // DeepSeek-on-NIM reasoning switch (off by default; AI_THINKING=true to enable)
+        // Nemotron also respects this if enable_thinking is set in aiExtraBody()
+        ...aiExtraBody(ai),
       });
 
       // Accumulate streaming response
