@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { alpacaClient } from "../lib/AlpacaClient";
+import AlpacaClient from "../lib/alpacaClient";
+
+const alpacaClient = new AlpacaClient();
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Skeleton } from "../components/ui/skeleton";
 
