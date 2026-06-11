@@ -7,22 +7,15 @@ import { setBaseUrl } from "@workspace/api-client-react";
 // 1. VITE_API_BASE_URL — baked in at build time. Set it to a full origin
 //    (https://my-api.example.com) to force a host, or to "/" to force
 //    same-origin relative requests.
-// 2. On *.onrender.com the static site has no same-origin /api proxy (the
-//    API is a separate Render service), so default to the live API host.
-// 3. Anywhere else (Replit dev, local vite + proxy) use same-origin paths.
-const RENDER_API_HOST = "https://stockvault-5qjg.onrender.com";
-
+// 2. Same-origin everywhere else. The API service serves this frontend build
+//    itself (see api-server/src/app.ts), so on Render the app and the API
+//    share one origin and relative /api/... paths just work. Never hardcode
+//    a Render host here — service URLs change and a dead host bricks the app.
 function resolveApiBaseUrl(): string | null {
   const fromEnv = import.meta.env.VITE_API_BASE_URL as string | undefined;
   if (fromEnv && fromEnv.trim()) {
     const trimmed = fromEnv.trim().replace(/\/+$/, "");
     return trimmed === "" ? null : trimmed; // "/" → same-origin
-  }
-  if (
-    typeof window !== "undefined" &&
-    window.location.hostname.endsWith(".onrender.com")
-  ) {
-    return RENDER_API_HOST;
   }
   return null;
 }

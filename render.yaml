@@ -68,14 +68,17 @@ services:
       - key: GEMINI_API_KEY
         sync: false
       # ── AI agent backend (OpenAI-compatible) ──────────────────────────────
-      # Defaults to NVIDIA NIM serving Nemotron 3 Ultra. The API key is a secret —
+      # Defaults to NVIDIA NIM serving DeepSeek V4 Pro. The API key is a secret —
       # paste your nvapi-… key in the Render dashboard (never commit it).
       - key: AI_INTEGRATIONS_OPENAI_BASE_URL
         value: https://integrate.api.nvidia.com/v1
       - key: AI_INTEGRATIONS_OPENAI_API_KEY
         sync: false
       - key: AI_MODEL
-        value: nvidia/nemotron-3-ultra-550b-a55b
+        value: deepseek-ai/deepseek-v4-pro
+      # Reasoning/thinking mode for DeepSeek-on-NIM (default off = faster SSE).
+      - key: AI_THINKING
+        value: "false"
       # ── Ticker reference search (Polygon or Massive — identical API) ───────
       # Symbol search uses /v3/reference/tickers. Defaults to Polygon's host;
       # set TICKERS_BASE_URL=https://api.massive.com to use Massive instead.
@@ -104,16 +107,23 @@ services:
       # Vite inlines it at BUILD time, so a change requires a redeploy.
       - key: VITE_CLERK_PUBLISHABLE_KEY
         sync: false
-      # Where the frontend sends /api requests. Baked in at BUILD time. The
-      # live API service is stockvault-5qjg; change this if the API service
-      # gets a different host. Set it to "/" to use same-origin requests
-      # (requires the /api/* rewrite below to be active on the static site).
+      # Where the frontend sends /api requests. "/" = same-origin: requests go
+      # to THIS static site and the /api/* rewrite below proxies them to the
+      # API service. NEVER bake a hardcoded API host here — when that service
+      # is renamed/deleted the whole app bricks ("API server is unreachable").
+      #
+      # NOTE: the stockvault-api service serves this same frontend itself, so
+      # the simplest setup is to use the API service's URL as the app URL and
+      # ignore this static site entirely.
       - key: VITE_API_BASE_URL
-        value: https://stockvault-5qjg.onrender.com
+        value: "/"
     routes:
+      # Proxy API calls to the API service. AFTER the Blueprint deploy, check
+      # the actual URL of stockvault-api in the Render dashboard and update
+      # this destination if it differs (Render may add a suffix to new URLs).
       - type: rewrite
         source: /api/*
-        destination: https://stockvault-5qjg.onrender.com/api/*
+        destination: https://stockvault-api.onrender.com/api/*
       # SPA fallback — every non-API route serves the React app.
       - type: rewrite
         source: /*
