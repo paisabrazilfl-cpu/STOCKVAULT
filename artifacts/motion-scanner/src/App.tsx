@@ -23,6 +23,7 @@ import { News } from "@/pages/news";
 import { Notes } from "@/pages/notes";
 import { Charts } from "@/pages/charts";
 import { Agent } from "@/pages/agent";
+import { MrBot } from "@/pages/mrbot";
 import NotFound from "@/pages/not-found";
 
 // ── QueryClient singleton ─────────────────────────────────────────────────────
@@ -277,6 +278,7 @@ function AuthedPages() {
         <Route path="/news" component={News} />
         <Route path="/charts" component={Charts} />
         <Route path="/agent" component={Agent} />
+        <Route path="/mrbot" component={MrBot} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
