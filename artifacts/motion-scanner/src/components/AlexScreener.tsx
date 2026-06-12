@@ -9,10 +9,10 @@ import { Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ALEX_PARAMS = {
-  priceMin: 1,
-  priceMax: 10,
-  mom1mMin: 0.20,
-  nearHigh52wPct: 0.10,
+  priceMin: 2,
+  priceMax: 50,
+  mom1mMin: 0.05,
+  nearHigh52wPct: 0.20,
 };
 
 function VerdictBadge({ verdict }: { verdict: string }) {
@@ -55,7 +55,7 @@ export const AlexScreener: React.FC = () => {
     const tech = c.technical as Record<string, unknown> | null ?? {};
     const high52w = Number(tech.high52w ?? 0);
     const low52w  = Number(tech.low52w  ?? 0);
-    return high52w > 0 && low52w > 0 && high52w / low52w >= 2;
+    return high52w > 0 && low52w > 0 && high52w / low52w >= 1.5;
   });
 
   return (
@@ -67,7 +67,7 @@ export const AlexScreener: React.FC = () => {
             Alex's Screener
           </CardTitle>
           <p className="text-xs text-muted-foreground mt-1">
-            2× 52w Range · $1–$10 · ≥20% MoM · ≤10% from High
+            1.5× 52w Range · $2–$50 · ≥5% MoM · ≤20% from High
           </p>
         </div>
         <Button
