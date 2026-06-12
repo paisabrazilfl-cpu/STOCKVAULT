@@ -1,14 +1,46 @@
 import React from 'react';
 import { useRunScreener, getRunScreenerQueryKey } from "@workspace/api-client-react";
 import type { CandidateRecord } from "@workspace/api-client-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Zap } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-// Alex's preset: $1–$10 price · ≥20% 1-month momentum · ≤10% from 52w high · 2× range
 const ALEX_PARAMS = {
   priceMin: 1,
   priceMax: 10,
   mom1mMin: 0.20,
   nearHigh52wPct: 0.10,
 };
+
+function VerdictBadge({ verdict }: { verdict: string }) {
+  return (
+    <span className={cn(
+      "inline-flex items-center px-2 py-0.5 rounded border text-xs font-bold tracking-wide",
+      verdict === "GO"    && "bg-[hsl(var(--go-color))]/20 text-[hsl(var(--go-color))] border-[hsl(var(--go-color))]/40",
+      verdict === "HOLD"  && "bg-yellow-500/20 text-yellow-500 border-yellow-500/40",
+      verdict === "ABORT" && "bg-red-500/20 text-red-500 border-red-500/40",
+      !["GO","HOLD","ABORT"].includes(verdict) && "bg-muted text-muted-foreground border-border",
+    )}>
+      {verdict}
+    </span>
+  );
+}
+
+function ScoreBar({ score }: { score: number }) {
+  const pct = Math.min(100, Math.max(0, score));
+  const color = pct >= 60 ? "bg-[hsl(var(--go-color))]" : pct >= 40 ? "bg-yellow-500" : "bg-red-500";
+  return (
+    <div className="flex items-center gap-2">
+      <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
+        <div className={cn("h-full rounded-full transition-all", color)} style={{ width: `${pct}%` }} />
+      </div>
+      <span className="text-xs font-mono w-8 text-right text-muted-foreground">{pct.toFixed(0)}</span>
+    </div>
+  );
+}
 
 export const AlexScreener: React.FC = () => {
   const { data, isFetching, error, refetch } = useRunScreener(ALEX_PARAMS, {
@@ -19,112 +51,116 @@ export const AlexScreener: React.FC = () => {
     },
   });
 
-  // Filter for 2× 52-week range (high/low ≥ 2)
   const candidates: CandidateRecord[] = (data?.results ?? []).filter((c) => {
     const tech = c.technical as Record<string, unknown> | null ?? {};
     const high52w = Number(tech.high52w ?? 0);
-    const low52w = Number(tech.low52w ?? 0);
+    const low52w  = Number(tech.low52w  ?? 0);
     return high52w > 0 && low52w > 0 && high52w / low52w >= 2;
   });
 
   return (
-    <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 max-w-5xl mx-auto mb-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+    <Card className="bg-card border-border">
+      <CardHeader className="pb-3 flex flex-row items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Alex's Screener</h2>
-          <p className="text-gray-500 text-base mt-1">2× Range · $1–$10 · ≥20% MoM · ≤10% from High</p>
+          <CardTitle className="text-sm uppercase tracking-wider flex items-center gap-2">
+            <Zap className="h-3.5 w-3.5 text-[hsl(var(--go-color))]" />
+            Alex's Screener
+          </CardTitle>
+          <p className="text-xs text-muted-foreground mt-1">
+            2× 52w Range · $1–$10 · ≥20% MoM · ≤10% from High
+          </p>
         </div>
-        <button
+        <Button
+          size="sm"
+          variant="outline"
           onClick={() => refetch()}
           disabled={isFetching}
-          className="px-6 py-3 bg-black text-white rounded-xl font-semibold text-base hover:bg-gray-800 transition disabled:opacity-50 flex items-center gap-2"
+          className="font-mono text-xs tracking-widest shrink-0"
         >
-          {isFetching ? 'Scanning…' : 'Run Screener'}
-        </button>
-      </div>
+          {isFetching ? "SCANNING..." : "▶  RUN"}
+        </Button>
+      </CardHeader>
 
-      {error && (
-        <div className="mb-6 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
-          {(error as Error)?.message ?? 'Failed to run screener — is the API server running?'}
-        </div>
-      )}
+      <CardContent className="pt-0">
+        {/* Error */}
+        {error && (
+          <p className="text-xs text-red-500 py-3">
+            {(error as Error)?.message ?? "Failed to run screener — is the API server running?"}
+          </p>
+        )}
 
-      {isFetching && (
-        <div className="py-16 text-center text-gray-400 text-sm">
-          Scanning live market data…
-        </div>
-      )}
+        {/* Loading skeletons */}
+        {isFetching && (
+          <div className="space-y-2 py-1">
+            {[1,2,3,4].map((i) => <Skeleton key={i} className="h-9 w-full" />)}
+          </div>
+        )}
 
-      {!isFetching && !error && !data && (
-        <div className="py-16 text-center text-gray-400 text-sm bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
-          Click 'Run Screener' to fetch live candidates matching the Alex preset.
-        </div>
-      )}
+        {/* Empty prompt */}
+        {!isFetching && !error && !data && (
+          <p className="text-xs text-muted-foreground py-4 text-center">
+            Click ▶ RUN to scan live market data for Alex preset candidates.
+          </p>
+        )}
 
-      {!isFetching && data && candidates.length === 0 && (
-        <div className="py-8 text-center text-gray-400 text-sm bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
-          No tickers matched all Alex criteria right now — try again during market hours.
-        </div>
-      )}
+        {/* No results */}
+        {!isFetching && data && candidates.length === 0 && (
+          <p className="text-xs text-muted-foreground py-4 text-center">
+            No tickers matched all criteria right now — try again during market hours.
+          </p>
+        )}
 
-      {candidates.length > 0 && (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-gray-100 text-sm text-gray-500">
-                <th className="pb-4 font-medium pl-2">Symbol</th>
-                <th className="pb-4 font-medium">Price</th>
-                <th className="pb-4 font-medium">MoM</th>
-                <th className="pb-4 font-medium">% from High</th>
-                <th className="pb-4 font-medium">Score</th>
-                <th className="pb-4 font-medium">Verdict</th>
-              </tr>
-            </thead>
-            <tbody className="text-gray-900 text-base">
+        {/* Results table */}
+        {candidates.length > 0 && (
+          <Table>
+            <TableHeader>
+              <TableRow className="border-border">
+                <TableHead>Ticker</TableHead>
+                <TableHead>Verdict</TableHead>
+                <TableHead>Score</TableHead>
+                <TableHead className="text-right">Price</TableHead>
+                <TableHead className="text-right">MoM</TableHead>
+                <TableHead className="text-right hidden sm:table-cell">52w Range</TableHead>
+                <TableHead className="text-right hidden sm:table-cell">% from High</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {candidates.map((c) => {
-                const tech = c.technical as Record<string, unknown> | null ?? {};
-                const price = Number(tech.price ?? 0);
-                const mom1m = Number(tech.mom1m ?? 0);
-                const high52w = Number(tech.high52w ?? 0);
+                const tech       = c.technical as Record<string, unknown> | null ?? {};
+                const price      = Number(tech.price    ?? 0);
+                const mom1m      = Number(tech.mom1m    ?? 0);
+                const high52w    = Number(tech.high52w  ?? 0);
+                const low52w     = Number(tech.low52w   ?? 0);
+                const range52w   = low52w > 0 ? high52w / low52w : 0;
                 const pctFromHigh = high52w > 0 ? (high52w - price) / high52w : 0;
-                const score = Number(c.score ?? 0);
+                const score      = Number(c.score ?? 0);
                 return (
-                  <tr key={c.ticker} className="border-b border-gray-50 hover:bg-gray-50/50 transition">
-                    <td className="py-5 font-semibold pl-2">{c.ticker}</td>
-                    <td className="py-5">${price.toFixed(2)}</td>
-                    <td className={`py-5 font-semibold ${mom1m >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {mom1m >= 0 ? '+' : ''}{(mom1m * 100).toFixed(1)}%
-                    </td>
-                    <td className="py-5 text-gray-600">
+                  <TableRow key={c.ticker} className="border-border hover:bg-muted/30 cursor-default">
+                    <TableCell className="font-mono font-semibold">{c.ticker}</TableCell>
+                    <TableCell><VerdictBadge verdict={c.verdict} /></TableCell>
+                    <TableCell><ScoreBar score={score} /></TableCell>
+                    <TableCell className="text-right font-mono text-sm">
+                      ${price.toFixed(2)}
+                    </TableCell>
+                    <TableCell className={cn(
+                      "text-right font-mono text-sm",
+                      mom1m >= 0 ? "text-[hsl(var(--go-color))]" : "text-red-500"
+                    )}>
+                      {mom1m >= 0 ? "+" : ""}{(mom1m * 100).toFixed(1)}%
+                    </TableCell>
+                    <TableCell className="text-right font-mono text-sm hidden sm:table-cell">
+                      {range52w.toFixed(1)}×
+                    </TableCell>
+                    <TableCell className="text-right font-mono text-sm text-muted-foreground hidden sm:table-cell">
                       -{(pctFromHigh * 100).toFixed(1)}%
-                    </td>
-                    <td className="py-5 pr-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-24 bg-gray-100 rounded-full h-2">
-                          <div
-                            className="bg-black h-2 rounded-full transition-all duration-500"
-                            style={{ width: `${Math.min(100, score)}%` }}
-                          />
-                        </div>
-                        <span className="text-xs text-gray-500 font-mono">{score.toFixed(0)}</span>
-                      </div>
-                    </td>
-                    <td className="py-5">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        c.verdict === 'GO'   ? 'bg-green-100 text-green-800' :
-                        c.verdict === 'HOLD' ? 'bg-yellow-100 text-yellow-800' :
-                                               'bg-red-100 text-red-800'
-                      }`}>
-                        {c.verdict}
-                      </span>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 );
               })}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
   );
 };

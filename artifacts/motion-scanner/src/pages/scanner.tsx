@@ -1307,12 +1307,14 @@ function Screener() {
 export function Scanner() {
   return (
     <div className="p-4 md:p-6 space-y-5">
-      <AlexScreener />
-
       <h1 className="text-xl md:text-2xl font-bold">Stock Finder</h1>
 
-      <Tabs defaultValue="screener" className="w-full">
+      <Tabs defaultValue="alex" className="w-full">
         <TabsList className="mb-5">
+          <TabsTrigger value="alex" className="gap-2">
+            <Zap className="h-3.5 w-3.5" />
+            Alex's Screener
+          </TabsTrigger>
           <TabsTrigger value="screener" className="gap-2">
             <Filter className="h-3.5 w-3.5" />
             Screener
@@ -1322,6 +1324,10 @@ export function Scanner() {
             Manual Scan
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="alex">
+          <AlexScreener />
+        </TabsContent>
 
         <TabsContent value="screener">
           <Screener />
