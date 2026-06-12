@@ -290,8 +290,11 @@ export function isBreakout52w(closes: number[]): boolean {
 }
 
 // ── Technical data ────────────────────────────────────────────────────────────
-export async function getTechnical(ticker: string): Promise<TechData> {
-  const chart = await fetchYahooChart(ticker, "1y");
+export async function getTechnical(
+  ticker: string,
+  preloadedChart?: Awaited<ReturnType<typeof fetchYahooChart>>
+): Promise<TechData> {
+  const chart = preloadedChart ?? await fetchYahooChart(ticker, "1y");
   if (!chart || chart.closes.length < 20) return { ok: false } as unknown as TechData;
   try {
     const { closes, highs, lows, opens, volumes } = chart;
@@ -597,6 +600,19 @@ interface CandRecord {
   [key: string]: unknown;
 }
 
+async function runConcurrent<T>(
+  tasks: Array<() => Promise<T>>,
+  limit: number
+): Promise<Array<PromiseSettledResult<T>>> {
+  const results: Array<PromiseSettledResult<T>> = [];
+  for (let i = 0; i < tasks.length; i += limit) {
+    const batch = tasks.slice(i, i + limit);
+    const batchResults = await Promise.allSettled(batch.map((fn) => fn()));
+    results.push(...batchResults);
+  }
+  return results;
+}
+
 export async function runScan(
   tickers: string[],
   cfg: Record<string, unknown>,
@@ -609,8 +625,10 @@ export async function runScan(
 
   const [spyReturn] = await Promise.all([fetchSpyReturn()]);
 
-  const results = await Promise.allSettled(
-    tickers.map((tk) => scanTicker(tk.toUpperCase(), cfg, spyReturn, providerKeys))
+  // Process tickers in batches of 40 to avoid overwhelming Yahoo Finance
+  const results = await runConcurrent(
+    tickers.map((tk) => () => scanTicker(tk.toUpperCase(), cfg, spyReturn, providerKeys)),
+    40
   );
 
   const records: CandRecord[] = results.map((r, i) =>
@@ -634,9 +652,12 @@ export async function runScan(
 }
 
 async function scanTicker(ticker: string, cfg: Record<string, unknown>, spyReturn: number, keys: TenantProviderKeys): Promise<CandRecord> {
-  // Fetch all provider data in parallel
+  // Fetch the Yahoo chart once and share it between getTechnical and getFlow
+  const chart = await fetchYahooChart(ticker, "1y").catch(() => null);
+
+  // Fetch all provider data in parallel, reusing the pre-fetched chart
   const [tech, polygonData, finnhubData] = await Promise.all([
-    getTechnical(ticker),
+    getTechnical(ticker, chart ?? undefined),
     keys.polygonKey ? fetchPolygonData(ticker, keys.polygonKey) : Promise.resolve(null),
     keys.finnhubKey ? fetchFinnhubData(ticker, keys.finnhubKey) : Promise.resolve(null),
   ]);
@@ -652,8 +673,6 @@ async function scanTicker(ticker: string, cfg: Record<string, unknown>, spyRetur
     else if (finnhubData?.quote?.changePct != null) tech.changePct = finnhubData.quote.changePct;
   }
 
-  // Build flow data from Yahoo chart (already fetched inside getTechnical)
-  const chart = await fetchYahooChart(ticker, "1y").catch(() => null);
   const flow = await getFlow(ticker, spyReturn, chart ?? undefined);
 
   // Fundamentals: merge Yahoo + Finnhub
