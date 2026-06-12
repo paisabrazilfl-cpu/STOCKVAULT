@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Zap } from "lucide-react";
+import { Zap, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ALEX_PARAMS = {
@@ -14,6 +14,38 @@ const ALEX_PARAMS = {
   mom1mMin: 0.05,
   nearHigh52wPct: 0.20,
 };
+
+// NYSE regular session: Mon–Fri 9:30–16:00 ET
+function getMarketStatus(): { isOpen: boolean; label: string } {
+  const now = new Date();
+  const et = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }));
+  const day = et.getDay(); // 0=Sun, 6=Sat
+  const hour = et.getHours();
+  const min = et.getMinutes();
+  const mins = hour * 60 + min;
+  const isWeekday = day >= 1 && day <= 5;
+  const isDuringSession = mins >= 9 * 60 + 30 && mins < 16 * 60;
+  const isOpen = isWeekday && isDuringSession;
+  return { isOpen, label: isOpen ? "LIVE" : "CLOSED" };
+}
+
+function MarketStatusBadge() {
+  const { isOpen, label } = getMarketStatus();
+  return (
+    <span className={cn(
+      "inline-flex items-center gap-1 px-2 py-0.5 rounded border text-xs font-bold tracking-wide",
+      isOpen
+        ? "bg-[hsl(var(--go-color))]/15 text-[hsl(var(--go-color))] border-[hsl(var(--go-color))]/30"
+        : "bg-muted text-muted-foreground border-border"
+    )}>
+      <span className={cn(
+        "w-1.5 h-1.5 rounded-full",
+        isOpen ? "bg-[hsl(var(--go-color))] animate-pulse" : "bg-muted-foreground"
+      )} />
+      {label}
+    </span>
+  );
+}
 
 function VerdictBadge({ verdict }: { verdict: string }) {
   return (
@@ -45,8 +77,9 @@ function ScoreBar({ score }: { score: number }) {
 export const AlexScreener: React.FC = () => {
   const { data, isFetching, error, refetch } = useRunScreener(ALEX_PARAMS, {
     query: {
-      enabled: false,
+      enabled: true,
       retry: 1,
+      staleTime: 5 * 60 * 1000,
       queryKey: getRunScreenerQueryKey(ALEX_PARAMS),
     },
   });
@@ -58,16 +91,26 @@ export const AlexScreener: React.FC = () => {
     return high52w > 0 && low52w > 0 && high52w / low52w >= 1.5;
   });
 
+  const cachedAt = data?.cachedAt ? new Date(data.cachedAt as string) : null;
+  const dataLabel = cachedAt
+    ? cachedAt.toLocaleDateString("en-US", { month: "short", day: "numeric" }) +
+      " · " + cachedAt.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short" })
+    : null;
+
   return (
     <Card className="bg-card border-border">
-      <CardHeader className="pb-3 flex flex-row items-center justify-between">
-        <div>
+      <CardHeader className="pb-3 flex flex-row items-center justify-between gap-3">
+        <div className="min-w-0">
           <CardTitle className="text-sm uppercase tracking-wider flex items-center gap-2">
             <Zap className="h-3.5 w-3.5 text-[hsl(var(--go-color))]" />
             Alex's Screener
+            <MarketStatusBadge />
           </CardTitle>
           <p className="text-xs text-muted-foreground mt-1">
             1.5× 52w Range · $2–$50 · ≥5% MoM · ≤20% from High
+            {dataLabel && (
+              <span className="ml-2 text-muted-foreground/60">· {dataLabel}</span>
+            )}
           </p>
         </div>
         <Button
@@ -77,7 +120,9 @@ export const AlexScreener: React.FC = () => {
           disabled={isFetching}
           className="font-mono text-xs tracking-widest shrink-0"
         >
-          {isFetching ? "SCANNING..." : "▶  RUN"}
+          {isFetching
+            ? <><RefreshCw className="h-3 w-3 animate-spin mr-1" />SCANNING</>
+            : "▶  RUN"}
         </Button>
       </CardHeader>
 
@@ -96,17 +141,15 @@ export const AlexScreener: React.FC = () => {
           </div>
         )}
 
-        {/* Empty prompt */}
-        {!isFetching && !error && !data && (
-          <p className="text-xs text-muted-foreground py-4 text-center">
-            Click ▶ RUN to scan live market data for Alex preset candidates.
-          </p>
-        )}
-
-        {/* No results */}
+        {/* No results after scan */}
         {!isFetching && data && candidates.length === 0 && (
           <p className="text-xs text-muted-foreground py-4 text-center">
-            No tickers matched all criteria right now — try again during market hours.
+            No tickers matched all criteria in the last session's data.
+            {data.scanned != null && (
+              <span className="block mt-1 text-muted-foreground/60">
+                Scanned {data.scanned} tickers · Yahoo Finance daily data
+              </span>
+            )}
           </p>
         )}
 
