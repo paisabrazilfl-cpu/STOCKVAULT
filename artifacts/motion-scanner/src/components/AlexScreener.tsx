@@ -9,6 +9,7 @@ import { Zap, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ALEX_PARAMS = {
+  universe: "all" as const,
   priceMin: 1,
   priceMax: 100,
   mom1mMin: 0.02,
