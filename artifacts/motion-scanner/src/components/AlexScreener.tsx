@@ -9,10 +9,11 @@ import { Zap, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ALEX_PARAMS = {
-  priceMin: 2,
-  priceMax: 50,
-  mom1mMin: 0.05,
-  nearHigh52wPct: 0.20,
+  priceMin: 1,
+  priceMax: 100,
+  mom1mMin: 0.02,
+  nearHigh52wPct: 0.30,
+  range52wMin: 1.5,
 };
 
 // NYSE regular session: Mon–Fri 9:30–16:00 ET
@@ -84,12 +85,7 @@ export const AlexScreener: React.FC = () => {
     },
   });
 
-  const candidates: CandidateRecord[] = (data?.results ?? []).filter((c) => {
-    const tech = c.technical as Record<string, unknown> | null ?? {};
-    const high52w = Number(tech.high52w ?? 0);
-    const low52w  = Number(tech.low52w  ?? 0);
-    return high52w > 0 && low52w > 0 && high52w / low52w >= 1.5;
-  });
+  const candidates: CandidateRecord[] = (data?.results ?? []);
 
   const cachedAt = data?.cachedAt ? new Date(data.cachedAt as string) : null;
   const dataLabel = cachedAt
@@ -107,7 +103,7 @@ export const AlexScreener: React.FC = () => {
             <MarketStatusBadge />
           </CardTitle>
           <p className="text-xs text-muted-foreground mt-1">
-            1.5× 52w Range · $2–$50 · ≥5% MoM · ≤20% from High
+            1.5× 52w Range · $1–$100 · ≥2% MoM · ≤30% from High
             {dataLabel && (
               <span className="ml-2 text-muted-foreground/60">· {dataLabel}</span>
             )}
