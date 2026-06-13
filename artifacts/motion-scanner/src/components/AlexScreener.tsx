@@ -1,11 +1,13 @@
-import React from 'react';
-import { useRunScreener, getRunScreenerQueryKey } from "@workspace/api-client-react";
+import React, { useState } from 'react';
+import { useRunScreener, getRunScreenerQueryKey, useCreateWatchlist } from "@workspace/api-client-react";
 import type { CandidateRecord } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Zap, RefreshCw } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Zap, RefreshCw, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ALEX_PARAMS = {
@@ -77,6 +79,9 @@ function ScoreBar({ score }: { score: number }) {
 }
 
 export const AlexScreener: React.FC = () => {
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [watchlistName, setWatchlistName] = useState("Alex's Screener Results");
+
   const { data, isFetching, error, refetch } = useRunScreener(ALEX_PARAMS, {
     query: {
       enabled: true,
@@ -84,6 +89,10 @@ export const AlexScreener: React.FC = () => {
       staleTime: 5 * 60 * 1000,
       queryKey: getRunScreenerQueryKey(ALEX_PARAMS),
     },
+  });
+
+  const { mutate: createWatchlist, isPending: isSaving } = useCreateWatchlist({
+    mutation: { onSuccess: () => { setSaveDialogOpen(false); setWatchlistName("Alex's Screener Results"); } },
   });
 
   const candidates: CandidateRecord[] = (data?.results ?? []);
@@ -148,6 +157,68 @@ export const AlexScreener: React.FC = () => {
               </span>
             )}
           </p>
+        )}
+
+        {/* Save to watchlist dialog */}
+        {candidates.length > 0 && (
+          <>
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-border">
+              <span className="text-xs text-muted-foreground">
+                {candidates.length} ticker{candidates.length !== 1 ? "s" : ""} passed all rules
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setSaveDialogOpen(true)}
+                disabled={isSaving}
+                className="font-mono text-xs gap-2"
+              >
+                <Download className="h-3.5 w-3.5" />
+                Save to Watchlist
+              </Button>
+            </div>
+            <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
+              <DialogContent className="max-w-sm">
+                <DialogHeader>
+                  <DialogTitle>Save Alex's Results as Watchlist</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-xs uppercase text-muted-foreground">Watchlist Name</label>
+                    <Input
+                      value={watchlistName}
+                      onChange={(e) => setWatchlistName(e.target.value)}
+                      placeholder="My Watchlist"
+                      disabled={isSaving}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Will save {candidates.length} tickers: {candidates.slice(0, 3).map(c => c.ticker).join(", ")}{candidates.length > 3 ? ", ..." : ""}
+                  </p>
+                  <div className="flex gap-2 justify-end">
+                    <Button variant="outline" onClick={() => setSaveDialogOpen(false)} disabled={isSaving}>
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        const tickers = candidates.map(c => c.ticker);
+                        createWatchlist({
+                          data: {
+                            name: watchlistName || "Alex's Screener Results",
+                            tickers,
+                            description: `Alex's Screener: 4 rules ($1–$10, 2× range, +20% MoM, ≤10% from high). Generated at ${new Date().toLocaleString()}`,
+                          }
+                        });
+                      }}
+                      disabled={isSaving || !watchlistName.trim()}
+                    >
+                      {isSaving ? "Saving..." : "Save"}
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </>
         )}
 
         {/* Results table */}
