@@ -11,10 +11,10 @@ import { cn } from "@/lib/utils";
 const ALEX_PARAMS = {
   universe: "all" as const,
   priceMin: 1,
-  priceMax: 100,
-  mom1mMin: 0.02,
-  nearHigh52wPct: 0.30,
-  range52wMin: 1.5,
+  priceMax: 10,
+  mom1mMin: 0.20,
+  nearHigh52wPct: 0.10,
+  range52wMin: 2,
 };
 
 // NYSE regular session: Mon–Fri 9:30–16:00 ET
@@ -64,7 +64,7 @@ function VerdictBadge({ verdict }: { verdict: string }) {
 }
 
 function ScoreBar({ score }: { score: number }) {
-  const pct = Math.min(100, Math.max(0, score));
+  const pct = Math.min(100, Math.max(0, score * 100));
   const color = pct >= 60 ? "bg-[hsl(var(--go-color))]" : pct >= 40 ? "bg-yellow-500" : "bg-red-500";
   return (
     <div className="flex items-center gap-2">
@@ -104,7 +104,7 @@ export const AlexScreener: React.FC = () => {
             <MarketStatusBadge />
           </CardTitle>
           <p className="text-xs text-muted-foreground mt-1">
-            1.5× 52w Range · $1–$100 · ≥2% MoM · ≤30% from High
+            2× 52w Range · $1–$10 · ≥20% MoM · ≤10% from High · Full Market (6k+)
             {dataLabel && (
               <span className="ml-2 text-muted-foreground/60">· {dataLabel}</span>
             )}

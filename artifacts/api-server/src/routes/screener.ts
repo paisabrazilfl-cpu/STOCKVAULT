@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { runScan, DEFAULT_CONFIG } from "../lib/scanner";
 import { decrypt } from "../lib/crypto";
 import type { TenantProviderKeys } from "../lib/providers";
+import { scanFullMarket } from "../lib/providers/fullmarket";
 
 const router = Router();
 
@@ -387,15 +388,38 @@ router.get("/screener", async (req, res): Promise<void> => {
   let allRecords: Record<string, unknown>[];
 
   if (stale) {
-    req.log.info({ universe: universeKey, count: tickers.length }, "screener: scanning universe");
-    const providerKeys = await getTenantKeys(req.tenantId);
-    const result = await runScan(tickers, DEFAULT_CONFIG, false, providerKeys);
-    allRecords = [
-      ...result.candidates,
-      ...result.hold,
-      ...result.rejected,
-    ] as unknown as Record<string, unknown>[];
-    cache.set(key, { records: allRecords, cachedAt: new Date() });
+    // universe=all: scan the real full-market directory (~6k symbols) via the
+    // bulk close-only path. Falls back to the hardcoded ALL_TICKERS list with
+    // full per-ticker scans if the directory or bulk feed is unavailable.
+    if (universeKey === "all") {
+      req.log.info("screener: full-market bulk scan");
+      const fm = await scanFullMarket(bust);
+      if (fm) {
+        allRecords = fm.records as unknown as Record<string, unknown>[];
+        cache.set(key, { records: allRecords, cachedAt: fm.cachedAt });
+        req.log.info({ scanned: allRecords.length }, "screener: full-market cache populated");
+      } else {
+        req.log.warn("screener: full-market scan unavailable, falling back to ALL_TICKERS");
+        const providerKeys = await getTenantKeys(req.tenantId);
+        const result = await runScan(tickers, DEFAULT_CONFIG, false, providerKeys);
+        allRecords = [
+          ...result.candidates,
+          ...result.hold,
+          ...result.rejected,
+        ] as unknown as Record<string, unknown>[];
+        cache.set(key, { records: allRecords, cachedAt: new Date() });
+      }
+    } else {
+      req.log.info({ universe: universeKey, count: tickers.length }, "screener: scanning universe");
+      const providerKeys = await getTenantKeys(req.tenantId);
+      const result = await runScan(tickers, DEFAULT_CONFIG, false, providerKeys);
+      allRecords = [
+        ...result.candidates,
+        ...result.hold,
+        ...result.rejected,
+      ] as unknown as Record<string, unknown>[];
+      cache.set(key, { records: allRecords, cachedAt: new Date() });
+    }
     req.log.info({ scanned: allRecords.length }, "screener: cache populated");
   } else {
     allRecords = cached!.records;

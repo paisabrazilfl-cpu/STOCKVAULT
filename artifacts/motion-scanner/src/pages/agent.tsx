@@ -139,7 +139,7 @@ const SUGGESTIONS = [
 // ── Alex's Screener preset ───────────────────────────────────────────────────
 
 const ALEX_PARAMS = {
-  universe: "smallcap" as const,
+  universe: "all" as const,
   priceMin: 1,
   priceMax: 10,
   range52wMin: 2,
@@ -163,7 +163,7 @@ function AlexScreenerPanel({ onClose }: { onClose: () => void }) {
         <div className="flex items-center gap-2">
           <Zap className="h-4 w-4 text-yellow-600" />
           <span className="text-xs font-bold text-yellow-600 uppercase tracking-wider">Alex's Screener</span>
-          <span className="text-[10px] text-yellow-600/70">2× Range · $1-$10 · 20% Mom · ≤10% from High</span>
+          <span className="text-[10px] text-yellow-600/70">2× Range · $1-$10 · 20% Mom · ≤10% from High · Full Market</span>
         </div>
         <Button size="icon" variant="ghost" className="h-6 w-6 text-yellow-600/70 hover:text-yellow-600" onClick={onClose}>
           <X className="h-3.5 w-3.5" />
@@ -174,7 +174,7 @@ function AlexScreenerPanel({ onClose }: { onClose: () => void }) {
         {isLoading && (
           <div className="flex items-center justify-center gap-2 py-8 text-muted-foreground text-xs">
             <Loader2 className="h-4 w-4 animate-spin" />
-            Scanning small-caps with Alex's 4 rules…
+            Scanning the full market with Alex's 4 rules…
           </div>
         )}
 
@@ -184,7 +184,7 @@ function AlexScreenerPanel({ onClose }: { onClose: () => void }) {
 
         {!isLoading && !isError && results.length === 0 && (
           <p className="text-xs text-muted-foreground text-center py-6">
-            No tickers passed all 4 rules right now. Check back during market hours.
+            No tickers passed all 4 rules in the last session's data{data?.scanned ? ` (${data.scanned} scanned)` : ""}.
           </p>
         )}
 
@@ -490,7 +490,7 @@ export function Agent() {
                 <Zap className="h-5 w-5 text-yellow-600 group-hover:animate-pulse" />
                 <div className="text-left">
                   <span className="font-bold text-sm block">Alex's Screener</span>
-                  <span className="text-[10px] text-yellow-600/70">2× Range · $1-$10 · 20% Mom · ≤10% from High</span>
+                  <span className="text-[10px] text-yellow-600/70">2× Range · $1-$10 · 20% Mom · ≤10% from High · Full Market</span>
                 </div>
               </button>
 
