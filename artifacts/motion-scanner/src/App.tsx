@@ -24,6 +24,7 @@ import { Notes } from "@/pages/notes";
 import { Charts } from "@/pages/charts";
 import { Agent } from "@/pages/agent";
 import { MrBot } from "@/pages/mrbot";
+import { FPTM } from "@/pages/fptm";
 import NotFound from "@/pages/not-found";
 
 // ── QueryClient singleton ─────────────────────────────────────────────────────
@@ -279,6 +280,7 @@ function AuthedPages() {
         <Route path="/charts" component={Charts} />
         <Route path="/agent" component={Agent} />
         <Route path="/mrbot" component={MrBot} />
+        <Route path="/fptm" component={FPTM} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

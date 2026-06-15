@@ -17,6 +17,7 @@ import {
   StickyNote,
   CandlestickChart,
   Bot,
+  TrendingUp,
   LogOut,
   X,
 } from "lucide-react";
@@ -41,6 +42,7 @@ const NAV_SECTIONS: { title: string; items: { href: string; label: string; icon:
     title: "Automate",
     items: [
       { href: "/mrbot", label: "MR.BOT", icon: Bot },
+      { href: "/fptm", label: "FPTM Bot", icon: TrendingUp },
     ],
   },
 
