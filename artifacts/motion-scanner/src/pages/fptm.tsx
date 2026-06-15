@@ -232,8 +232,8 @@ export function FPTM() {
               <div className="flex items-start space-x-2">
                 <Badge className="mt-1 bg-blue-600/20 text-blue-300 border-blue-500/40">CATALYST</Badge>
                 <div className="flex-1">
-                  <p className="text-sm font-semibold text-white">Required</p>
-                  <p className="text-xs text-slate-400">Earnings, FDA, partnership, etc.</p>
+                  <p className="text-sm font-semibold text-white">Optional</p>
+                  <p className="text-xs text-slate-400">Earnings, FDA, partnership, etc. (preferred)</p>
                 </div>
               </div>
 
@@ -412,7 +412,7 @@ export function FPTM() {
                             data: {
                               name: watchlistName || "FPTM Candidates",
                               tickers: candidates.map(c => c.symbol),
-                              description: `FPTM 14-Double Strategy candidates (${candidates.length} tickers). Meets: $1–$10, 2× range, +20% MoM, ≤10% from high, catalyst, low dilution.`,
+                              description: `FPTM 14-Double Strategy candidates (${candidates.length} tickers). Meets: $1–$10, 2× range, +20% MoM, ≤10% from high, ≥500k volume, 2.0× relative volume. Updated ${new Date().toLocaleString()}.`,
                             }
                           });
                         }}

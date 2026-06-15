@@ -42,11 +42,12 @@ router.get("/fptm/scan", async (req, res): Promise<void> => {
     // Get full market data
     const market = await scanFullMarket();
     if (!market) {
-      return res.status(503).json({
+      res.status(503).json({
         error: "Market data unavailable",
         candidates: [],
         ladder: buildDoubleLadder(config.startingCapital, 14),
       });
+      return;
     }
 
     // Convert to snapshots
