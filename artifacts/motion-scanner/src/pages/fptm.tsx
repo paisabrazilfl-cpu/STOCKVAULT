@@ -1,16 +1,71 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCreateWatchlist } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, Zap, AlertCircle, CheckCircle2, Target, DollarSign } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { TrendingUp, Zap, AlertCircle, CheckCircle2, Target, DollarSign, Download, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+interface FPTMCandidate {
+  symbol: string;
+  passed: boolean;
+  score: number;
+  reasons: string[];
+  warnings: string[];
+  price: number;
+  high52w: number;
+  low52w: number;
+  monthlyChangePct: number;
+  verdict: string;
+  tradePlanExample?: {
+    entryPrice: number;
+    stopLossPrice: number;
+    targetPrice: number;
+    shares: number;
+    maxPositionValue: number;
+  };
+  metrics: {
+    moveFrom52wLowPct: number;
+    distanceFrom52wHighPct: number;
+    relativeVolume: number;
+  };
+}
+
+interface FPTMResponse {
+  candidates: FPTMCandidate[];
+  total: number;
+  scanned: number;
+  config: any;
+  ladder: Array<{ step: number; capital: number }>;
+  cachedAt: string;
+}
 
 export function FPTM() {
   const [startingCapital, setStartingCapital] = useState(100);
   const [currentStep, setCurrentStep] = useState(0);
   const [accountValue, setAccountValue] = useState(100);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [watchlistName, setWatchlistName] = useState("FPTM Candidates");
+  const qc = useQueryClient();
+
+  const { data: fptmData, isLoading, error } = useQuery({
+    queryKey: ["/api/fptm/scan", startingCapital],
+    queryFn: async () => {
+      const res = await fetch(`/api/fptm/scan?startingCapital=${startingCapital}`);
+      return res.json() as Promise<FPTMResponse>;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { mutate: createWatchlist, isPending: isSaving } = useCreateWatchlist({
+    mutation: { onSuccess: () => { setSaveDialogOpen(false); setWatchlistName("FPTM Candidates"); } },
+  });
 
   const buildLadder = () => {
     const ladder = [];
@@ -27,6 +82,7 @@ export function FPTM() {
   const targetCapital = ladder[14].capital;
   const doublesNeeded = 14 - currentStep;
   const nextTarget = ladder[currentStep + 1]?.capital || targetCapital;
+  const candidates = fptmData?.candidates ?? [];
 
   return (
     <div className="p-6 space-y-8">
@@ -238,14 +294,149 @@ export function FPTM() {
         </CardContent>
       </Card>
 
+      {/* Candidates Section */}
+      <Card className="bg-gradient-to-br from-slate-900 to-slate-950 border-slate-800">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Target className="w-5 h-5 text-cyan-400" />
+              <div>
+                <CardTitle>FPTM Candidates</CardTitle>
+                <CardDescription>{candidates.length} stocks passed screening</CardDescription>
+              </div>
+            </div>
+            {candidates.length > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setSaveDialogOpen(true)}
+                className="font-mono text-xs gap-2"
+              >
+                <Download className="h-3.5 w-3.5" />
+                Save All
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isLoading && (
+            <div className="space-y-2">
+              {[1, 2, 3].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
+            </div>
+          )}
+
+          {error && (
+            <p className="text-xs text-red-500 py-4">
+              Failed to load candidates. Check API server.
+            </p>
+          )}
+
+          {!isLoading && !error && candidates.length === 0 && (
+            <div className="text-center py-8">
+              <AlertCircle className="w-8 h-8 text-slate-500 mx-auto mb-2" />
+              <p className="text-sm text-slate-400">No candidates passed the screener yet.</p>
+              <p className="text-xs text-slate-500 mt-1">Market data last updated: {fptmData?.cachedAt ? new Date(fptmData.cachedAt).toLocaleTimeString() : "—"}</p>
+            </div>
+          )}
+
+          {!isLoading && !error && candidates.length > 0 && (
+            <>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-slate-800">
+                      <TableHead>Ticker</TableHead>
+                      <TableHead className="text-right">Price</TableHead>
+                      <TableHead className="text-right">MoM</TableHead>
+                      <TableHead className="text-right">From Low</TableHead>
+                      <TableHead className="text-right">From High</TableHead>
+                      <TableHead className="text-right">Score</TableHead>
+                      <TableHead className="text-right">Target</TableHead>
+                      <TableHead className="text-right">Stop</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {candidates.map((c) => (
+                      <TableRow key={c.symbol} className="border-slate-800 hover:bg-slate-900/30">
+                        <TableCell className="font-bold font-mono">{c.symbol}</TableCell>
+                        <TableCell className="text-right font-mono">${c.price.toFixed(2)}</TableCell>
+                        <TableCell className={cn("text-right font-mono", c.monthlyChangePct >= 0 ? "text-emerald-400" : "text-red-400")}>
+                          +{c.monthlyChangePct.toFixed(0)}%
+                        </TableCell>
+                        <TableCell className="text-right font-mono text-emerald-300">
+                          +{c.metrics.moveFrom52wLowPct.toFixed(0)}%
+                        </TableCell>
+                        <TableCell className="text-right font-mono text-cyan-300">
+                          {c.metrics.distanceFrom52wHighPct.toFixed(1)}%
+                        </TableCell>
+                        <TableCell className="text-right font-mono text-white font-bold">
+                          {c.score.toFixed(0)}
+                        </TableCell>
+                        <TableCell className="text-right font-mono text-emerald-400">
+                          ${(c.tradePlanExample?.targetPrice ?? 0).toFixed(2)}
+                        </TableCell>
+                        <TableCell className="text-right font-mono text-red-400">
+                          ${(c.tradePlanExample?.stopLossPrice ?? 0).toFixed(2)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
+                <DialogContent className="max-w-sm">
+                  <DialogHeader>
+                    <DialogTitle>Save FPTM Candidates to Watchlist</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-xs uppercase text-muted-foreground">Watchlist Name</label>
+                      <Input
+                        value={watchlistName}
+                        onChange={(e) => setWatchlistName(e.target.value)}
+                        placeholder="My FPTM Candidates"
+                        disabled={isSaving}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Will save {candidates.length} tickers: {candidates.slice(0, 5).map(c => c.symbol).join(", ")}{candidates.length > 5 ? ", ..." : ""}
+                    </p>
+                    <div className="flex gap-2 justify-end">
+                      <Button variant="outline" onClick={() => setSaveDialogOpen(false)} disabled={isSaving}>
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          createWatchlist({
+                            data: {
+                              name: watchlistName || "FPTM Candidates",
+                              tickers: candidates.map(c => c.symbol),
+                              description: `FPTM 14-Double Strategy candidates (${candidates.length} tickers). Meets: $1–$10, 2× range, +20% MoM, ≤10% from high, catalyst, low dilution.`,
+                            }
+                          });
+                        }}
+                        disabled={isSaving || !watchlistName.trim()}
+                      >
+                        {isSaving ? "Saving..." : "Save"}
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Trade Plan Example */}
       <Card className="bg-gradient-to-br from-slate-900 to-slate-950 border-slate-800">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Target className="w-5 h-5 text-cyan-400" />
-            <span>Example Trade Plan</span>
+            <span>Trade Plan Example</span>
           </CardTitle>
-          <CardDescription>If bot finds a $4.50 candidate with $100 account</CardDescription>
+          <CardDescription>Position sizing for a $100 account</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">

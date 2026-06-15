@@ -13,6 +13,7 @@ import newsRouter from "./news";
 import notesRouter from "./notes";
 import screenerRouter from "./screener";
 import tickersRouter from "./tickers";
+import fptmRouter from "./fptm";
 import openaiRouter from "./openai/index";
 
 const router: IRouter = Router();
@@ -20,6 +21,7 @@ const router: IRouter = Router();
 router.use(healthRouter);
 router.use(scanRouter);
 router.use(screenerRouter);
+router.use(fptmRouter);
 router.use(tickersRouter);
 router.use(watchlistsRouter);
 router.use(configRouter);
