@@ -108,4 +108,23 @@ if (fs.existsSync(path.join(publicDir, "index.html"))) {
   logger.info({ publicDir }, "serving static frontend alongside the API");
 }
 
+// ── Keep-alive cron job (Render free tier sleep prevention) ────────────────
+// Ping the health endpoint every 10 minutes to prevent the service from
+// sleeping. This ensures STOCKVAULT is always responsive.
+if (process.env.NODE_ENV !== "test") {
+  setInterval(async () => {
+    try {
+      const response = await fetch("http://localhost:10000/api/healthz", {
+        method: "GET",
+        headers: { "User-Agent": "keep-alive-cron" },
+      });
+      if (response.ok) {
+        logger.debug("keep-alive ping successful");
+      }
+    } catch (err) {
+      logger.error({ err }, "keep-alive ping failed");
+    }
+  }, 10 * 60 * 1000); // 10 minutes
+}
+
 export default app;
