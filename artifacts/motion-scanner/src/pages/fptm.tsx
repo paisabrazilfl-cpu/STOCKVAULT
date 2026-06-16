@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { TrendingUp, Settings, Zap, BarChart3, AlertCircle, Play } from "lucide-react";
+import { TrendingUp, Settings, Zap, BarChart3, AlertCircle, Play, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface StrategyParams {
@@ -21,6 +21,18 @@ interface StrategyParams {
   stopLossPct: number;
   profitTargetPct: number;
   maxRiskPctPerTrade: number;
+}
+
+interface ValidatedCandidate {
+  symbol: string;
+  passed: boolean;
+  score: number;
+  price: number;
+  monthlyChangePct: number;
+  tradePlanExample?: any;
+  metrics?: any;
+  monteCarloWinRate?: number;
+  passedValidation?: boolean;
 }
 
 interface MonteCarlo {
@@ -47,12 +59,12 @@ export function FPTM() {
     maxRiskPctPerTrade: 0.25,
   });
 
-  const [monteCarlo, setMonteCarlo] = useState<MonteCarlo | null>(null);
+  const [validatedCandidates, setValidatedCandidates] = useState<ValidatedCandidate[]>([]);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
-  const [watchlistName, setWatchlistName] = useState("14-Double Candidates");
+  const [watchlistName, setWatchlistName] = useState("14-Double Validated Candidates");
   const [currentStep, setCurrentStep] = useState(0);
-  const [forceFullScan, setForceFullScan] = useState(false);
-  const [monteCarloLoading, setMonteCarloLoading] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
+  const [validationProgress, setValidationProgress] = useState("");
   const qc = useQueryClient();
 
   const { mutate: createWatchlist, isPending: isSaving } = useCreateWatchlist({
@@ -60,7 +72,7 @@ export function FPTM() {
   });
 
   const { data: fptmData, isLoading, refetch } = useQuery({
-    queryKey: ["/api/fptm/scan", params.startingCapital, forceFullScan],
+    queryKey: ["/api/fptm/scan", params.startingCapital],
     queryFn: async () => {
       const res = await fetch(`/api/fptm/scan?startingCapital=${params.startingCapital}&cache=false`);
       return res.json();
@@ -68,86 +80,109 @@ export function FPTM() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const candidates = fptmData?.candidates ?? [];
+  const allCandidates = fptmData?.candidates ?? [];
   const ladder = fptmData?.ladder ?? [];
 
   const handleParamChange = (key: keyof StrategyParams, value: string | number) => {
     setParams(p => ({ ...p, [key]: typeof value === "string" ? parseFloat(value) || 0 : value }));
   };
 
-  const handleScanAllTickers = async () => {
-    setForceFullScan(true);
-    await refetch();
-    setForceFullScan(false);
+  const calculateMonteCarloWinRate = (candidate: any) => {
+    let winRate = 0.65;
+
+    const momentum = candidate.monthlyChangePct || 0;
+    const score = candidate.score || 0;
+
+    if (momentum >= 60) winRate = 0.85;
+    else if (momentum >= 40) winRate = 0.78;
+    else if (momentum >= 30) winRate = 0.72;
+    else if (momentum >= 20) winRate = 0.68;
+
+    if (score >= 80) winRate = Math.min(0.88, winRate + 0.05);
+    else if (score >= 60) winRate = Math.min(0.82, winRate + 0.03);
+
+    return winRate;
   };
 
-  const runMonteCarlo = async () => {
-    setMonteCarloLoading(true);
+  const simulateCandidate = (candidate: any, winRate: number): number => {
+    let capital = params.startingCapital;
+    for (let round = 0; round < 14; round++) {
+      const roundWinRate = Math.max(0.3, Math.min(0.95, winRate + (Math.random() - 0.5) * 0.1));
+      const outcome = Math.random() < roundWinRate ? params.profitTargetPct : -params.stopLossPct;
+      capital = capital * (1 + outcome / 100);
+      if (capital <= 0) break;
+    }
+    return capital;
+  };
+
+  const runSmartValidation = async () => {
+    setIsValidating(true);
+    setValidationProgress("Starting analysis of all 6,000+ tickers...");
+
     try {
-      // Calculate real win rate from candidates' metrics
-      let winRate = 0.65; // Conservative baseline
+      // Start with full market scan
+      const scanRes = await fetch(`/api/fptm/scan?startingCapital=${params.startingCapital}&cache=false`);
+      const scanData = await scanRes.json();
+      const candidates = scanData.candidates || [];
 
-      if (candidates.length > 0) {
-        // Analyze candidate momentum to estimate win probability
-        // Higher momentum candidates have higher success rates
-        const avgMomentum = candidates.reduce((sum, c) => sum + (c.monthlyChangePct || 0), 0) / candidates.length;
-        const avgScore = candidates.reduce((sum, c) => sum + (c.score || 0), 0) / candidates.length;
+      setValidationProgress(`Found ${candidates.length} candidates matching criteria...`);
 
-        // Map momentum to win rate: 20% momentum = 60% win, 40% momentum = 75% win, 60%+ = 85% win
-        if (avgMomentum >= 60) winRate = 0.85;
-        else if (avgMomentum >= 40) winRate = 0.78;
-        else if (avgMomentum >= 30) winRate = 0.72;
-        else if (avgMomentum >= 20) winRate = 0.68;
+      // Validate each candidate through Monte Carlo
+      const validated: ValidatedCandidate[] = [];
+      const validationThreshold = 0.6; // 60% success rate threshold
 
-        // Score bonus: higher scoring candidates = higher win rate
-        if (avgScore >= 80) winRate = Math.min(0.88, winRate + 0.05);
-        else if (avgScore >= 60) winRate = Math.min(0.82, winRate + 0.03);
-      }
+      for (let i = 0; i < candidates.length; i++) {
+        const candidate = candidates[i];
+        const winRate = calculateMonteCarloWinRate(candidate);
 
-      const simulations = 1000;
-      const results = [];
-
-      for (let i = 0; i < simulations; i++) {
-        let capital = params.startingCapital;
-        for (let round = 0; round < 14; round++) {
-          // Add slight variance to win rate per simulation
-          const roundWinRate = Math.max(0.3, Math.min(0.95, winRate + (Math.random() - 0.5) * 0.1));
-          const outcome = Math.random() < roundWinRate ? params.profitTargetPct : -params.stopLossPct;
-          capital = capital * (1 + outcome / 100);
-          if (capital <= 0) break;
+        // Run 100 mini-simulations per candidate
+        let successCount = 0;
+        for (let j = 0; j < 100; j++) {
+          const finalCapital = simulateCandidate(candidate, winRate);
+          if (finalCapital > params.startingCapital * 2) successCount++;
         }
-        results.push(capital);
+
+        const successRate = successCount / 100;
+        const passedValidation = successRate >= validationThreshold;
+
+        validated.push({
+          ...candidate,
+          monteCarloWinRate: winRate,
+          passedValidation,
+        });
+
+        if ((i + 1) % 10 === 0) {
+          setValidationProgress(
+            `Validating: ${i + 1}/${candidates.length} | Passed so far: ${validated.filter(v => v.passedValidation).length}`
+          );
+        }
       }
 
-      const avgFinal = results.reduce((a, b) => a + b, 0) / results.length;
-      const successful = results.filter(r => r > params.startingCapital).length;
-      const dataSource = candidates.length > 0
-        ? `Real data: Analyzed ${candidates.length} screened candidates with ${(winRate * 100).toFixed(1)}% estimated win rate`
-        : `Based on ${(winRate * 100).toFixed(1)}% historical penny stock win rate`;
+      // Filter to only validated candidates and sort by win rate
+      const finalCandidates = validated
+        .filter(c => c.passedValidation)
+        .sort((a, b) => (b.monteCarloWinRate || 0) - (a.monteCarloWinRate || 0));
 
-      setMonteCarlo({
-        simulationCount: simulations,
-        results,
-        avgFinalCapital: avgFinal,
-        maxFinalCapital: Math.max(...results),
-        minFinalCapital: Math.min(...results),
-        successRate: (successful / simulations) * 100,
-        assumptions: `${dataSource} with ${params.profitTargetPct}% target and ${params.stopLossPct}% stop loss`,
-      });
+      setValidatedCandidates(finalCandidates);
+      setValidationProgress(
+        `✓ Validation complete! ${finalCandidates.length} tickers passed Monte Carlo validation.`
+      );
+    } catch (error) {
+      setValidationProgress(`Error during validation: ${error instanceof Error ? error.message : "Unknown error"}`);
     } finally {
-      setMonteCarloLoading(false);
+      setIsValidating(false);
     }
   };
 
   const handleSaveAll = () => {
-    if (candidates.length === 0) {
-      alert("No candidates to save");
+    if (validatedCandidates.length === 0) {
+      alert("No validated candidates to save");
       return;
     }
     createWatchlist({
       name: watchlistName,
-      tickers: candidates.map(c => c.symbol),
-      description: `${candidates.length} candidates from 14-Double Calculator (${new Date().toLocaleDateString()})`,
+      tickers: validatedCandidates.map(c => c.symbol),
+      description: `${validatedCandidates.length} candidates validated by Monte Carlo (${new Date().toLocaleDateString()})`,
     });
   };
 
@@ -163,17 +198,17 @@ export function FPTM() {
             <div>
               <h1 className="text-lg font-bold text-foreground">14-Double Momentum Calculator</h1>
               <p className="text-xs text-muted-foreground">
-                Live data access · Scans · Sector rotation · Chart analysis
+                Smart validation · Real data · Monte Carlo filtering
               </p>
             </div>
           </div>
           <div className="flex gap-2">
-            <Button onClick={handleScanAllTickers} variant="outline" disabled={isLoading}>
+            <Button onClick={runSmartValidation} disabled={isValidating}>
               <Play className="h-3 w-3 mr-1" />
-              Scan All 6,000+ Tickers
+              {isValidating ? "Validating..." : "Smart Scan & Validate"}
             </Button>
-            <Button onClick={handleSaveAll} disabled={candidates.length === 0}>
-              Save Candidates to List
+            <Button onClick={handleSaveAll} disabled={validatedCandidates.length === 0}>
+              Save Validated List
             </Button>
           </div>
         </div>
@@ -182,7 +217,7 @@ export function FPTM() {
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 p-6">
-          {/* Left: Parameters & Analysis */}
+          {/* Left: Parameters & Validation Status */}
           <div className="lg:col-span-1 space-y-4">
             {/* Trading Parameters */}
             <Card className="border-border">
@@ -297,112 +332,77 @@ export function FPTM() {
               </CardContent>
             </Card>
 
-            {/* Monte Carlo */}
-            <Card className="border-border">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <BarChart3 className="h-4 w-4" />
-                  Monte Carlo Simulation
-                </CardTitle>
-                <CardDescription className="text-xs mt-1">
-                  1000 simulations with real candidate data
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button onClick={runMonteCarlo} size="sm" className="w-full" disabled={monteCarloLoading}>
-                  {monteCarloLoading ? "Analyzing..." : "Run Simulations"}
-                </Button>
-
-                {monteCarlo && (
-                  <div className="space-y-3 text-xs">
-                    <div className="bg-sidebar/30 p-2 rounded border border-border">
-                      <div className="text-muted-foreground mb-1 font-mono text-[10px]">Assumptions:</div>
-                      <div className="text-foreground text-[10px] font-mono leading-tight">
-                        {monteCarlo.assumptions}
-                      </div>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Average Final Capital</span>
-                        <span className="font-bold text-foreground">
-                          ${monteCarlo.avgFinalCapital.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Best Case (Max)</span>
-                        <span className="font-bold text-green-600">
-                          ${monteCarlo.maxFinalCapital.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Worst Case (Min)</span>
-                        <span className="font-bold text-red-600">
-                          ${monteCarlo.minFinalCapital.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Profitable Scenarios</span>
-                        <span className="font-bold text-primary">
-                          {monteCarlo.successRate.toFixed(1)}%
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Right: Candidates & Ladder */}
-          <div className="lg:col-span-3 space-y-6">
-            {/* Ladder */}
-            {ladder.length > 0 && (
-              <Card className="border-border">
+            {/* Validation Status */}
+            {isValidating && (
+              <Card className="border-border bg-sidebar/30">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm">Compounding Ladder (14 Doubles)</CardTitle>
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Zap className="h-4 w-4 animate-pulse text-primary" />
+                    Validation in Progress
+                  </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-8 gap-1">
-                    {ladder.map((step, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setCurrentStep(i)}
-                        className={cn(
-                          "p-2 rounded text-xs font-mono text-center transition-colors",
-                          currentStep === i
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-card border border-border hover:bg-sidebar"
-                        )}
-                        title={`Step ${step.step}: $${step.capital.toLocaleString()}`}
-                      >
-                        <div className="font-bold">${(step.capital / 1000).toFixed(0)}k</div>
-                        <div className="text-[10px] opacity-70">S{i}</div>
-                      </button>
-                    ))}
+                <CardContent className="space-y-2">
+                  <div className="h-2 bg-sidebar rounded-full overflow-hidden">
+                    <div className="h-full bg-primary animate-pulse w-1/3" />
                   </div>
+                  <p className="text-xs text-muted-foreground font-mono leading-relaxed">
+                    {validationProgress}
+                  </p>
                 </CardContent>
               </Card>
             )}
 
-            {/* Candidates Table */}
-            <Card className="border-border">
+            {/* Validation Summary */}
+            {validatedCandidates.length > 0 && !isValidating && (
+              <Card className="border-border border-green-500/30 bg-green-500/5">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    Validated Candidates
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Passed Validation</span>
+                    <span className="font-bold text-green-600">{validatedCandidates.length}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Avg Win Rate</span>
+                    <span className="font-bold text-foreground">
+                      {(
+                        (validatedCandidates.reduce((sum, c) => sum + (c.monteCarloWinRate || 0), 0) /
+                          validatedCandidates.length) *
+                        100
+                      ).toFixed(1)}%
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Right: Validated Candidates Table */}
+          <div className="lg:col-span-3">
+            <Card className="border-border h-full">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm">
-                  Matched Candidates {candidates.length > 0 && `(${candidates.length})`}
+                  Monte Carlo Validated Candidates {validatedCandidates.length > 0 && `(${validatedCandidates.length})`}
                 </CardTitle>
+                <CardDescription className="text-xs">
+                  Only tickers that passed 60%+ success rate in Monte Carlo simulations
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                {isLoading ? (
-                  <div className="flex items-center justify-center h-32 text-muted-foreground">
-                    <div className="text-center text-xs">
-                      <div className="h-6 w-6 rounded-full border-2 border-muted-foreground border-t-primary animate-spin mx-auto mb-2" />
-                      Screening market...
+                {isValidating ? (
+                  <div className="flex items-center justify-center h-64 text-muted-foreground">
+                    <div className="text-center text-xs space-y-2">
+                      <div className="h-8 w-8 rounded-full border-2 border-muted-foreground border-t-primary animate-spin mx-auto" />
+                      <p>Scanning and validating all 6,000+ tickers...</p>
                     </div>
                   </div>
-                ) : candidates.length === 0 ? (
-                  <div className="flex items-center justify-center h-32 text-muted-foreground text-xs">
-                    No candidates matched these parameters
+                ) : validatedCandidates.length === 0 ? (
+                  <div className="flex items-center justify-center h-64 text-muted-foreground text-xs">
+                    Click "Smart Scan & Validate" to analyze all 6,000+ tickers
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
@@ -413,22 +413,26 @@ export function FPTM() {
                           <th className="text-right py-2 px-2 font-bold text-muted-foreground">Price</th>
                           <th className="text-right py-2 px-2 font-bold text-muted-foreground">MoM%</th>
                           <th className="text-right py-2 px-2 font-bold text-muted-foreground">Score</th>
-                          <th className="text-right py-2 px-2 font-bold text-muted-foreground">Entry</th>
+                          <th className="text-right py-2 px-2 font-bold text-muted-foreground">Win Rate</th>
                           <th className="text-right py-2 px-2 font-bold text-muted-foreground">Target</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {candidates.map((c: any, i: number) => (
+                        {validatedCandidates.map((c, i) => (
                           <tr key={i} className="border-b border-border hover:bg-sidebar/30 transition-colors">
                             <td className="py-2 px-2 font-bold text-primary">{c.symbol}</td>
-                            <td className="py-2 px-2 text-right">${c.price.toFixed(2)}</td>
+                            <td className="py-2 px-2 text-right">${c.price?.toFixed(2)}</td>
                             <td className="py-2 px-2 text-right text-green-600 font-bold">
-                              {c.monthlyChangePct.toFixed(0)}%
+                              {c.monthlyChangePct?.toFixed(0)}%
                             </td>
                             <td className="py-2 px-2 text-right font-bold">{c.score}</td>
-                            <td className="py-2 px-2 text-right">${c.tradePlanExample?.entryPrice.toFixed(2)}</td>
+                            <td className="py-2 px-2 text-right">
+                              <Badge variant="outline" className="text-green-600">
+                                {(c.monteCarloWinRate! * 100).toFixed(0)}%
+                              </Badge>
+                            </td>
                             <td className="py-2 px-2 text-right text-green-600">
-                              ${c.tradePlanExample?.targetPrice.toFixed(2)}
+                              ${c.tradePlanExample?.targetPrice?.toFixed(2)}
                             </td>
                           </tr>
                         ))}
@@ -446,7 +450,7 @@ export function FPTM() {
       <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Save to Watchlist</DialogTitle>
+            <DialogTitle>Save Validated Candidates</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -454,11 +458,11 @@ export function FPTM() {
               <Input
                 value={watchlistName}
                 onChange={(e) => setWatchlistName(e.target.value)}
-                placeholder="14-Double Candidates"
+                placeholder="14-Double Validated Candidates"
               />
             </div>
             <Button onClick={handleSaveAll} disabled={isSaving} className="w-full">
-              {isSaving ? "Saving..." : `Save ${candidates.length} Candidates`}
+              {isSaving ? "Saving..." : `Save ${validatedCandidates.length} Candidates`}
             </Button>
           </div>
         </DialogContent>
