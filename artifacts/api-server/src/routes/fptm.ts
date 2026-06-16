@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { scanFullMarket } from "../lib/providers/fullmarket";
+import { runScan } from "../lib/scanner";
 import {
   analyzeCandidate,
   decideNextTrade,
@@ -39,21 +40,46 @@ router.get("/fptm/scan", async (req, res): Promise<void> => {
       targetCapital: parseFloat(req.query.targetCapital as string) || DEFAULT_FPTM_CONFIG.targetCapital,
     };
 
-    // Get full market data
-    const market = await scanFullMarket();
+    // Try full market data, fall back to per-ticker screener
+    let market = await scanFullMarket();
+
     if (!market) {
-      res.status(503).json({
-        error: "Market data unavailable",
-        candidates: [],
-        ladder: buildDoubleLadder(config.startingCapital, 14),
-      });
-      return;
+      console.warn("[FPTM] Full market scan unavailable - using fallback screener with common symbols");
+      // Fallback: use the regular screener's symbol set
+      const fallbackResult = await runScan({}, { tenantId: "default" });
+      if (!fallbackResult?.records) {
+        res.status(200).json({
+          error: "No market data available",
+          candidates: [],
+          total: 0,
+          scanned: 0,
+          config,
+          ladder: buildDoubleLadder(config.startingCapital, 14),
+          cachedAt: new Date().toISOString(),
+        });
+        return;
+      }
+      // Convert screener records to fullmarket format
+      market = {
+        records: fallbackResult.records.map((r: any) => ({
+          ticker: r.ticker,
+          verdict: "GO",
+          score: 0.5,
+          reason: "FALLBACK_SCREENER",
+          technical: r.technical,
+        })),
+        cachedAt: new Date(),
+      };
     }
+
+    console.log(`[FPTM] Scanning ${market.records.length} records`);
 
     // Convert to snapshots
     const snapshots = market.records
       .map((r: any) => convertToSnapshot(r))
       .filter((s) => s.price > 0);
+
+    console.log(`[FPTM] ${snapshots.length} snapshots with valid price`);
 
     // Screen using FPTM rules
     const candidates = snapshots
@@ -83,6 +109,8 @@ router.get("/fptm/scan", async (req, res): Promise<void> => {
       .filter((c) => c.passed)
       .sort((a, b) => b.score - a.score);
 
+    console.log(`[FPTM] ${candidates.length} candidates passed screening`);
+
     res.json({
       candidates,
       total: candidates.length,
@@ -92,8 +120,8 @@ router.get("/fptm/scan", async (req, res): Promise<void> => {
       cachedAt: market.cachedAt.toISOString(),
     });
   } catch (error) {
-    console.error("FPTM scan error:", error);
-    res.status(500).json({ error: "Scan failed", candidates: [] });
+    console.error("[FPTM] Scan error:", error);
+    res.status(500).json({ error: "Scan failed", candidates: [], total: 0, scanned: 0 });
   }
 });
 
