@@ -189,26 +189,27 @@ export function FPTM() {
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-background">
       {/* Header */}
-      <div className="border-b border-border bg-background/95 backdrop-blur px-6 py-4 shrink-0">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <TrendingUp className="h-5 w-5 text-primary" />
+      <div className="border-b border-border bg-background/95 backdrop-blur px-4 py-3 shrink-0">
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="p-1.5 bg-primary/10 rounded-lg shrink-0">
+              <TrendingUp className="h-4 w-4 text-primary" />
             </div>
-            <div>
-              <h1 className="text-lg font-bold text-foreground">14-Double Momentum Calculator</h1>
-              <p className="text-xs text-muted-foreground">
+            <div className="min-w-0">
+              <h1 className="text-sm md:text-lg font-bold text-foreground truncate">14-Double Momentum Calculator</h1>
+              <p className="text-xs text-muted-foreground truncate">
                 Smart validation · Real data · Monte Carlo filtering
               </p>
             </div>
           </div>
-          <div className="flex gap-2">
-            <Button onClick={runSmartValidation} disabled={isValidating}>
+          <div className="flex gap-2 w-full">
+            <Button onClick={runSmartValidation} disabled={isValidating} size="sm" className="text-xs flex-1 md:flex-none">
               <Play className="h-3 w-3 mr-1" />
-              {isValidating ? "Validating..." : "Smart Scan & Validate"}
+              <span className="hidden sm:inline">{isValidating ? "Validating..." : "Smart Scan & Validate"}</span>
+              <span className="sm:hidden">{isValidating ? "..." : "Scan"}</span>
             </Button>
-            <Button onClick={handleSaveAll} disabled={validatedCandidates.length === 0}>
-              Save Validated List
+            <Button onClick={handleSaveAll} disabled={validatedCandidates.length === 0} size="sm" className="text-xs flex-1 md:flex-none">
+              Save List
             </Button>
           </div>
         </div>
@@ -216,29 +217,29 @@ export function FPTM() {
 
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 p-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6 p-4 md:p-6">
           {/* Left: Parameters & Validation Status */}
-          <div className="lg:col-span-1 space-y-4">
+          <div className="lg:col-span-1 space-y-3 md:space-y-4">
             {/* Trading Parameters */}
             <Card className="border-border">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Settings className="h-4 w-4" />
+              <CardHeader className="pb-2 md:pb-3">
+                <CardTitle className="text-xs md:text-sm flex items-center gap-2">
+                  <Settings className="h-3.5 w-3.5 md:h-4 md:w-4" />
                   Trading Parameters
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
+              <CardContent className="space-y-3 md:space-y-4">
+                <div className="space-y-1">
                   <Label className="text-xs">Starting Capital ($)</Label>
                   <Input
                     type="number"
                     value={params.startingCapital}
                     onChange={(e) => handleParamChange("startingCapital", e.target.value)}
-                    className="h-8 text-xs"
+                    className="h-7 md:h-8 text-xs"
                   />
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label className="text-xs">Price Range</Label>
                   <div className="flex gap-2">
                     <Input
@@ -246,87 +247,87 @@ export function FPTM() {
                       placeholder="Min"
                       value={params.minPrice}
                       onChange={(e) => handleParamChange("minPrice", e.target.value)}
-                      className="h-8 text-xs"
+                      className="h-7 md:h-8 text-xs"
                     />
                     <Input
                       type="number"
                       placeholder="Max"
                       value={params.maxPrice}
                       onChange={(e) => handleParamChange("maxPrice", e.target.value)}
-                      className="h-8 text-xs"
+                      className="h-7 md:h-8 text-xs"
                     />
                   </div>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label className="text-xs">Min Monthly Momentum (%)</Label>
                   <Input
                     type="number"
                     value={params.minMonthlyChangePct}
                     onChange={(e) => handleParamChange("minMonthlyChangePct", e.target.value)}
-                    className="h-8 text-xs"
+                    className="h-7 md:h-8 text-xs"
                   />
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label className="text-xs">Min Avg Volume</Label>
                   <Input
                     type="number"
                     value={params.minAvgVolume}
                     onChange={(e) => handleParamChange("minAvgVolume", e.target.value)}
-                    className="h-8 text-xs"
+                    className="h-7 md:h-8 text-xs"
                   />
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label className="text-xs">Min Relative Volume</Label>
                   <Input
                     type="number"
                     step="0.1"
                     value={params.minRelativeVolume}
                     onChange={(e) => handleParamChange("minRelativeVolume", e.target.value)}
-                    className="h-8 text-xs"
+                    className="h-7 md:h-8 text-xs"
                   />
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label className="text-xs">Distance from 52w High (%)</Label>
                   <Input
                     type="number"
                     value={params.maxDistanceFrom52wHighPct}
                     onChange={(e) => handleParamChange("maxDistanceFrom52wHighPct", e.target.value)}
-                    className="h-8 text-xs"
+                    className="h-7 md:h-8 text-xs"
                   />
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label className="text-xs">Stop Loss (%)</Label>
                   <Input
                     type="number"
                     value={params.stopLossPct}
                     onChange={(e) => handleParamChange("stopLossPct", e.target.value)}
-                    className="h-8 text-xs"
+                    className="h-7 md:h-8 text-xs"
                   />
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label className="text-xs">Profit Target (%)</Label>
                   <Input
                     type="number"
                     value={params.profitTargetPct}
                     onChange={(e) => handleParamChange("profitTargetPct", e.target.value)}
-                    className="h-8 text-xs"
+                    className="h-7 md:h-8 text-xs"
                   />
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label className="text-xs">Max Risk per Trade (%)</Label>
                   <Input
                     type="number"
                     step="0.01"
                     value={params.maxRiskPctPerTrade * 100}
                     onChange={(e) => handleParamChange("maxRiskPctPerTrade", parseFloat(e.target.value) / 100)}
-                    className="h-8 text-xs"
+                    className="h-7 md:h-8 text-xs"
                   />
                 </div>
               </CardContent>
@@ -335,9 +336,9 @@ export function FPTM() {
             {/* Validation Status */}
             {isValidating && (
               <Card className="border-border bg-sidebar/30">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <Zap className="h-4 w-4 animate-pulse text-primary" />
+                <CardHeader className="pb-2 md:pb-3">
+                  <CardTitle className="text-xs md:text-sm flex items-center gap-2">
+                    <Zap className="h-3.5 w-3.5 md:h-4 md:w-4 animate-pulse text-primary" />
                     Validation in Progress
                   </CardTitle>
                 </CardHeader>
@@ -355,9 +356,9 @@ export function FPTM() {
             {/* Validation Summary */}
             {validatedCandidates.length > 0 && !isValidating && (
               <Card className="border-border border-green-500/30 bg-green-500/5">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <CardHeader className="pb-2 md:pb-3">
+                  <CardTitle className="text-xs md:text-sm flex items-center gap-2">
+                    <CheckCircle2 className="h-3.5 w-3.5 md:h-4 md:w-4 text-green-600" />
                     Validated Candidates
                   </CardTitle>
                 </CardHeader>
@@ -384,8 +385,8 @@ export function FPTM() {
           {/* Right: Validated Candidates Table */}
           <div className="lg:col-span-3">
             <Card className="border-border h-full">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm">
+              <CardHeader className="pb-2 md:pb-3">
+                <CardTitle className="text-xs md:text-sm">
                   Monte Carlo Validated Candidates {validatedCandidates.length > 0 && `(${validatedCandidates.length})`}
                 </CardTitle>
                 <CardDescription className="text-xs">
@@ -394,14 +395,14 @@ export function FPTM() {
               </CardHeader>
               <CardContent>
                 {isValidating ? (
-                  <div className="flex items-center justify-center h-64 text-muted-foreground">
+                  <div className="flex items-center justify-center h-48 md:h-64 text-muted-foreground">
                     <div className="text-center text-xs space-y-2">
                       <div className="h-8 w-8 rounded-full border-2 border-muted-foreground border-t-primary animate-spin mx-auto" />
                       <p>Scanning and validating all 6,000+ tickers...</p>
                     </div>
                   </div>
                 ) : validatedCandidates.length === 0 ? (
-                  <div className="flex items-center justify-center h-64 text-muted-foreground text-xs">
+                  <div className="flex items-center justify-center h-48 md:h-64 text-muted-foreground text-xs">
                     Click "Smart Scan & Validate" to analyze all 6,000+ tickers
                   </div>
                 ) : (
@@ -409,29 +410,29 @@ export function FPTM() {
                     <table className="w-full text-xs">
                       <thead className="border-b border-border">
                         <tr>
-                          <th className="text-left py-2 px-2 font-bold text-muted-foreground">Ticker</th>
-                          <th className="text-right py-2 px-2 font-bold text-muted-foreground">Price</th>
-                          <th className="text-right py-2 px-2 font-bold text-muted-foreground">MoM%</th>
-                          <th className="text-right py-2 px-2 font-bold text-muted-foreground">Score</th>
-                          <th className="text-right py-2 px-2 font-bold text-muted-foreground">Win Rate</th>
-                          <th className="text-right py-2 px-2 font-bold text-muted-foreground">Target</th>
+                          <th className="text-left py-1.5 md:py-2 px-1.5 md:px-2 font-bold text-muted-foreground">Ticker</th>
+                          <th className="text-right py-1.5 md:py-2 px-1.5 md:px-2 font-bold text-muted-foreground">Price</th>
+                          <th className="text-right py-1.5 md:py-2 px-1.5 md:px-2 font-bold text-muted-foreground">MoM%</th>
+                          <th className="text-right py-1.5 md:py-2 px-1.5 md:px-2 font-bold text-muted-foreground hidden sm:table-cell">Score</th>
+                          <th className="text-right py-1.5 md:py-2 px-1.5 md:px-2 font-bold text-muted-foreground">Win Rate</th>
+                          <th className="text-right py-1.5 md:py-2 px-1.5 md:px-2 font-bold text-muted-foreground hidden sm:table-cell">Target</th>
                         </tr>
                       </thead>
                       <tbody>
                         {validatedCandidates.map((c, i) => (
                           <tr key={i} className="border-b border-border hover:bg-sidebar/30 transition-colors">
-                            <td className="py-2 px-2 font-bold text-primary">{c.symbol}</td>
-                            <td className="py-2 px-2 text-right">${c.price?.toFixed(2)}</td>
-                            <td className="py-2 px-2 text-right text-green-600 font-bold">
+                            <td className="py-1.5 md:py-2 px-1.5 md:px-2 font-bold text-primary text-xs md:text-sm">{c.symbol}</td>
+                            <td className="py-1.5 md:py-2 px-1.5 md:px-2 text-right text-xs md:text-sm">${c.price?.toFixed(2)}</td>
+                            <td className="py-1.5 md:py-2 px-1.5 md:px-2 text-right text-green-600 font-bold text-xs md:text-sm">
                               {c.monthlyChangePct?.toFixed(0)}%
                             </td>
-                            <td className="py-2 px-2 text-right font-bold">{c.score}</td>
-                            <td className="py-2 px-2 text-right">
-                              <Badge variant="outline" className="text-green-600">
+                            <td className="py-1.5 md:py-2 px-1.5 md:px-2 text-right font-bold hidden sm:table-cell">{c.score}</td>
+                            <td className="py-1.5 md:py-2 px-1.5 md:px-2 text-right">
+                              <Badge variant="outline" className="text-green-600 text-xs">
                                 {(c.monteCarloWinRate! * 100).toFixed(0)}%
                               </Badge>
                             </td>
-                            <td className="py-2 px-2 text-right text-green-600">
+                            <td className="py-1.5 md:py-2 px-1.5 md:px-2 text-right text-green-600 hidden sm:table-cell">
                               ${c.tradePlanExample?.targetPrice?.toFixed(2)}
                             </td>
                           </tr>
@@ -448,20 +449,21 @@ export function FPTM() {
 
       {/* Save Dialog */}
       <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
-        <DialogContent>
+        <DialogContent className="w-[90vw] max-w-md">
           <DialogHeader>
-            <DialogTitle>Save Validated Candidates</DialogTitle>
+            <DialogTitle className="text-base md:text-lg">Save Validated Candidates</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Watchlist Name</Label>
+              <Label className="text-xs md:text-sm">Watchlist Name</Label>
               <Input
                 value={watchlistName}
                 onChange={(e) => setWatchlistName(e.target.value)}
                 placeholder="14-Double Validated Candidates"
+                className="text-xs md:text-sm h-8 md:h-9"
               />
             </div>
-            <Button onClick={handleSaveAll} disabled={isSaving} className="w-full">
+            <Button onClick={handleSaveAll} disabled={isSaving} className="w-full text-xs md:text-sm">
               {isSaving ? "Saving..." : `Save ${validatedCandidates.length} Candidates`}
             </Button>
           </div>
