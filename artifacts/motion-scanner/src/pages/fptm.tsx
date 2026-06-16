@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { TrendingUp, Settings, Zap, BarChart3, AlertCircle } from "lucide-react";
+import { TrendingUp, Settings, Zap, BarChart3, AlertCircle, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface StrategyParams {
@@ -30,6 +30,7 @@ interface MonteCarlo {
   maxFinalCapital: number;
   minFinalCapital: number;
   successRate: number;
+  assumptions: string;
 }
 
 export function FPTM() {
@@ -50,16 +51,17 @@ export function FPTM() {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [watchlistName, setWatchlistName] = useState("14-Double Candidates");
   const [currentStep, setCurrentStep] = useState(0);
+  const [forceFullScan, setForceFullScan] = useState(false);
   const qc = useQueryClient();
 
   const { mutate: createWatchlist, isPending: isSaving } = useCreateWatchlist({
     mutation: { onSuccess: () => { setSaveDialogOpen(false); } },
   });
 
-  const { data: fptmData, isLoading } = useQuery({
-    queryKey: ["/api/fptm/scan", params.startingCapital],
+  const { data: fptmData, isLoading, refetch } = useQuery({
+    queryKey: ["/api/fptm/scan", params.startingCapital, forceFullScan],
     queryFn: async () => {
-      const res = await fetch(`/api/fptm/scan?startingCapital=${params.startingCapital}`);
+      const res = await fetch(`/api/fptm/scan?startingCapital=${params.startingCapital}&cache=false`);
       return res.json();
     },
     staleTime: 5 * 60 * 1000,
@@ -72,10 +74,16 @@ export function FPTM() {
     setParams(p => ({ ...p, [key]: typeof value === "string" ? parseFloat(value) || 0 : value }));
   };
 
+  const handleScanAllTickers = async () => {
+    setForceFullScan(true);
+    await refetch();
+    setForceFullScan(false);
+  };
+
   const runMonteCarlo = () => {
     const simulations = 1000;
     const results = [];
-    const winRate = 0.85; // Assume 85% win rate based on strategy rules
+    const winRate = 0.85;
 
     for (let i = 0; i < simulations; i++) {
       let capital = params.startingCapital;
@@ -97,6 +105,7 @@ export function FPTM() {
       maxFinalCapital: Math.max(...results),
       minFinalCapital: Math.min(...results),
       successRate: (successful / simulations) * 100,
+      assumptions: `Based on 85% win rate per trade with ${params.profitTargetPct}% target and ${params.stopLossPct}% stop loss`,
     });
   };
 
@@ -108,7 +117,7 @@ export function FPTM() {
     createWatchlist({
       name: watchlistName,
       tickers: candidates.map(c => c.symbol),
-      description: `${candidates.length} candidates from 14-Double Calculator`,
+      description: `${candidates.length} candidates from 14-Double Calculator (${new Date().toLocaleDateString()})`,
     });
   };
 
@@ -128,9 +137,15 @@ export function FPTM() {
               </p>
             </div>
           </div>
-          <Button onClick={handleSaveAll} disabled={candidates.length === 0}>
-            Save Candidates to List
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={handleScanAllTickers} variant="outline" disabled={isLoading}>
+              <Play className="h-3 w-3 mr-1" />
+              Scan All 6,000+ Tickers
+            </Button>
+            <Button onClick={handleSaveAll} disabled={candidates.length === 0}>
+              Save Candidates to List
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -257,39 +272,51 @@ export function FPTM() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <BarChart3 className="h-4 w-4" />
-                  Monte Carlo Analysis
+                  Monte Carlo Simulation
                 </CardTitle>
+                <CardDescription className="text-xs mt-1">
+                  1000 simulations of 14 consecutive trades
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 <Button onClick={runMonteCarlo} size="sm" className="w-full">
-                  Run 1000 Simulations
+                  Run Simulations
                 </Button>
 
                 {monteCarlo && (
-                  <div className="space-y-2 text-xs">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Average Result</span>
-                      <span className="font-bold text-foreground">
-                        ${monteCarlo.avgFinalCapital.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                      </span>
+                  <div className="space-y-3 text-xs">
+                    <div className="bg-sidebar/30 p-2 rounded border border-border">
+                      <div className="text-muted-foreground mb-1 font-mono text-[10px]">Assumptions:</div>
+                      <div className="text-foreground text-[10px] font-mono leading-tight">
+                        {monteCarlo.assumptions}
+                      </div>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Max Result</span>
-                      <span className="font-bold text-green-600">
-                        ${monteCarlo.maxFinalCapital.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Min Result</span>
-                      <span className="font-bold text-red-600">
-                        ${monteCarlo.minFinalCapital.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Success Rate</span>
-                      <span className="font-bold text-primary">
-                        {monteCarlo.successRate.toFixed(1)}%
-                      </span>
+
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Average Final Capital</span>
+                        <span className="font-bold text-foreground">
+                          ${monteCarlo.avgFinalCapital.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Best Case (Max)</span>
+                        <span className="font-bold text-green-600">
+                          ${monteCarlo.maxFinalCapital.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Worst Case (Min)</span>
+                        <span className="font-bold text-red-600">
+                          ${monteCarlo.minFinalCapital.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Profitable Scenarios</span>
+                        <span className="font-bold text-primary">
+                          {monteCarlo.successRate.toFixed(1)}%
+                        </span>
+                      </div>
                     </div>
                   </div>
                 )}
