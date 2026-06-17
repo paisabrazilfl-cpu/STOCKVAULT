@@ -180,9 +180,11 @@ export function FPTM() {
       return;
     }
     createWatchlist({
-      name: watchlistName,
-      tickers: validatedCandidates.map(c => c.symbol),
-      description: `${validatedCandidates.length} candidates validated by Monte Carlo (${new Date().toLocaleDateString()})`,
+      data: {
+        name: watchlistName,
+        tickers: validatedCandidates.map(c => c.symbol),
+        description: `${validatedCandidates.length} candidates validated by Monte Carlo (${new Date().toLocaleDateString()})`,
+      }
     });
   };
 

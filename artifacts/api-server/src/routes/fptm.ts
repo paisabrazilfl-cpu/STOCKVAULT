@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { scanFullMarket } from "../lib/providers/fullmarket";
-import { runScan } from "../lib/scanner";
+import { runScan, DEFAULT_CONFIG } from "../lib/scanner";
+import type { TenantProviderKeys } from "../lib/providers";
 import {
   analyzeCandidate,
   decideNextTrade,
@@ -44,10 +45,14 @@ router.get("/fptm/scan", async (req, res): Promise<void> => {
     let market = await scanFullMarket();
 
     if (!market) {
-      console.warn("[FPTM] Full market scan unavailable - using fallback screener with common symbols");
-      // Fallback: use the regular screener's symbol set
-      const fallbackResult = await runScan({}, { tenantId: "default" });
-      if (!fallbackResult?.records) {
+      console.warn("[FPTM] Full market scan unavailable - using fallback screener with S&P 500 subset");
+      // Fallback: use common tech stocks as baseline
+      const fallbackTickers = [
+        "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA", "BRK.B", "JNJ", "V",
+        "WMT", "JPM", "PG", "MA", "COST", "MCD", "BA", "NFLX", "INTC", "AMD",
+      ];
+      const fallbackResult = await runScan(fallbackTickers, DEFAULT_CONFIG, false, {} as TenantProviderKeys);
+      if (!fallbackResult?.candidates || fallbackResult.candidates.length === 0) {
         res.status(200).json({
           error: "No market data available",
           candidates: [],
@@ -61,10 +66,10 @@ router.get("/fptm/scan", async (req, res): Promise<void> => {
       }
       // Convert screener records to fullmarket format
       market = {
-        records: fallbackResult.records.map((r: any) => ({
+        records: fallbackResult.candidates.map((r: any) => ({
           ticker: r.ticker,
           verdict: "GO",
-          score: 0.5,
+          score: r.score || 0.5,
           reason: "FALLBACK_SCREENER",
           technical: r.technical,
         })),
