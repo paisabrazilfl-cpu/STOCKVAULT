@@ -62,8 +62,64 @@
 }
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 
+  --background: 217 32% 8%;
+  --foreground: 210 40% 98%;
+
+  --muted: 218 14% 22%;
+  --muted-foreground: 214 32% 72%;
+
+  --popover: 217 32% 12%;
+  --popover-foreground: 210 40% 98%;
+  --popover-border: 216 34% 20%;
+
+  --card: 217 32% 12%;
+  --card-foreground: 210 40% 98%;
+  --card-border: 216 34% 20%;
+
+  --border: 216 34% 20%;
+  --input: 216 34% 20%;
+
+  --primary: 217 92% 54%;
+  --primary-foreground: 217 32% 8%;
+
+  --secondary: 218 14% 22%;
+  --secondary-foreground: 210 40% 98%;
+
+  --accent: 217 92% 54%;
+  --accent-foreground: 217 32% 8%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 217 32% 8%;
+
+  --ring: 217 92% 54%;
+
+  --sidebar: 217 32% 10%;
+  --sidebar-foreground: 210 40% 98%;
+  --sidebar-border: 216 34% 20%;
+  --sidebar-primary: 217 92% 54%;
+  --sidebar-primary-foreground: 217 32% 8%;
+  --sidebar-accent: 216 34% 28%;
+  --sidebar-accent-foreground: 210 40% 98%;
+  --sidebar-ring: 217 92% 54%;
+
+  --app-font-sans: 'Inter', sans-serif;
+  --app-font-mono: 'JetBrains Mono', monospace;
+  --radius: 0.25rem;
+
+  --chart-1: 142 71% 45%;
+  --chart-2: 38 92% 50%;
+  --chart-3: 348 83% 47%;
+  --chart-4: 217 91% 60%;
+  --chart-5: 280 65% 60%;
+
+  --go-color: 142 71% 35%;
+  --hold-color: 38 92% 45%;
+  --abort-color: 348 83% 47%;
+}
+
+.light {
   --background: 0 0% 100%;
   --foreground: 224 71% 4%;
 
@@ -81,90 +137,34 @@
   --border: 220 13% 91%;
   --input: 220 13% 91%;
 
-  --primary: 222 47% 11%;
+  --primary: 217 92% 54%;
   --primary-foreground: 210 40% 98%;
 
   --secondary: 220 14% 96%;
   --secondary-foreground: 222 47% 11%;
 
-  --accent: 220 14% 96%;
+  --accent: 217 92% 54%;
   --accent-foreground: 222 47% 11%;
 
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
 
-  --ring: 222 47% 11%;
+  --ring: 217 92% 54%;
 
   --sidebar: 220 14% 96%;
   --sidebar-foreground: 224 71% 4%;
   --sidebar-border: 220 13% 91%;
-  --sidebar-primary: 222 47% 11%;
+  --sidebar-primary: 217 92% 54%;
   --sidebar-primary-foreground: 210 40% 98%;
   --sidebar-accent: 220 14% 93%;
   --sidebar-accent-foreground: 222 47% 11%;
-  --sidebar-ring: 222 47% 11%;
-
-  --app-font-sans: 'Inter', sans-serif;
-  --app-font-mono: 'JetBrains Mono', monospace;
-  --radius: 0.25rem;
+  --sidebar-ring: 217 92% 54%;
 
   --chart-1: 142 71% 35%;
   --chart-2: 38 92% 45%;
   --chart-3: 348 83% 47%;
   --chart-4: 217 91% 50%;
   --chart-5: 280 65% 50%;
-
-  --go-color: 142 71% 35%;
-  --hold-color: 38 92% 45%;
-  --abort-color: 348 83% 47%;
-}
-
-.dark {
-  --background: 224 71% 4%;
-  --foreground: 213 31% 91%;
-
-  --muted: 223 47% 11%;
-  --muted-foreground: 215 25% 70%;
-
-  --popover: 224 71% 4%;
-  --popover-foreground: 215 20.2% 65.1%;
-  --popover-border: 216 34% 17%;
-
-  --card: 224 71% 4%;
-  --card-foreground: 213 31% 91%;
-  --card-border: 216 34% 17%;
-
-  --border: 216 34% 17%;
-  --input: 216 34% 17%;
-
-  --primary: 210 40% 98%;
-  --primary-foreground: 222.2 47.4% 11.2%;
-
-  --secondary: 222.2 47.4% 11.2%;
-  --secondary-foreground: 210 40% 98%;
-
-  --accent: 216 34% 17%;
-  --accent-foreground: 210 40% 98%;
-
-  --destructive: 0 63% 31%;
-  --destructive-foreground: 210 40% 98%;
-
-  --ring: 216 34% 17%;
-
-  --sidebar: 224 71% 4%;
-  --sidebar-foreground: 213 31% 91%;
-  --sidebar-border: 216 34% 17%;
-  --sidebar-primary: 210 40% 98%;
-  --sidebar-primary-foreground: 222.2 47.4% 11.2%;
-  --sidebar-accent: 216 34% 17%;
-  --sidebar-accent-foreground: 210 40% 98%;
-  --sidebar-ring: 216 34% 17%;
-
-  --chart-1: 142 71% 45%;
-  --chart-2: 38 92% 50%;
-  --chart-3: 348 83% 47%;
-  --chart-4: 217 91% 60%;
-  --chart-5: 280 65% 60%;
 }
 
 @layer base {
